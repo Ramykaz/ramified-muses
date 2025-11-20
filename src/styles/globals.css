@@ -1,0 +1,424 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Shadows Into Light', cursive;
+  color: #2c3e50;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #f5f1e6;
+  zoom: 0.8; /* More zoomed out */
+  transform: scale(0.9); /* Additional scaling */
+  transform-origin: top center;
+}
+
+/* Common notebook styles */
+.notebook-page {
+  min-height: 100vh;
+  padding: 30px;
+  position: relative;
+}
+
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  padding-top: 80px;
+}
+
+.page-title {
+  font-family: 'Shadows Into Light', cursive;
+  font-size: 3.5rem;
+  text-align: center;
+  margin-bottom: 50px;
+  color: #2c3e50;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  letter-spacing: 2px;
+}
+
+.section {
+  margin-bottom: 40px;
+  position: relative;
+  /* REMOVED all card styles - no background, no padding, no border */
+}
+
+.section-title {
+  font-family: 'Shadows Into Light', cursive;
+  font-size: 2.2rem;
+  margin-bottom: 25px;
+  color: #2c3e50;
+  border-bottom: 2px solid #bdc3c7;
+  padding-bottom: 8px;
+}
+
+.content {
+  font-size: 1.6rem;
+  line-height: 1.8;
+  font-family: 'Architects Daughter', cursive; /* Your original font */
+}
+
+.link {
+  color: #e74c3c;
+  text-decoration: none;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.link:hover {
+  color: #c0392b;
+  text-decoration: underline;
+}
+
+.quote {
+  font-style: italic;
+  margin: 25px 0;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.3); /* More transparent */
+  border-left: 4px solid #9b59b6;
+  border-radius: 4px;
+  font-size: 1.5rem;
+  font-family: 'Architects Daughter', cursive;
+}
+
+/* Top Navigation - Notebook Tabs */
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+  border-bottom: 2px solid #bdc3c7;
+  z-index: 1000;
+  padding: 10px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nav-tab {
+  font-family: 'Shadows Into Light', cursive;
+  font-size: 1.4rem;
+  padding: 12px 24px;
+  background: #fff;
+  border: 1px solid #bdc3c7;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #2c3e50;
+  text-decoration: none;
+  position: relative;
+  top: 2px;
+}
+
+.nav-tab:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.nav-tab.active {
+  background: #fff;
+  border-bottom: 2px solid #fff;
+  margin-bottom: -2px;
+  z-index: 2;
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+/* Date */
+.date {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #ddd;
+  font-family: 'Architects Daughter', cursive;
+}
+
+/* List styles - REMOVED card styles */
+.content-list {
+  list-style: none;
+  padding-left: 20px;
+}
+
+.content-list li {
+  margin-bottom: 15px;
+  position: relative;
+  padding-left: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  /* REMOVED background, border, padding */
+}
+
+.content-list li:hover {
+  color: #e74c3c;
+  transform: translateX(5px);
+}
+
+.content-list li::before {
+  content: '•'; /* Simple bullet point */
+  position: absolute;
+  left: 0;
+  color: #e74c3c;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+/* Profile Section */
+.profile-section {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+  align-items: start;
+  margin-bottom: 40px;
+}
+
+.profile-image {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  border: 2px solid #bdc3c7;
+}
+
+.profile-content {
+  padding: 0;
+}
+
+/* Collapsible content */
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  margin-top: 15px;
+  padding-left: 25px;
+  border-left: 2px solid #3498db;
+}
+
+.collapsible-content.open {
+  max-height: 500px;
+}
+
+.collapsible-content p {
+  margin: 12px 0;
+  font-size: 1.4rem;
+  line-height: 1.6;
+  font-family: 'Architects Daughter', cursive;
+}
+
+/* Page-specific backgrounds - ENHANCED to be more visible */
+
+/* Home - Dotted Journal */
+.page-home {
+  background-color: #fef9e7;
+  background-image:
+    radial-gradient(#a8c0d6 1.5px, transparent 1.5px),
+    radial-gradient(#a8c0d6 1.5px, transparent 1.5px);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+  border-right: 3px solid #e74c3c;
+}
+
+/* Projects - Graph Paper */
+.page-projects {
+  background-color: #f0f7ff;
+  background-image:
+    linear-gradient(#3498db 1px, transparent 1px),
+    linear-gradient(90deg, #3498db 1px, transparent 1px);
+  background-size: 20px 20px;
+  border-left: 3px solid #27ae60;
+}
+
+.page-projects .content {
+  font-family: 'Architects Daughter', cursive; /* Your font */
+}
+
+/* Reading List - Lined Paper */
+.page-reading {
+  background-color: #fff9f0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 35px, #d5c9b1 35px, #d5c9b1 36px);
+  background-size: 100% 36px;
+  border-right: 3px solid #9b59b6;
+  padding-left: 60px;
+}
+
+/* Film Reviews - Cinema Film Strip - ENHANCED */
+.page-film {
+  background-color: #1a1a2e;
+  background-image:
+    repeating-linear-gradient(90deg,
+      transparent,
+      transparent 38px,
+      #e74c3c 38px,
+      #e74c3c 40px,
+      transparent 40px,
+      transparent 78px,
+      #3498db 78px,
+      #3498db 80px
+    );
+  background-size: 80px 40px;
+  border-left: 3px solid #e67e22;
+  color: #ecf0f1;
+}
+
+.page-film .section-title,
+.page-film .content {
+  color: #ecf0f1;
+}
+
+.page-film .link {
+  color: #3498db;
+}
+
+.page-film .link:hover {
+  color: #2980b9;
+}
+
+.page-film .content-list li::before {
+  color: #e74c3c;
+}
+
+/* Research - Hexagonal Pattern */
+.page-research {
+  background-color: #f7f9f7;
+  background-image:
+    radial-gradient(circle at 100% 150%, #f7f9f7 24%, #c8e6c9 25%, #c8e6c9 28%, #f7f9f7 29%, #f7f9f7 36%, #c8e6c9 36%, #c8e6c9 40%, transparent 40%, transparent),
+    radial-gradient(circle at 0 150%, #f7f9f7 24%, #c8e6c9 25%, #c8e6c9 28%, #f7f9f7 29%, #f7f9f7 36%, #c8e6c9 36%, #c8e6c9 40%, transparent 40%, transparent),
+    radial-gradient(circle at 50% 100%, #c8e6c9 10%, #f7f9f7 11%, #f7f9f7 23%, #c8e6c9 24%, #c8e6c9 30%, #f7f9f7 31%, #f7f9f7 43%, #c8e6c9 44%, #c8e6c9 50%, #f7f9f7 51%, #f7f9f7 63%, #c8e6c9 64%, #c8e6c9 71%, transparent 71%, transparent),
+    radial-gradient(circle at 100% 50%, #c8e6c9 5%, #f7f9f7 6%, #f7f9f7 15%, #c8e6c9 16%, #c8e6c9 20%, #f7f9f7 21%, #f7f9f7 30%, #c8e6c9 31%, #c8e6c9 35%, transparent 35%, transparent),
+    radial-gradient(circle at 0 50%, #c8e6c9 5%, #f7f9f7 6%, #f7f9f7 15%, #c8e6c9 16%, #c8e6c9 20%, #f7f9f7 21%, #f7f9f7 30%, #c8e6c9 31%, #c8e6c9 35%, transparent 35%, transparent);
+  background-size: 60px 30px;
+  border-right: 3px solid #e74c3c;
+}
+
+/* Blog - Watercolor Texture */
+.page-blog {
+  background-color: #f8f6ff;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(155, 89, 182, 0.2) 0%, transparent 25%),
+    radial-gradient(circle at 90% 80%, rgba(52, 152, 219, 0.2) 0%, transparent 25%),
+    radial-gradient(circle at 50% 50%, rgba(255, 182, 193, 0.15) 0%, transparent 30%);
+  border-left: 3px solid #9b59b6;
+}
+
+/* Contact - Subtle Pattern */
+.page-contact {
+  background-color: #fffaf0;
+  background-image:
+    linear-gradient(rgba(255, 152, 0, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 152, 0, 0.15) 1px, transparent 1px);
+  background-size: 30px 30px;
+  border-right: 3px solid #3498db;
+}
+
+/* Blog post styles - REMOVED card styles */
+.blog-post {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed #bdc3c7;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  /* REMOVED background, border, padding */
+}
+
+.blog-post:hover {
+  transform: translateX(5px);
+}
+
+.blog-title {
+  font-family: 'Shadows Into Light', cursive;
+  font-size: 1.8rem;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.blog-meta {
+  font-size: 1.3rem;
+  color: #7f8c8d;
+  margin-bottom: 12px;
+  font-style: italic;
+  font-family: 'Architects Daughter', cursive;
+}
+
+.blog-excerpt {
+  font-size: 1.4rem;
+  line-height: 1.6;
+  font-family: 'Architects Daughter', cursive;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    zoom: 1;
+    transform: scale(1);
+  }
+
+  .notebook-page {
+    padding: 20px;
+  }
+
+  .page-reading {
+    padding-left: 30px;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+  }
+
+  .content-wrapper {
+    padding-top: 100px;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+
+  .content {
+    font-size: 1.4rem;
+  }
+
+  .profile-section {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .profile-image {
+    max-width: 250px;
+    margin: 0 auto;
+  }
+
+  .nav-tabs {
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .nav-tab {
+    font-size: 1.2rem;
+    padding: 10px 16px;
+  }
+
+  .date {
+    position: static;
+    text-align: center;
+    margin-top: 25px;
+    display: inline-block;
+  }
+}
