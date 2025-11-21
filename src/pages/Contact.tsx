@@ -8,7 +8,7 @@ const Contact: React.FC = () => {
   return (
     <div className="notebook-page page-contact">
       <div className="content-wrapper">
-        <h1 className="page-title">Contact</h1>
+        <h1 className="page-title"></h1>
 
         <div className="section">
           <h2 className="section-title">Get In Touch</h2>
@@ -25,9 +25,16 @@ const Contact: React.FC = () => {
               <li><strong>Email:</strong> Ramadanshemsu341@gmail.com</li>
               <li><strong>Phone:</strong> +9053 4614 6330</li>
               <li><strong>Location:</strong> Çankaya, Ankara, Turkey</li>
-              <li><strong>LinkedIn:</strong> Ramadan Shemsu Hussen</li>
-              <li><strong>GitHub:</strong> Ramykaz</li>
             </ul>
+
+            <div className="contact-links">
+              <a href="https://linkedin.com/in/ramadan-shemsu-hussen-0b995a191" className="contact-link" target="_blank" rel="noopener noreferrer">
+                <span>LinkedIn</span>
+              </a>
+              <a href="https://github.com/Ramykaz" className="contact-link" target="_blank" rel="noopener noreferrer">
+                <span>GitHub</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>

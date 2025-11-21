@@ -8,7 +8,7 @@ const Home: React.FC = () => {
   return (
     <div className="notebook-page page-home">
       <div className="content-wrapper">
-        <h1 className="page-title">Ramadan Shemsu Hussen</h1>
+        <h1 className="page-title"></h1>
 
         <div className="profile-section">
           <div>

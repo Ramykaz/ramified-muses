@@ -15,19 +15,29 @@ const Navigation: React.FC = () => {
   ]
 
   return (
-    <nav className="top-nav">
-      <div className="nav-tabs">
-        {navItems.map((item) => (
-          <button
-            key={item.path}
-            className={`nav-tab ${location.pathname === item.path ? 'active' : ''}`}
-            onClick={() => navigate(item.path)}
-          >
-            {item.label}
-          </button>
-        ))}
+    <>
+      <div className="logo-container">
+        <img
+          src="/log.svg"
+          alt="Ramified Muses"
+          className="logo-image"
+        />
       </div>
-    </nav>
+
+      <nav className="top-nav">
+        <div className="nav-tabs">
+          {navItems.map((item) => (
+            <button
+              key={item.path}
+              className={`nav-tab ${location.pathname === item.path ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+    </>
   )
 }
 

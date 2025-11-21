@@ -39,7 +39,7 @@ const FilmReviews: React.FC = () => {
   return (
     <div className="notebook-page page-film">
       <div className="content-wrapper">
-        <h1 className="page-title">Film Reviews</h1>
+        <h1 className="page-title"></h1>
 
         <div className="section">
           <h2 className="section-title">Recent Analysis</h2>

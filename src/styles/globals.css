@@ -5,68 +5,72 @@
 }
 
 body {
-  font-family: 'Shadows Into Light', cursive;
+  font-family: 'Quicksand', sans-serif;
   color: #2c3e50;
   min-height: 100vh;
   overflow-x: hidden;
-  background: #f5f1e6;
-  zoom: 0.8; /* More zoomed out */
-  transform: scale(0.9); /* Additional scaling */
-  transform-origin: top center;
 }
 
-/* Common notebook styles */
+/* Full screen notebook - NO BORDERS, NO CUTS */
 .notebook-page {
   min-height: 100vh;
-  padding: 30px;
+  width: 100vw;
   position: relative;
+  overflow: hidden;
 }
 
 .content-wrapper {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
-  padding-top: 80px;
+  padding: 60px 40px 40px 40px;
+  min-height: 100vh;
 }
 
-.page-title {
-  font-family: 'Shadows Into Light', cursive;
-  font-size: 3.5rem;
-  text-align: center;
-  margin-bottom: 50px;
-  color: #2c3e50;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-  letter-spacing: 2px;
+/* Logo Styles */
+.logo-container {
+  position: fixed;
+  top: 20px;
+  left: 40px;
+  z-index: 1001;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .section {
-  margin-bottom: 40px;
+  margin-bottom: 25px;
   position: relative;
-  /* REMOVED all card styles - no background, no padding, no border */
 }
 
 .section-title {
-  font-family: 'Shadows Into Light', cursive;
-  font-size: 2.2rem;
-  margin-bottom: 25px;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1.6rem;
+  margin-bottom: 15px;
   color: #2c3e50;
-  border-bottom: 2px solid #bdc3c7;
-  padding-bottom: 8px;
+  border-bottom: 1px dashed #bdc3c7;
+  padding-bottom: 4px;
+  font-weight: 600;
 }
 
 .content {
-  font-size: 1.6rem;
-  line-height: 1.8;
-  font-family: 'Architects Daughter', cursive; /* Your original font */
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 400;
 }
 
 .link {
   color: #e74c3c;
   text-decoration: none;
-  position: relative;
   transition: all 0.3s ease;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .link:hover {
@@ -76,107 +80,121 @@ body {
 
 .quote {
   font-style: italic;
-  margin: 25px 0;
-  padding: 25px;
-  background: rgba(255, 255, 255, 0.3); /* More transparent */
-  border-left: 4px solid #9b59b6;
-  border-radius: 4px;
-  font-size: 1.5rem;
-  font-family: 'Architects Daughter', cursive;
+  margin: 15px 0;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.3);
+  border-left: 3px solid #9b59b6;
+  font-size: 1rem;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 500;
 }
 
-/* Top Navigation - Notebook Tabs */
+/* Centered Navigation */
 .top-nav {
   position: fixed;
-  top: 0;
+  top: 20px;
   left: 0;
   right: 0;
-  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
-  border-bottom: 2px solid #bdc3c7;
+  background: transparent;
   z-index: 1000;
-  padding: 10px 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 0;
 }
 
 .nav-tabs {
   display: flex;
   justify-content: center;
-  gap: 5px;
-  max-width: 1200px;
+  gap: 20px;
+  max-width: 1000px;
   margin: 0 auto;
+  align-items: center;
 }
 
 .nav-tab {
-  font-family: 'Shadows Into Light', cursive;
-  font-size: 1.4rem;
-  padding: 12px 24px;
-  background: #fff;
-  border: 1px solid #bdc3c7;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1rem;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
   cursor: pointer;
   transition: all 0.3s ease;
   color: #2c3e50;
-  text-decoration: none;
   position: relative;
-  top: 2px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #e74c3c;
+  transition: all 0.3s ease;
 }
 
 .nav-tab:hover {
-  background: #e9ecef;
-  transform: translateY(-2px);
+  opacity: 1;
+  transform: translateY(-1px);
+  color: #e74c3c;
+}
+
+.nav-tab:hover::before {
+  width: 100%;
 }
 
 .nav-tab.active {
-  background: #fff;
-  border-bottom: 2px solid #fff;
-  margin-bottom: -2px;
-  z-index: 2;
-  font-weight: bold;
+  opacity: 1;
   color: #e74c3c;
+  font-weight: 600;
+}
+
+.nav-tab.active::before {
+  width: 100%;
+  height: 2px;
 }
 
 /* Date */
 .date {
   position: fixed;
   bottom: 20px;
-  left: 20px;
-  font-size: 1.2rem;
+  left: 40px;
+  font-size: 0.8rem;
   color: #7f8c8d;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 8px 16px;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 8px;
   border: 1px solid #ddd;
-  font-family: 'Architects Daughter', cursive;
+  font-family: 'Quicksand', sans-serif;
 }
 
-/* List styles - REMOVED card styles */
+/* List styles */
 .content-list {
   list-style: none;
-  padding-left: 20px;
+  padding-left: 15px;
 }
 
 .content-list li {
-  margin-bottom: 15px;
+  margin-bottom: 8px;
   position: relative;
-  padding-left: 25px;
+  padding-left: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
-  /* REMOVED background, border, padding */
+  font-family: 'Quicksand', sans-serif;
 }
 
 .content-list li:hover {
   color: #e74c3c;
-  transform: translateX(5px);
+  transform: translateX(3px);
 }
 
 .content-list li::before {
-  content: '•'; /* Simple bullet point */
+  content: '•';
   position: absolute;
   left: 0;
   color: #e74c3c;
-  font-size: 2rem;
+  font-size: 1.5rem;
   line-height: 1;
 }
 
@@ -184,21 +202,17 @@ body {
 .profile-section {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 40px;
+  gap: 25px;
   align-items: start;
-  margin-bottom: 40px;
+  margin-bottom: 25px;
 }
 
 .profile-image {
   width: 100%;
-  max-width: 300px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  border: 2px solid #bdc3c7;
-}
-
-.profile-content {
-  padding: 0;
+  max-width: 220px;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  border: 1px solid #bdc3c7;
 }
 
 /* Collapsible content */
@@ -206,219 +220,215 @@ body {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
-  margin-top: 15px;
-  padding-left: 25px;
+  margin-top: 8px;
+  padding-left: 15px;
   border-left: 2px solid #3498db;
 }
 
 .collapsible-content.open {
-  max-height: 500px;
+  max-height: 350px;
 }
 
 .collapsible-content p {
-  margin: 12px 0;
-  font-size: 1.4rem;
-  line-height: 1.6;
-  font-family: 'Architects Daughter', cursive;
+  margin: 8px 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-family: 'Quicksand', sans-serif;
 }
 
-/* Page-specific backgrounds - ENHANCED to be more visible */
+/* FULL-SCREEN NOTEBOOK BACKGROUNDS - CLEAN */
 
-/* Home - Dotted Journal */
+/* Home - Grey Dotted Journal */
 .page-home {
-  background-color: #fef9e7;
-  background-image:
-    radial-gradient(#a8c0d6 1.5px, transparent 1.5px),
-    radial-gradient(#a8c0d6 1.5px, transparent 1.5px);
-  background-size: 40px 40px;
-  background-position: 0 0, 20px 20px;
-  border-right: 3px solid #e74c3c;
+  background:
+    radial-gradient(#a8a8a8 1px, transparent 1px),
+    #f8f9fa;
+  background-size: 35px 35px;
 }
 
 /* Projects - Graph Paper */
 .page-projects {
-  background-color: #f0f7ff;
-  background-image:
-    linear-gradient(#3498db 1px, transparent 1px),
-    linear-gradient(90deg, #3498db 1px, transparent 1px);
-  background-size: 20px 20px;
-  border-left: 3px solid #27ae60;
-}
-
-.page-projects .content {
-  font-family: 'Architects Daughter', cursive; /* Your font */
+  background:
+    linear-gradient(#a8c0d6 0.5px, transparent 0.5px),
+    linear-gradient(90deg, #a8c0d6 0.5px, transparent 0.5px),
+    #f3e5f5;
+  background-size: 18px 18px;
 }
 
 /* Reading List - Lined Paper */
 .page-reading {
-  background-color: #fff9f0;
-  background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 35px, #d5c9b1 35px, #d5c9b1 36px);
-  background-size: 100% 36px;
-  border-right: 3px solid #9b59b6;
-  padding-left: 60px;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 29px, #d5c9b1 29px, #d5c9b1 30px),
+    #e8f5e8;
+  background-size: 100% 30px;
+  padding-left: 45px;
 }
 
-/* Film Reviews - Cinema Film Strip - ENHANCED */
+/* Film Reviews - Film Strip */
 .page-film {
-  background-color: #1a1a2e;
-  background-image:
+  background:
     repeating-linear-gradient(90deg,
       transparent,
-      transparent 38px,
-      #e74c3c 38px,
-      #e74c3c 40px,
-      transparent 40px,
-      transparent 78px,
-      #3498db 78px,
-      #3498db 80px
-    );
-  background-size: 80px 40px;
-  border-left: 3px solid #e67e22;
-  color: #ecf0f1;
+      transparent 34px,
+      rgba(231, 76, 60, 0.3) 34px,
+      rgba(231, 76, 60, 0.3) 36px
+    ),
+    #ffe0b2;
+  background-size: 72px 28px;
+  color: #2c3e50;
 }
 
 .page-film .section-title,
 .page-film .content {
-  color: #ecf0f1;
+  color: #2c3e50;
 }
 
 .page-film .link {
-  color: #3498db;
-}
-
-.page-film .link:hover {
-  color: #2980b9;
-}
-
-.page-film .content-list li::before {
   color: #e74c3c;
 }
 
-/* Research - Hexagonal Pattern */
+/* Research - Full Screen Hex Pattern (FIXED) */
 .page-research {
-  background-color: #f7f9f7;
-  background-image:
-    radial-gradient(circle at 100% 150%, #f7f9f7 24%, #c8e6c9 25%, #c8e6c9 28%, #f7f9f7 29%, #f7f9f7 36%, #c8e6c9 36%, #c8e6c9 40%, transparent 40%, transparent),
-    radial-gradient(circle at 0 150%, #f7f9f7 24%, #c8e6c9 25%, #c8e6c9 28%, #f7f9f7 29%, #f7f9f7 36%, #c8e6c9 36%, #c8e6c9 40%, transparent 40%, transparent),
-    radial-gradient(circle at 50% 100%, #c8e6c9 10%, #f7f9f7 11%, #f7f9f7 23%, #c8e6c9 24%, #c8e6c9 30%, #f7f9f7 31%, #f7f9f7 43%, #c8e6c9 44%, #c8e6c9 50%, #f7f9f7 51%, #f7f9f7 63%, #c8e6c9 64%, #c8e6c9 71%, transparent 71%, transparent),
-    radial-gradient(circle at 100% 50%, #c8e6c9 5%, #f7f9f7 6%, #f7f9f7 15%, #c8e6c9 16%, #c8e6c9 20%, #f7f9f7 21%, #f7f9f7 30%, #c8e6c9 31%, #c8e6c9 35%, transparent 35%, transparent),
-    radial-gradient(circle at 0 50%, #c8e6c9 5%, #f7f9f7 6%, #f7f9f7 15%, #c8e6c9 16%, #c8e6c9 20%, #f7f9f7 21%, #f7f9f7 30%, #c8e6c9 31%, #c8e6c9 35%, transparent 35%, transparent);
+  background:
+    radial-gradient(circle at 100% 150%, transparent 24%, #c8e6c9 25%, #c8e6c9 28%, transparent 29%, transparent 36%, #c8e6c9 36%, #c8e6c9 40%, transparent 40%, transparent),
+    radial-gradient(circle at 0 150%, transparent 24%, #c8e6c9 25%, #c8e6c9 28%, transparent 29%, transparent 36%, #c8e6c9 36%, #c8e6c9 40%, transparent 40%, transparent),
+    radial-gradient(circle at 50% 100%, #c8e6c9 10%, transparent 11%, transparent 23%, #c8e6c9 24%, #c8e6c9 30%, transparent 31%, transparent 43%, #c8e6c9 44%, #c8e6c9 50%, transparent 51%, transparent 63%, #c8e6c9 64%, #c8e6c9 71%, transparent 71%, transparent),
+    radial-gradient(circle at 100% 50%, #c8e6c9 5%, transparent 6%, transparent 15%, #c8e6c9 16%, #c8e6c9 20%, transparent 21%, transparent 30%, #c8e6c9 31%, #c8e6c9 35%, transparent 35%, transparent),
+    radial-gradient(circle at 0 50%, #c8e6c9 5%, transparent 6%, transparent 15%, #c8e6c9 16%, #c8e6c9 20%, transparent 21%, transparent 30%, #c8e6c9 31%, #c8e6c9 35%, transparent 35%, transparent),
+    #e1f5fe;
   background-size: 60px 30px;
-  border-right: 3px solid #e74c3c;
 }
 
-/* Blog - Watercolor Texture */
+/* Blog - Watercolor Dots */
 .page-blog {
-  background-color: #f8f6ff;
-  background-image:
-    radial-gradient(circle at 10% 20%, rgba(155, 89, 182, 0.2) 0%, transparent 25%),
-    radial-gradient(circle at 90% 80%, rgba(52, 152, 219, 0.2) 0%, transparent 25%),
-    radial-gradient(circle at 50% 50%, rgba(255, 182, 193, 0.15) 0%, transparent 30%);
-  border-left: 3px solid #9b59b6;
+  background:
+    radial-gradient(circle at 15% 25%, rgba(155, 89, 182, 0.15) 0%, transparent 20%),
+    radial-gradient(circle at 85% 75%, rgba(52, 152, 219, 0.15) 0%, transparent 20%),
+    #fce4ec;
+  background-size: 80px 80px;
 }
 
-/* Contact - Subtle Pattern */
+/* Contact - Subtle Grid */
 .page-contact {
-  background-color: #fffaf0;
-  background-image:
-    linear-gradient(rgba(255, 152, 0, 0.15) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 152, 0, 0.15) 1px, transparent 1px);
-  background-size: 30px 30px;
-  border-right: 3px solid #3498db;
+  background:
+    linear-gradient(rgba(255, 152, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 152, 0, 0.08) 1px, transparent 1px),
+    #faf3e0;
+  background-size: 25px 25px;
 }
 
-/* Blog post styles - REMOVED card styles */
+/* Blog post styles */
 .blog-post {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
   border-bottom: 1px dashed #bdc3c7;
   cursor: pointer;
   transition: all 0.3s ease;
-  /* REMOVED background, border, padding */
 }
 
 .blog-post:hover {
-  transform: translateX(5px);
+  transform: translateX(3px);
 }
 
 .blog-title {
-  font-family: 'Shadows Into Light', cursive;
-  font-size: 1.8rem;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1.3rem;
   color: #2c3e50;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+  font-weight: 600;
 }
 
 .blog-meta {
-  font-size: 1.3rem;
+  font-size: 0.9rem;
   color: #7f8c8d;
-  margin-bottom: 12px;
-  font-style: italic;
-  font-family: 'Architects Daughter', cursive;
+  margin-bottom: 8px;
+  font-family: 'Quicksand', sans-serif;
 }
 
 .blog-excerpt {
-  font-size: 1.4rem;
-  line-height: 1.6;
-  font-family: 'Architects Daughter', cursive;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-family: 'Quicksand', sans-serif;
+}
+
+/* Contact Links */
+.contact-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.contact-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  text-decoration: none;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(189, 195, 199, 0.3);
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.contact-link:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  body {
-    zoom: 1;
-    transform: scale(1);
-  }
-
-  .notebook-page {
-    padding: 20px;
+  .content-wrapper {
+    padding: 70px 20px 30px 20px;
   }
 
   .page-reading {
     padding-left: 30px;
   }
 
-  .page-title {
-    font-size: 2.5rem;
-    margin-bottom: 30px;
+  .logo-container {
+    left: 20px;
   }
 
-  .content-wrapper {
-    padding-top: 100px;
+  .date {
+    left: 20px;
   }
 
   .section-title {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
   }
 
   .content {
-    font-size: 1.4rem;
+    font-size: 1rem;
   }
 
   .profile-section {
     grid-template-columns: 1fr;
-    gap: 25px;
+    gap: 20px;
   }
 
   .profile-image {
-    max-width: 250px;
+    max-width: 200px;
     margin: 0 auto;
   }
 
   .nav-tabs {
+    gap: 12px;
     flex-wrap: wrap;
-    gap: 3px;
   }
 
   .nav-tab {
-    font-size: 1.2rem;
-    padding: 10px 16px;
+    font-size: 0.9rem;
+    padding: 4px 0;
   }
 
-  .date {
-    position: static;
-    text-align: center;
-    margin-top: 25px;
-    display: inline-block;
+  .contact-links {
+    flex-direction: column;
+    gap: 8px;
   }
 }

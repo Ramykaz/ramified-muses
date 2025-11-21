@@ -39,7 +39,7 @@ const Blog: React.FC = () => {
   return (
     <div className="notebook-page page-blog">
       <div className="content-wrapper">
-        <h1 className="page-title">Blog</h1>
+        <h1 className="page-title"></h1>
 
         <div className="section">
           <h2 className="section-title">Latest Writings</h2>

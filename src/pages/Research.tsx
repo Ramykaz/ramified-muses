@@ -36,7 +36,7 @@ const Research: React.FC = () => {
   return (
     <div className="notebook-page page-research">
       <div className="content-wrapper">
-        <h1 className="page-title">Research</h1>
+        <h1 className="page-title"></h1>
 
         <div className="section">
           <h2 className="section-title">Current Research Areas</h2>

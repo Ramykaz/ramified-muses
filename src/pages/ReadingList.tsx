@@ -39,7 +39,7 @@ const ReadingList: React.FC = () => {
   return (
     <div className="notebook-page page-reading">
       <div className="content-wrapper">
-        <h1 className="page-title">Reading List</h1>
+        <h1 className="page-title"></h1>
 
         <div className="section">
           <h2 className="section-title">Current Reading</h2>
