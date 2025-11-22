@@ -18,7 +18,7 @@ const Navigation: React.FC = () => {
     <>
       <div className="logo-container">
         <img
-          src="/log.svg"
+          src="/3-Photoroom1.png"
           alt="Ramified Muses"
           className="logo-image"
         />
