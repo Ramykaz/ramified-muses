@@ -48,7 +48,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     location: "Çankaya, Ankara, Turkey",
     linkedin: "https://linkedin.com/in/ramadan-shemsu-hussen-0b995a191",
     github: "https://github.com/Ramykaz",
-    intro: "If you'd like to reach out for collaborations, inquiries, or just to say hello, feel free to contact me through the following channels:",
+    intro: "If you'd like to reach out for collaborations, inquiries, or just to say hello, feel free to contact me through the following channels.",
     cvUrl: ""
   },
   blogPosts: [
@@ -62,14 +62,14 @@ export const DEFAULT_CONTENT: SiteContent = {
     { id: 3, title: "Parasite", director: "Bong Joon-ho", year: "2019", excerpt: "Masterful class commentary disguised as a genre-blending thriller...", fullReview: "", blocks: [{ type: 'paragraph', text: "The architectural space becomes a character in itself, representing social stratification through vertical composition." }, { type: 'paragraph', text: "The tonal shifts from comedy to thriller to horror are handled with incredible precision." }], rating: "★★★★★" }
   ],
   researchAreas: [
-    { id: 1, title: "Computer Vision for Renewable Energy", excerpt: "Using deep learning for solar panel defect detection...", details: "", blocks: [{ type: 'paragraph', text: "Developing computer vision pipelines that analyze IR, EL, and RGB drone imagery to identify micro-cracks, hotspots, and other defects in solar panels. Focus on improving renewable energy efficiency through automated inspection systems." }], tags: ["Computer Vision", "Deep Learning", "Energy"] },
-    { id: 2, title: "Multilingual NLP", excerpt: "Arabic sentiment analysis and cross-cultural AI...", details: "", blocks: [{ type: 'paragraph', text: "Exploring the challenges of Arabic natural language processing, including dialect variations and morphological complexity. Working on sentiment analysis systems that can understand cultural context and regional linguistic nuances." }], tags: ["NLP", "Arabic", "AI"] },
-    { id: 3, title: "Real-time AI Systems", excerpt: "Optimizing object detection for security applications...", details: "", blocks: [{ type: 'paragraph', text: "Researching efficient inference pipelines for real-time computer vision applications. Focus on optimizing YOLO architectures for low-latency performance in security and monitoring systems while maintaining high accuracy." }], tags: ["YOLO", "Real-time", "Optimization"] }
+    { id: 1, title: "Computer Vision for Renewable Energy", excerpt: "Using deep learning for solar panel defect detection...", details: "", blocks: [{ type: 'paragraph', text: "Developing computer vision pipelines that analyze IR, EL, and RGB drone imagery to identify micro-cracks, hotspots, and other defects in solar panels." }], tags: ["Computer Vision", "Deep Learning", "Energy"] },
+    { id: 2, title: "Multilingual NLP", excerpt: "Arabic sentiment analysis and cross-cultural AI...", details: "", blocks: [{ type: 'paragraph', text: "Exploring the challenges of Arabic natural language processing, including dialect variations and morphological complexity." }], tags: ["NLP", "Arabic", "AI"] },
+    { id: 3, title: "Real-time AI Systems", excerpt: "Optimizing object detection for security applications...", details: "", blocks: [{ type: 'paragraph', text: "Researching efficient inference pipelines for real-time computer vision applications using YOLO architectures." }], tags: ["YOLO", "Real-time", "Optimization"] }
   ],
   books: [
     { id: 1, title: "Gödel, Escher, Bach", author: "Douglas Hofstadter", status: "Reading", notes: "Exploring connections between formal systems, art, and consciousness. The chapter on self-reference has fascinating implications for AI." },
-    { id: 2, title: "The Order of Time", author: "Carlo Rovelli", status: "Finished", notes: "Beautiful meditation on the nature of time from a theoretical physicist's perspective. Changed how I think about temporal structures." },
-    { id: 3, title: "Film Art: An Introduction", author: "Bordwell & Thompson", status: "Reference", notes: "Essential for understanding film form and style. The analysis of editing patterns has been particularly useful." }
+    { id: 2, title: "The Order of Time", author: "Carlo Rovelli", status: "Finished", notes: "Beautiful meditation on the nature of time from a theoretical physicist's perspective." },
+    { id: 3, title: "Film Art: An Introduction", author: "Bordwell & Thompson", status: "Reference", notes: "Essential for understanding film form and style." }
   ],
   experiences: [
     { id: 1, title: "Generative AI Research Intern", company: "UNDP-ICPSD", period: "Nov 2025 - present", details: "Conducting research on generative AI models and their applications in sustainable development.", type: "work" },
@@ -115,16 +115,22 @@ export function useContent() {
   const updateContact = (c: Partial<SiteContent['contact']>) =>
     save({ ...content, contact: { ...content.contact, ...c } })
 
+  // Cast through unknown to satisfy strict TS overlap check
   function addItem<T extends { id: number }>(key: keyof SiteContent, item: Omit<T, 'id'>): T {
-    const newItem = { ...item, id: Date.now() } as T
-    save({ ...content, [key]: [newItem, ...(content[key] as T[])] })
+    const newItem = { ...item, id: Date.now() } as unknown as T
+    const list = (content[key] as unknown) as T[]
+    save({ ...content, [key]: [newItem, ...list] })
     return newItem
   }
+
   function updateItem<T extends { id: number }>(key: keyof SiteContent, id: number, updates: Partial<T>) {
-    save({ ...content, [key]: (content[key] as T[]).map(i => i.id === id ? { ...i, ...updates } : i) })
+    const list = (content[key] as unknown) as T[]
+    save({ ...content, [key]: list.map(i => i.id === id ? { ...i, ...updates } : i) })
   }
+
   function deleteItem<T extends { id: number }>(key: keyof SiteContent, id: number) {
-    save({ ...content, [key]: (content[key] as T[]).filter(i => i.id !== id) })
+    const list = (content[key] as unknown) as T[]
+    save({ ...content, [key]: list.filter(i => i.id !== id) })
   }
 
   const resetToDefaults = () => {

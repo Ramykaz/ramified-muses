@@ -97,7 +97,6 @@ const Admin: React.FC = () => {
           ))}
         </div>
 
-        {/* ── PROFILE ── */}
         {tab === 'profile' && pf && (
           <div className="admin-section">
             <ProfileImageField value={pf.image} onChange={v => setPf(f => f ? { ...f, image: v } : f)} />
@@ -120,7 +119,6 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* ── CONTACT ── */}
         {tab === 'contact' && cf && (
           <div className="admin-section">
             <F label="Intro Text"><Txt rows={3} value={cf.intro} onChange={e => setCf(c => c ? { ...c, intro: e.target.value } : c)} /></F>
@@ -129,7 +127,7 @@ const Admin: React.FC = () => {
             <F label="Location"><Inp value={cf.location} onChange={e => setCf(c => c ? { ...c, location: e.target.value } : c)} /></F>
             <F label="LinkedIn URL"><Inp value={cf.linkedin} onChange={e => setCf(c => c ? { ...c, linkedin: e.target.value } : c)} /></F>
             <F label="GitHub URL"><Inp value={cf.github} onChange={e => setCf(c => c ? { ...c, github: e.target.value } : c)} /></F>
-            <F label="CV Link" hint="Upload your CV to Google Drive, set sharing to 'Anyone with the link', paste the URL here.">
+            <F label="CV Link" hint="Upload to Google Drive, set sharing to 'Anyone with link', paste URL here.">
               <Inp value={cf.cvUrl || ''} placeholder="https://drive.google.com/..." onChange={e => setCf(c => c ? { ...c, cvUrl: e.target.value } : c)} />
             </F>
             <div className="admin-actions">
@@ -138,7 +136,6 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* ── BLOG ── */}
         {tab === 'blog' && (
           <div className="admin-section">
             <BlogEditor posts={content?.blogPosts ?? []}
@@ -149,7 +146,6 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* ── FILMS ── */}
         {tab === 'films' && (
           <div className="admin-section">
             <FilmEditor reviews={content?.filmReviews ?? []}
@@ -160,7 +156,6 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* ── RESEARCH ── */}
         {tab === 'research' && (
           <div className="admin-section">
             <ResearchEditor areas={content?.researchAreas ?? []}
@@ -171,7 +166,6 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* ── BOOKS ── */}
         {tab === 'books' && (
           <div className="admin-section">
             <BookEditor books={content?.books ?? []}
@@ -182,7 +176,6 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {/* ── EXPERIENCE ── */}
         {tab === 'experience' && (
           <div className="admin-section">
             <ExperienceEditor experiences={content?.experiences ?? []}
@@ -199,8 +192,8 @@ const Admin: React.FC = () => {
 
 // ── Shared list shell ──────────────────────────────────────────
 function ListShell<T extends { id: number }>({
-  items, label, newLabel, renderSummary, renderForm, onDelete,
-  onAdd, onUpdate, blankItem
+  items, label, newLabel, renderSummary, renderForm,
+  onDelete, onAdd, onUpdate, blankItem
 }: {
   items: T[]; label: string; newLabel: string
   renderSummary: (item: T) => React.ReactNode
@@ -213,12 +206,12 @@ function ListShell<T extends { id: number }>({
   const [draft, setDraft] = useState<T | null>(null)
   const [isNew, setIsNew] = useState(false)
 
-  const startNew = () => { setDraft({ ...blankItem(), id: -1 } as T); setIsNew(true) }
+  const startNew = () => { setDraft({ ...blankItem(), id: -1 } as unknown as T); setIsNew(true) }
   const startEdit = (item: T) => { setDraft({ ...item }); setIsNew(false) }
   const cancel = () => { setDraft(null); setIsNew(false) }
   const save = () => {
     if (!draft) return
-    if (isNew) onAdd(draft as Omit<T, 'id'>)
+    if (isNew) onAdd(draft as unknown as Omit<T, 'id'>)
     else onUpdate(draft.id, draft)
     cancel()
   }
@@ -226,7 +219,7 @@ function ListShell<T extends { id: number }>({
 
   if (draft) return (
     <div className="post-editor">
-      <p className="admin-sublabel">{isNew ? newLabel : `Edit: ${(draft as any).title || (draft as any).name || ''}`}</p>
+      <p className="admin-sublabel">{isNew ? newLabel : `Edit: ${(draft as Record<string, unknown>).title as string || ''}`}</p>
       {renderForm(draft, change, isNew)}
       <div className="admin-actions">
         <button className="admin-btn primary" onClick={save}>{isNew ? 'Publish' : 'Save Changes'}</button>
@@ -254,110 +247,97 @@ function ListShell<T extends { id: number }>({
   )
 }
 
-// ── Blog Editor ────────────────────────────────────────────────
+// ── Section editors ────────────────────────────────────────────
+
 const BlogEditor: React.FC<{ posts: BlogPost[]; onAdd: (p: Omit<BlogPost,'id'>) => void; onUpdate: (id:number, u:Partial<BlogPost>) => void; onDelete: (id:number) => void }> = ({ posts, onAdd, onUpdate, onDelete }) => (
   <ListShell
     items={posts} label="New Post" newLabel="New Blog Post"
-    blankItem={() => ({ title: '', date: new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}), excerpt: '', fullContent: '', blocks: [], tags: [], image: '' })}
+    blankItem={() => ({ title: '', date: new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}), excerpt: '', fullContent: '', blocks: [] as Block[], tags: [], image: '' })}
     renderSummary={p => (<><strong>{p.title || '(untitled)'}</strong><span className="admin-post-date">{p.date}</span></>)}
-    renderForm={(d, ch) => (
-      <>
-        <F label="Title"><Inp value={d.title||''} placeholder="Post title..." onChange={e => ch({title:e.target.value} as any)} /></F>
-        <F label="Date"><Inp value={d.date||''} placeholder="March 2025" onChange={e => ch({date:e.target.value} as any)} /></F>
-        <F label="Excerpt (shown on list)"><Txt rows={2} value={d.excerpt||''} placeholder="Short teaser..." onChange={e => ch({excerpt:e.target.value} as any)} /></F>
-        <F label="Tags (comma-separated)"><Inp value={(d.tags||[]).join(', ')} placeholder="AI, Research" onChange={e => ch({tags:e.target.value.split(',').map((t:string)=>t.trim()).filter(Boolean)} as any)} /></F>
-        <F label="Content" hint="Add paragraphs, headings, quotes, and images in any order. Use the 🖼 button to insert images between paragraphs.">
-          <BlockEditor blocks={d.blocks || []} onChange={blocks => ch({blocks} as any)} />
-        </F>
-      </>
-    )}
+    renderForm={(d, ch) => (<>
+      <F label="Title"><Inp value={d.title||''} placeholder="Post title..." onChange={e => ch({title:e.target.value})} /></F>
+      <F label="Date"><Inp value={d.date||''} placeholder="March 2025" onChange={e => ch({date:e.target.value})} /></F>
+      <F label="Excerpt"><Txt rows={2} value={d.excerpt||''} placeholder="Short teaser..." onChange={e => ch({excerpt:e.target.value})} /></F>
+      <F label="Tags (comma-separated)"><Inp value={(d.tags||[]).join(', ')} placeholder="AI, Research" onChange={e => ch({tags:e.target.value.split(',').map((t:string)=>t.trim()).filter(Boolean)})} /></F>
+      <F label="Content" hint="Add paragraphs, headings, quotes, and images in any order. Use 🖼 to insert images between paragraphs.">
+        <BlockEditor blocks={d.blocks || []} onChange={blocks => ch({blocks})} />
+      </F>
+    </>)}
     onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete}
   />
 )
 
-// ── Film Editor ────────────────────────────────────────────────
 const FilmEditor: React.FC<{ reviews: FilmReview[]; onAdd: (r: Omit<FilmReview,'id'>) => void; onUpdate: (id:number, u:Partial<FilmReview>) => void; onDelete: (id:number) => void }> = ({ reviews, onAdd, onUpdate, onDelete }) => (
   <ListShell
     items={reviews} label="New Review" newLabel="New Film Review"
-    blankItem={() => ({ title: '', director: '', year: '', excerpt: '', fullReview: '', blocks: [], rating: '', image: '' })}
+    blankItem={() => ({ title: '', director: '', year: '', excerpt: '', fullReview: '', blocks: [] as Block[], rating: '', image: '' })}
     renderSummary={r => (<><strong>{r.title||'(untitled)'} {r.year&&`(${r.year})`}</strong><span className="admin-post-date">{r.director}</span></>)}
-    renderForm={(d, ch) => (
-      <>
-        <F label="Title"><Inp value={d.title||''} onChange={e => ch({title:e.target.value} as any)} /></F>
-        <F label="Director"><Inp value={d.director||''} onChange={e => ch({director:e.target.value} as any)} /></F>
-        <F label="Year"><Inp value={d.year||''} placeholder="2024" onChange={e => ch({year:e.target.value} as any)} /></F>
-        <F label="Rating"><Inp value={d.rating||''} placeholder="★★★★☆" onChange={e => ch({rating:e.target.value} as any)} /></F>
-        <F label="Excerpt"><Txt rows={2} value={d.excerpt||''} onChange={e => ch({excerpt:e.target.value} as any)} /></F>
-        <F label="Review Content" hint="Add your full review with images, quotes, and headings.">
-          <BlockEditor blocks={d.blocks || []} onChange={blocks => ch({blocks} as any)} />
-        </F>
-      </>
-    )}
+    renderForm={(d, ch) => (<>
+      <F label="Title"><Inp value={d.title||''} onChange={e => ch({title:e.target.value})} /></F>
+      <F label="Director"><Inp value={d.director||''} onChange={e => ch({director:e.target.value})} /></F>
+      <F label="Year"><Inp value={d.year||''} placeholder="2024" onChange={e => ch({year:e.target.value})} /></F>
+      <F label="Rating"><Inp value={d.rating||''} placeholder="★★★★☆" onChange={e => ch({rating:e.target.value})} /></F>
+      <F label="Excerpt"><Txt rows={2} value={d.excerpt||''} onChange={e => ch({excerpt:e.target.value})} /></F>
+      <F label="Review Content" hint="Write your full review with inline images, quotes, and headings.">
+        <BlockEditor blocks={d.blocks || []} onChange={blocks => ch({blocks})} />
+      </F>
+    </>)}
     onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete}
   />
 )
 
-// ── Research Editor ────────────────────────────────────────────
 const ResearchEditor: React.FC<{ areas: ResearchArea[]; onAdd: (a: Omit<ResearchArea,'id'>) => void; onUpdate: (id:number, u:Partial<ResearchArea>) => void; onDelete: (id:number) => void }> = ({ areas, onAdd, onUpdate, onDelete }) => (
   <ListShell
     items={areas} label="New Area" newLabel="New Research Area"
-    blankItem={() => ({ title: '', excerpt: '', details: '', blocks: [], tags: [], image: '' })}
+    blankItem={() => ({ title: '', excerpt: '', details: '', blocks: [] as Block[], tags: [], image: '' })}
     renderSummary={a => (<><strong>{a.title||'(untitled)'}</strong></>)}
-    renderForm={(d, ch) => (
-      <>
-        <F label="Title"><Inp value={d.title||''} onChange={e => ch({title:e.target.value} as any)} /></F>
-        <F label="Excerpt"><Txt rows={2} value={d.excerpt||''} onChange={e => ch({excerpt:e.target.value} as any)} /></F>
-        <F label="Tags (comma-separated)"><Inp value={(d.tags||[]).join(', ')} onChange={e => ch({tags:e.target.value.split(',').map((t:string)=>t.trim()).filter(Boolean)} as any)} /></F>
-        <F label="Content" hint="Write your research details with inline images and structured sections.">
-          <BlockEditor blocks={d.blocks || []} onChange={blocks => ch({blocks} as any)} />
-        </F>
-      </>
-    )}
+    renderForm={(d, ch) => (<>
+      <F label="Title"><Inp value={d.title||''} onChange={e => ch({title:e.target.value})} /></F>
+      <F label="Excerpt"><Txt rows={2} value={d.excerpt||''} onChange={e => ch({excerpt:e.target.value})} /></F>
+      <F label="Tags (comma-separated)"><Inp value={(d.tags||[]).join(', ')} onChange={e => ch({tags:e.target.value.split(',').map((t:string)=>t.trim()).filter(Boolean)})} /></F>
+      <F label="Content" hint="Write your research details with inline images and structured sections.">
+        <BlockEditor blocks={d.blocks || []} onChange={blocks => ch({blocks})} />
+      </F>
+    </>)}
     onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete}
   />
 )
 
-// ── Book Editor ────────────────────────────────────────────────
 const BookEditor: React.FC<{ books: Book[]; onAdd: (b: Omit<Book,'id'>) => void; onUpdate: (id:number, u:Partial<Book>) => void; onDelete: (id:number) => void }> = ({ books, onAdd, onUpdate, onDelete }) => (
   <ListShell
     items={books} label="New Book" newLabel="New Book"
     blankItem={() => ({ title: '', author: '', status: 'Want to Read' as const, notes: '', coverImage: '' })}
     renderSummary={b => (<><strong>{b.title||'(untitled)'}</strong><span className="admin-post-date">{b.author} · {b.status}</span></>)}
-    renderForm={(d, ch) => (
-      <>
-        <F label="Title"><Inp value={d.title||''} onChange={e => ch({title:e.target.value} as any)} /></F>
-        <F label="Author"><Inp value={d.author||''} onChange={e => ch({author:e.target.value} as any)} /></F>
-        <F label="Status">
-          <select className="admin-input" value={d.status} onChange={e => ch({status:e.target.value as Book['status']} as any)}>
-            {(['Reading','Finished','Reference','Want to Read'] as const).map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </F>
-        <F label="Notes"><Txt rows={4} value={d.notes||''} onChange={e => ch({notes:e.target.value} as any)} /></F>
-      </>
-    )}
+    renderForm={(d, ch) => (<>
+      <F label="Title"><Inp value={d.title||''} onChange={e => ch({title:e.target.value})} /></F>
+      <F label="Author"><Inp value={d.author||''} onChange={e => ch({author:e.target.value})} /></F>
+      <F label="Status">
+        <select className="admin-input" value={d.status} onChange={e => ch({status:e.target.value as Book['status']})}>
+          {(['Reading','Finished','Reference','Want to Read'] as const).map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </F>
+      <F label="Notes"><Txt rows={4} value={d.notes||''} onChange={e => ch({notes:e.target.value})} /></F>
+    </>)}
     onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete}
   />
 )
 
-// ── Experience Editor ──────────────────────────────────────────
 const ExperienceEditor: React.FC<{ experiences: Experience[]; onAdd: (e: Omit<Experience,'id'>) => void; onUpdate: (id:number, u:Partial<Experience>) => void; onDelete: (id:number) => void }> = ({ experiences, onAdd, onUpdate, onDelete }) => (
   <ListShell
     items={experiences} label="New Entry" newLabel="New Experience"
-    blankItem={() => ({ title: '', company: '', period: '', details: '', blocks: [], type: 'work' as const, image: '' })}
+    blankItem={() => ({ title: '', company: '', period: '', details: '', blocks: [] as Block[], type: 'work' as const, image: '' })}
     renderSummary={e => (<><strong>{e.title||'(untitled)'}</strong><span className="admin-post-date">{e.company} · {e.period}</span></>)}
-    renderForm={(d, ch) => (
-      <>
-        <F label="Title / Role"><Inp value={d.title||''} onChange={e => ch({title:e.target.value} as any)} /></F>
-        <F label="Company / Organization"><Inp value={d.company||''} onChange={e => ch({company:e.target.value} as any)} /></F>
-        <F label="Period"><Inp value={d.period||''} placeholder="Jan 2024 - Present" onChange={e => ch({period:e.target.value} as any)} /></F>
-        <F label="Type">
-          <select className="admin-input" value={d.type} onChange={e => ch({type:e.target.value as 'work'|'volunteer'} as any)}>
-            <option value="work">Work</option><option value="volunteer">Volunteer</option>
-          </select>
-        </F>
-        <F label="Details"><Txt rows={3} value={d.details||''} onChange={e => ch({details:e.target.value} as any)} /></F>
-      </>
-    )}
+    renderForm={(d, ch) => (<>
+      <F label="Title / Role"><Inp value={d.title||''} onChange={e => ch({title:e.target.value})} /></F>
+      <F label="Company / Organization"><Inp value={d.company||''} onChange={e => ch({company:e.target.value})} /></F>
+      <F label="Period"><Inp value={d.period||''} placeholder="Jan 2024 - Present" onChange={e => ch({period:e.target.value})} /></F>
+      <F label="Type">
+        <select className="admin-input" value={d.type} onChange={e => ch({type:e.target.value as 'work'|'volunteer'})}>
+          <option value="work">Work</option><option value="volunteer">Volunteer</option>
+        </select>
+      </F>
+      <F label="Details"><Txt rows={3} value={d.details||''} onChange={e => ch({details:e.target.value})} /></F>
+    </>)}
     onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete}
   />
 )

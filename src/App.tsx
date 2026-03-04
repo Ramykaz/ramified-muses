@@ -7,7 +7,7 @@ import FilmReviews from './pages/FilmReviews'
 import Research from './pages/Research'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
-import { FilmReviewPost, ResearchPost } from './pages/PostPages'
+import { FilmReviewPost, ResearchPost } from './pages/PostPages.tsx'
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
 
