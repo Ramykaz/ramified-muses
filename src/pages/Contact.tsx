@@ -1,44 +1,72 @@
+import React from 'react'
+import { useContent } from '../hooks/useContent'
+
 const Contact: React.FC = () => {
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  const { content } = useContent()
+  const contact = content?.contact
+  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+
+  if (!contact) return null
 
   return (
     <div className="notebook-page page-contact">
       <div className="content-wrapper">
-        <h1 className="page-title"></h1>
-
         <div className="section">
           <h2 className="section-title">Get In Touch</h2>
           <div className="content">
-            <p>Interested in collaboration or research discussions? Feel free to reach out.</p>
-            <p className="quote">"The meeting of two personalities is like the contact of two chemical substances: if there is any reaction, both are transformed." - Carl Jung</p>
+            <p>{contact.intro}</p>
           </div>
         </div>
 
-        <div className="section">
-          <h2 className="section-title">Connect</h2>
-          <div className="content">
-            <ul className="content-list">
-              <li><strong>Email:</strong> Ramadanshemsu341@gmail.com</li>
-              <li><strong>Phone:</strong> +9053 4614 6330</li>
-              <li><strong>Location:</strong> Çankaya, Ankara, Turkey</li>
-            </ul>
+        <div className="contact-grid">
+          {/* Left: details */}
+          <div className="contact-details-card">
+            <div className="contact-detail-row">
+              <span className="contact-icon">✉</span>
+              <div>
+                <div className="contact-detail-label">Email</div>
+                <a href={`mailto:${contact.email}`} className="link">{contact.email}</a>
+              </div>
+            </div>
+            <div className="contact-detail-row">
+              <span className="contact-icon">☎</span>
+              <div>
+                <div className="contact-detail-label">Phone</div>
+                <span>{contact.phone}</span>
+              </div>
+            </div>
+            <div className="contact-detail-row">
+              <span className="contact-icon">◎</span>
+              <div>
+                <div className="contact-detail-label">Location</div>
+                <span>{contact.location}</span>
+              </div>
+            </div>
+          </div>
 
-            <div className="contact-links">
-              <a href="https://linkedin.com/in/ramadan-shemsu-hussen-0b995a191" className="contact-link" target="_blank" rel="noopener noreferrer">
+          {/* Right: links + CV */}
+          <div className="contact-links-card">
+            {contact.linkedin && (
+              <a href={contact.linkedin} className="contact-link-card" target="_blank" rel="noopener noreferrer">
+                <span className="contact-link-icon">in</span>
                 <span>LinkedIn</span>
               </a>
-              <a href="https://github.com/Ramykaz" className="contact-link" target="_blank" rel="noopener noreferrer">
+            )}
+            {contact.github && (
+              <a href={contact.github} className="contact-link-card" target="_blank" rel="noopener noreferrer">
+                <span className="contact-link-icon">⌥</span>
                 <span>GitHub</span>
               </a>
-            </div>
+            )}
+            {contact.cvUrl && (
+              <a href={contact.cvUrl} className="contact-link-card cv-link" target="_blank" rel="noopener noreferrer" download>
+                <span className="contact-link-icon">↓</span>
+                <span>Download CV</span>
+              </a>
+            )}
           </div>
         </div>
       </div>
-
       <div className="date">{currentDate}</div>
     </div>
   )

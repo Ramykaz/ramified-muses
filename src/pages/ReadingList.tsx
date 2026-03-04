@@ -1,63 +1,42 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useContent } from '../hooks/useContent'
+
+const STATUS_COLORS: Record<string, string> = {
+  'Reading': '#3498db',
+  'Finished': '#27ae60',
+  'Reference': '#9b59b6',
+  'Want to Read': '#e67e22'
+}
 
 const ReadingList: React.FC = () => {
+  const { content } = useContent()
+  const books = content?.books ?? []
   const [openBook, setOpenBook] = useState<number | null>(null)
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-
-  const books = [
-    {
-      id: 1,
-      title: "Gödel, Escher, Bach",
-      author: "Douglas Hofstadter",
-      status: "Reading",
-      notes: "Exploring connections between formal systems, art, and consciousness. The chapter on self-reference has fascinating implications for AI."
-    },
-    {
-      id: 2,
-      title: "The Order of Time",
-      author: "Carlo Rovelli",
-      status: "Finished",
-      notes: "Beautiful meditation on the nature of time from a theoretical physicist's perspective. Changed how I think about temporal structures."
-    },
-    {
-      id: 3,
-      title: "Film Art: An Introduction",
-      author: "Bordwell & Thompson",
-      status: "Reference",
-      notes: "Essential for understanding film form and style. The analysis of editing patterns has been particularly useful."
-    }
-  ]
-
-  const toggleBook = (id: number) => {
-    setOpenBook(openBook === id ? null : id)
-  }
+  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <div className="notebook-page page-reading">
       <div className="content-wrapper">
-        <h1 className="page-title"></h1>
-
         <div className="section">
           <h2 className="section-title">Current Reading</h2>
-          <div className="content">
-            <ul className="content-list">
-              {books.map(book => (
-                <li key={book.id} onClick={() => toggleBook(book.id)}>
-                  <strong>{book.title}</strong> by {book.author} ({book.status})
-                  <div className={`collapsible-content ${openBook === book.id ? 'open' : ''}`}>
-                    <p>{book.notes}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {books.length === 0 && (
+            <p style={{ opacity: 0.6 }}>No books yet — add some from the <Link to="/admin" className="link">admin panel</Link>.</p>
+          )}
+          <ul className="content-list">
+            {books.map(book => (
+              <li key={book.id} onClick={() => setOpenBook(openBook === book.id ? null : book.id)}>
+                <strong>{book.title}</strong> by {book.author}{' '}
+                <span style={{ color: STATUS_COLORS[book.status] || '#7f8c8d', fontSize: '0.85rem' }}>({book.status})</span>
+                <div className={`collapsible-content ${openBook === book.id ? 'open' : ''}`}>
+                  {book.coverImage && <img src={book.coverImage} alt={book.title} className="entry-image-inline" />}
+                  <p>{book.notes}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
-
       <div className="date">{currentDate}</div>
     </div>
   )
