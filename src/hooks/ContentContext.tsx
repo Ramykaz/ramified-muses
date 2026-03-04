@@ -107,7 +107,7 @@ interface Ctx {
   updateContact: (c: Partial<SiteContent['contact']>) => void
   addItem: <T extends { id: number }>(key: keyof SiteContent, item: Omit<T, 'id'>) => T
   updateItem: <T extends { id: number }>(key: keyof SiteContent, id: number, updates: Partial<T>) => void
-  deleteItem: <T extends { id: number }>(key: keyof SiteContent, id: number) => void
+  deleteItem: (key: keyof SiteContent, id: number) => void
   resetToDefaults: () => void
 }
 
