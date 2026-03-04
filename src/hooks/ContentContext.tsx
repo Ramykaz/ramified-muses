@@ -137,8 +137,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const list = (content[key] as unknown) as T[]
     save({ ...content, [key]: list.map(i => i.id === id ? { ...i, ...updates } : i) })
   }
-  function deleteItem<T extends { id: number }>(key: keyof SiteContent, id: number) {
-    const list = (content[key] as unknown) as T[]
+  function deleteItem(key: keyof SiteContent, id: number) {
+    const list = content[key] as { id: number }[]
     save({ ...content, [key]: list.filter(i => i.id !== id) })
   }
   const resetToDefaults = () => { localStorage.removeItem(STORAGE_KEY); setContent(DEFAULT_CONTENT) }
