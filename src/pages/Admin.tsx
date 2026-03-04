@@ -140,7 +140,7 @@ const Admin: React.FC = () => {
             <BlogEditor posts={content.blogPosts}
               onAdd={p => { addItem<BlogPost>('blogPosts', p); toast('Post published!') }}
               onUpdate={(id, u) => { updateItem<BlogPost>('blogPosts', id, u); toast('Saved!') }}
-              onDelete={id => { deleteItem<BlogPost>('blogPosts', id); toast('Deleted.') }}
+              onDelete={id => { deleteItem('blogPosts', id); toast('Deleted.') }}
             />
           </div>
         )}
@@ -150,7 +150,7 @@ const Admin: React.FC = () => {
             <FilmEditor reviews={content.filmReviews}
               onAdd={r => { addItem<FilmReview>('filmReviews', r); toast('Review added!') }}
               onUpdate={(id, u) => { updateItem<FilmReview>('filmReviews', id, u); toast('Saved!') }}
-              onDelete={id => { deleteItem<FilmReview>('filmReviews', id); toast('Deleted.') }}
+              onDelete={id => { deleteItem('filmReviews', id); toast('Deleted.') }}
             />
           </div>
         )}
@@ -160,7 +160,7 @@ const Admin: React.FC = () => {
             <ResearchEditor areas={content.researchAreas}
               onAdd={a => { addItem<ResearchArea>('researchAreas', a); toast('Added!') }}
               onUpdate={(id, u) => { updateItem<ResearchArea>('researchAreas', id, u); toast('Saved!') }}
-              onDelete={id => { deleteItem<ResearchArea>('researchAreas', id); toast('Deleted.') }}
+              onDelete={id => { deleteItem('researchAreas', id); toast('Deleted.') }}
             />
           </div>
         )}
@@ -170,7 +170,7 @@ const Admin: React.FC = () => {
             <BookEditor books={content.books}
               onAdd={b => { addItem<Book>('books', b); toast('Book added!') }}
               onUpdate={(id, u) => { updateItem<Book>('books', id, u); toast('Saved!') }}
-              onDelete={id => { deleteItem<Book>('books', id); toast('Deleted.') }}
+              onDelete={id => { deleteItem('books', id); toast('Deleted.') }}
             />
           </div>
         )}
@@ -180,7 +180,7 @@ const Admin: React.FC = () => {
             <ExperienceEditor experiences={content.experiences}
               onAdd={e => { addItem<Experience>('experiences', e); toast('Added!') }}
               onUpdate={(id, u) => { updateItem<Experience>('experiences', id, u); toast('Saved!') }}
-              onDelete={id => { deleteItem<Experience>('experiences', id); toast('Deleted.') }}
+              onDelete={id => { deleteItem('experiences', id); toast('Deleted.') }}
             />
           </div>
         )}
