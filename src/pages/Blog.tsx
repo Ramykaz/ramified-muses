@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useContent } from '../hooks/useContent'
+import { useContent } from '../hooks/ContentContext'
 
 const Blog: React.FC = () => {
   const { content } = useContent()

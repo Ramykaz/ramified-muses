@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useContent } from '../hooks/useContent'
+import { useContent } from '../hooks/ContentContext'
 
 const STATUS_COLORS: Record<string, string> = {
   'Reading': '#3498db',

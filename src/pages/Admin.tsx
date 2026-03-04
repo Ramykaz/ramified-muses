@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { useContent } from '../hooks/useContent'
-import type { BlogPost, FilmReview, ResearchArea, Book, Experience } from '../hooks/useContent'
+import { useContent } from '../hooks/ContentContext'
+import type { BlogPost, FilmReview, ResearchArea, Book, Experience } from '../hooks/ContentContext'
 import BlockEditor from '../components/BlockEditor'
 import type { Block } from '../components/BlockEditor'
 
@@ -48,7 +48,6 @@ const ProfileImageField = ({ value, onChange }: { value: string; onChange: (v: s
   )
 }
 
-// ── Main Admin ─────────────────────────────────────────────────
 const Admin: React.FC = () => {
   const [auth, setAuth] = useState(false)
   const [pw, setPw] = useState('')
@@ -57,8 +56,8 @@ const Admin: React.FC = () => {
   const [flashMsg, setFlashMsg] = useState('')
 
   const { content, updateProfile, updateContact, addItem, updateItem, deleteItem, resetToDefaults } = useContent()
-  const [pf, setPf] = useState(content?.profile)
-  const [cf, setCf] = useState(content?.contact)
+  const [pf, setPf] = useState(content.profile)
+  const [cf, setCf] = useState(content.contact)
 
   const toast = (msg: string) => { setFlashMsg(msg); setTimeout(() => setFlashMsg(''), 2500) }
   const handleLogin = () => { if (pw === ADMIN_PASSWORD) { setAuth(true); setPwErr(false) } else setPwErr(true) }
@@ -97,38 +96,38 @@ const Admin: React.FC = () => {
           ))}
         </div>
 
-        {tab === 'profile' && pf && (
+        {tab === 'profile' && (
           <div className="admin-section">
-            <ProfileImageField value={pf.image} onChange={v => setPf(f => f ? { ...f, image: v } : f)} />
-            <F label="Name"><Inp value={pf.name} onChange={e => setPf(f => f ? { ...f, name: e.target.value } : f)} /></F>
+            <ProfileImageField value={pf.image} onChange={v => setPf(f => ({ ...f, image: v }))} />
+            <F label="Name"><Inp value={pf.name} onChange={e => setPf(f => ({ ...f, name: e.target.value }))} /></F>
             <F label="Bio Paragraphs">
               {pf.bio.map((p, i) => (
                 <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Txt rows={2} value={p} onChange={e => { const b = [...pf.bio]; b[i] = e.target.value; setPf(f => f ? { ...f, bio: b } : f) }} />
-                  <button className="admin-btn danger small" onClick={() => setPf(f => f ? { ...f, bio: f.bio.filter((_, j) => j !== i) } : f)}>×</button>
+                  <Txt rows={2} value={p} onChange={e => { const b = [...pf.bio]; b[i] = e.target.value; setPf(f => ({ ...f, bio: b })) }} />
+                  <button className="admin-btn danger small" onClick={() => setPf(f => ({ ...f, bio: f.bio.filter((_, j) => j !== i) }))}>×</button>
                 </div>
               ))}
-              <button className="admin-btn secondary small" onClick={() => setPf(f => f ? { ...f, bio: [...f.bio, ''] } : f)}>+ Add Paragraph</button>
+              <button className="admin-btn secondary small" onClick={() => setPf(f => ({ ...f, bio: [...f.bio, ''] }))}>+ Add Paragraph</button>
             </F>
-            <F label="Quote"><Inp value={pf.quote} onChange={e => setPf(f => f ? { ...f, quote: e.target.value } : f)} /></F>
-            <F label="Quote Author"><Inp value={pf.quoteAuthor} onChange={e => setPf(f => f ? { ...f, quoteAuthor: e.target.value } : f)} /></F>
-            <F label="Current Work"><Txt rows={2} value={pf.currentWork} onChange={e => setPf(f => f ? { ...f, currentWork: e.target.value } : f)} /></F>
+            <F label="Quote"><Inp value={pf.quote} onChange={e => setPf(f => ({ ...f, quote: e.target.value }))} /></F>
+            <F label="Quote Author"><Inp value={pf.quoteAuthor} onChange={e => setPf(f => ({ ...f, quoteAuthor: e.target.value }))} /></F>
+            <F label="Current Work"><Txt rows={2} value={pf.currentWork} onChange={e => setPf(f => ({ ...f, currentWork: e.target.value }))} /></F>
             <div className="admin-actions">
               <button className="admin-btn primary" onClick={() => { updateProfile(pf); toast('Profile saved!') }}>Save Profile</button>
             </div>
           </div>
         )}
 
-        {tab === 'contact' && cf && (
+        {tab === 'contact' && (
           <div className="admin-section">
-            <F label="Intro Text"><Txt rows={3} value={cf.intro} onChange={e => setCf(c => c ? { ...c, intro: e.target.value } : c)} /></F>
-            <F label="Email"><Inp value={cf.email} onChange={e => setCf(c => c ? { ...c, email: e.target.value } : c)} /></F>
-            <F label="Phone"><Inp value={cf.phone} onChange={e => setCf(c => c ? { ...c, phone: e.target.value } : c)} /></F>
-            <F label="Location"><Inp value={cf.location} onChange={e => setCf(c => c ? { ...c, location: e.target.value } : c)} /></F>
-            <F label="LinkedIn URL"><Inp value={cf.linkedin} onChange={e => setCf(c => c ? { ...c, linkedin: e.target.value } : c)} /></F>
-            <F label="GitHub URL"><Inp value={cf.github} onChange={e => setCf(c => c ? { ...c, github: e.target.value } : c)} /></F>
+            <F label="Intro Text"><Txt rows={3} value={cf.intro} onChange={e => setCf(c => ({ ...c, intro: e.target.value }))} /></F>
+            <F label="Email"><Inp value={cf.email} onChange={e => setCf(c => ({ ...c, email: e.target.value }))} /></F>
+            <F label="Phone"><Inp value={cf.phone} onChange={e => setCf(c => ({ ...c, phone: e.target.value }))} /></F>
+            <F label="Location"><Inp value={cf.location} onChange={e => setCf(c => ({ ...c, location: e.target.value }))} /></F>
+            <F label="LinkedIn URL"><Inp value={cf.linkedin} onChange={e => setCf(c => ({ ...c, linkedin: e.target.value }))} /></F>
+            <F label="GitHub URL"><Inp value={cf.github} onChange={e => setCf(c => ({ ...c, github: e.target.value }))} /></F>
             <F label="CV Link" hint="Upload to Google Drive, set sharing to 'Anyone with link', paste URL here.">
-              <Inp value={cf.cvUrl || ''} placeholder="https://drive.google.com/..." onChange={e => setCf(c => c ? { ...c, cvUrl: e.target.value } : c)} />
+              <Inp value={cf.cvUrl || ''} placeholder="https://drive.google.com/..." onChange={e => setCf(c => ({ ...c, cvUrl: e.target.value }))} />
             </F>
             <div className="admin-actions">
               <button className="admin-btn primary" onClick={() => { updateContact(cf); toast('Contact saved!') }}>Save Contact</button>
@@ -138,7 +137,7 @@ const Admin: React.FC = () => {
 
         {tab === 'blog' && (
           <div className="admin-section">
-            <BlogEditor posts={content?.blogPosts ?? []}
+            <BlogEditor posts={content.blogPosts}
               onAdd={p => { addItem<BlogPost>('blogPosts', p); toast('Post published!') }}
               onUpdate={(id, u) => { updateItem<BlogPost>('blogPosts', id, u); toast('Saved!') }}
               onDelete={id => { deleteItem<BlogPost>('blogPosts', id); toast('Deleted.') }}
@@ -148,7 +147,7 @@ const Admin: React.FC = () => {
 
         {tab === 'films' && (
           <div className="admin-section">
-            <FilmEditor reviews={content?.filmReviews ?? []}
+            <FilmEditor reviews={content.filmReviews}
               onAdd={r => { addItem<FilmReview>('filmReviews', r); toast('Review added!') }}
               onUpdate={(id, u) => { updateItem<FilmReview>('filmReviews', id, u); toast('Saved!') }}
               onDelete={id => { deleteItem<FilmReview>('filmReviews', id); toast('Deleted.') }}
@@ -158,7 +157,7 @@ const Admin: React.FC = () => {
 
         {tab === 'research' && (
           <div className="admin-section">
-            <ResearchEditor areas={content?.researchAreas ?? []}
+            <ResearchEditor areas={content.researchAreas}
               onAdd={a => { addItem<ResearchArea>('researchAreas', a); toast('Added!') }}
               onUpdate={(id, u) => { updateItem<ResearchArea>('researchAreas', id, u); toast('Saved!') }}
               onDelete={id => { deleteItem<ResearchArea>('researchAreas', id); toast('Deleted.') }}
@@ -168,7 +167,7 @@ const Admin: React.FC = () => {
 
         {tab === 'books' && (
           <div className="admin-section">
-            <BookEditor books={content?.books ?? []}
+            <BookEditor books={content.books}
               onAdd={b => { addItem<Book>('books', b); toast('Book added!') }}
               onUpdate={(id, u) => { updateItem<Book>('books', id, u); toast('Saved!') }}
               onDelete={id => { deleteItem<Book>('books', id); toast('Deleted.') }}
@@ -178,7 +177,7 @@ const Admin: React.FC = () => {
 
         {tab === 'experience' && (
           <div className="admin-section">
-            <ExperienceEditor experiences={content?.experiences ?? []}
+            <ExperienceEditor experiences={content.experiences}
               onAdd={e => { addItem<Experience>('experiences', e); toast('Added!') }}
               onUpdate={(id, u) => { updateItem<Experience>('experiences', id, u); toast('Saved!') }}
               onDelete={id => { deleteItem<Experience>('experiences', id); toast('Deleted.') }}
@@ -246,8 +245,6 @@ function ListShell<T extends { id: number }>({
     </>
   )
 }
-
-// ── Section editors ────────────────────────────────────────────
 
 const BlogEditor: React.FC<{ posts: BlogPost[]; onAdd: (p: Omit<BlogPost,'id'>) => void; onUpdate: (id:number, u:Partial<BlogPost>) => void; onDelete: (id:number) => void }> = ({ posts, onAdd, onUpdate, onDelete }) => (
   <ListShell

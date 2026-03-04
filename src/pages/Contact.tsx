@@ -1,5 +1,5 @@
 import React from 'react'
-import { useContent } from '../hooks/useContent'
+import { useContent } from '../hooks/ContentContext'
 
 const Contact: React.FC = () => {
   const { content } = useContent()

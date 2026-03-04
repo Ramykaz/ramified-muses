@@ -1,20 +1,17 @@
-import { useState } from 'react'
+import React, { createContext, useContext, useState } from 'react'
 import type { Block } from '../components/BlockEditor'
 
 export interface BlogPost {
   id: number; title: string; date: string; excerpt: string
-  fullContent: string; blocks?: Block[]
-  tags?: string[]; image?: string
+  fullContent: string; blocks?: Block[]; tags?: string[]; image?: string
 }
 export interface FilmReview {
   id: number; title: string; director: string; year?: string
-  excerpt: string; fullReview: string; blocks?: Block[]
-  rating?: string; image?: string
+  excerpt: string; fullReview: string; blocks?: Block[]; rating?: string; image?: string
 }
 export interface ResearchArea {
   id: number; title: string; excerpt: string
-  details: string; blocks?: Block[]
-  tags?: string[]; image?: string
+  details: string; blocks?: Block[]; tags?: string[]; image?: string
 }
 export interface Book {
   id: number; title: string; author: string
@@ -53,12 +50,12 @@ export const DEFAULT_CONTENT: SiteContent = {
   },
   blogPosts: [
     { id: 1, title: "Computer Vision in Renewable Energy", date: "February 2025", excerpt: "Exploring how deep learning models can identify defects in solar panels...", fullContent: "", blocks: [{ type: 'paragraph', text: "Working with drone imagery presents unique challenges for computer vision systems. The fusion of IR, EL, and RGB data requires sophisticated preprocessing and model architectures." }, { type: 'paragraph', text: "Recent advances in attention mechanisms have shown promise for multi-modal defect detection in renewable energy applications." }], tags: ["AI", "Computer Vision", "Renewable Energy"] },
-    { id: 2, title: "Multilingual NLP Challenges", date: "January 2025", excerpt: "Reflections on processing Arabic social media posts...", fullContent: "", blocks: [{ type: 'paragraph', text: "Arabic NLP faces challenges from dialect variations to complex morphology. The gap between Modern Standard Arabic and regional dialects requires careful dataset construction and model training strategies." }, { type: 'paragraph', text: "Transfer learning from larger languages shows potential but requires cultural and linguistic adaptation." }], tags: ["NLP", "Arabic", "Machine Learning"] },
-    { id: 3, title: "Cross-Cultural AI Development", date: "December 2024", excerpt: "Experiences working on AI projects across Turkey and Qatar...", fullContent: "", blocks: [{ type: 'paragraph', text: "Cultural context significantly influences technology development and deployment. Working across different regions reveals how user expectations, regulatory environments, and technical infrastructure shape AI system design." }, { type: 'paragraph', text: "The most successful projects often incorporate local knowledge from the earliest stages." }], tags: ["AI", "Culture", "Research"] }
+    { id: 2, title: "Multilingual NLP Challenges", date: "January 2025", excerpt: "Reflections on processing Arabic social media posts...", fullContent: "", blocks: [{ type: 'paragraph', text: "Arabic NLP faces challenges from dialect variations to complex morphology. The gap between Modern Standard Arabic and regional dialects requires careful dataset construction." }, { type: 'paragraph', text: "Transfer learning from larger languages shows potential but requires cultural and linguistic adaptation." }], tags: ["NLP", "Arabic", "Machine Learning"] },
+    { id: 3, title: "Cross-Cultural AI Development", date: "December 2024", excerpt: "Experiences working on AI projects across Turkey and Qatar...", fullContent: "", blocks: [{ type: 'paragraph', text: "Cultural context significantly influences technology development. Working across different regions reveals how user expectations and infrastructure shape AI system design." }, { type: 'paragraph', text: "The most successful projects often incorporate local knowledge from the earliest stages." }], tags: ["AI", "Culture", "Research"] }
   ],
   filmReviews: [
     { id: 1, title: "Stalker", director: "Andrei Tarkovsky", year: "1979", excerpt: "A profound meditation on desire, faith, and human limitation...", fullReview: "", blocks: [{ type: 'paragraph', text: "The Zone operates as both physical and metaphysical space. The gradual deterioration of film stock mirrors the characters' psychological unraveling." }, { type: 'paragraph', text: "Tarkovsky masterfully uses long takes to create a contemplative rhythm that draws viewers into the philosophical questions at the film's core." }], rating: "★★★★★" },
-    { id: 2, title: "Arrival", director: "Denis Villeneuve", year: "2016", excerpt: "Exceptional exploration of language, time, and communication...", fullReview: "", blocks: [{ type: 'paragraph', text: "The non-linear narrative structure perfectly mirrors the film's thematic concerns about time and perception. Amy Adams delivers a nuanced performance that carries the emotional weight." }, { type: 'paragraph', text: "The visual design of the heptapod language is particularly innovative." }], rating: "★★★★★" },
+    { id: 2, title: "Arrival", director: "Denis Villeneuve", year: "2016", excerpt: "Exceptional exploration of language, time, and communication...", fullReview: "", blocks: [{ type: 'paragraph', text: "The non-linear narrative structure perfectly mirrors the film's thematic concerns about time and perception." }, { type: 'paragraph', text: "The visual design of the heptapod language is particularly innovative." }], rating: "★★★★★" },
     { id: 3, title: "Parasite", director: "Bong Joon-ho", year: "2019", excerpt: "Masterful class commentary disguised as a genre-blending thriller...", fullReview: "", blocks: [{ type: 'paragraph', text: "The architectural space becomes a character in itself, representing social stratification through vertical composition." }, { type: 'paragraph', text: "The tonal shifts from comedy to thriller to horror are handled with incredible precision." }], rating: "★★★★★" }
   ],
   researchAreas: [
@@ -67,7 +64,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     { id: 3, title: "Real-time AI Systems", excerpt: "Optimizing object detection for security applications...", details: "", blocks: [{ type: 'paragraph', text: "Researching efficient inference pipelines for real-time computer vision applications using YOLO architectures." }], tags: ["YOLO", "Real-time", "Optimization"] }
   ],
   books: [
-    { id: 1, title: "Gödel, Escher, Bach", author: "Douglas Hofstadter", status: "Reading", notes: "Exploring connections between formal systems, art, and consciousness. The chapter on self-reference has fascinating implications for AI." },
+    { id: 1, title: "Gödel, Escher, Bach", author: "Douglas Hofstadter", status: "Reading", notes: "Exploring connections between formal systems, art, and consciousness." },
     { id: 2, title: "The Order of Time", author: "Carlo Rovelli", status: "Finished", notes: "Beautiful meditation on the nature of time from a theoretical physicist's perspective." },
     { id: 3, title: "Film Art: An Introduction", author: "Bordwell & Thompson", status: "Reference", notes: "Essential for understanding film form and style." }
   ],
@@ -95,14 +92,29 @@ function safeMerge(stored: Partial<SiteContent>): SiteContent {
   }
 }
 
-export function useContent() {
-  const [content, setContent] = useState<SiteContent>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) return safeMerge(JSON.parse(raw))
-    } catch { /* ignore */ }
-    return DEFAULT_CONTENT
-  })
+function load(): SiteContent {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return safeMerge(JSON.parse(raw))
+  } catch { /* ignore */ }
+  return DEFAULT_CONTENT
+}
+
+// ── Context ────────────────────────────────────────────────────
+interface Ctx {
+  content: SiteContent
+  updateProfile: (p: Partial<SiteContent['profile']>) => void
+  updateContact: (c: Partial<SiteContent['contact']>) => void
+  addItem: <T extends { id: number }>(key: keyof SiteContent, item: Omit<T, 'id'>) => T
+  updateItem: <T extends { id: number }>(key: keyof SiteContent, id: number, updates: Partial<T>) => void
+  deleteItem: <T extends { id: number }>(key: keyof SiteContent, id: number) => void
+  resetToDefaults: () => void
+}
+
+const ContentContext = createContext<Ctx | null>(null)
+
+export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [content, setContent] = useState<SiteContent>(load)
 
   const save = (next: SiteContent) => {
     setContent(next)
@@ -115,28 +127,31 @@ export function useContent() {
   const updateContact = (c: Partial<SiteContent['contact']>) =>
     save({ ...content, contact: { ...content.contact, ...c } })
 
-  // Cast through unknown to satisfy strict TS overlap check
   function addItem<T extends { id: number }>(key: keyof SiteContent, item: Omit<T, 'id'>): T {
     const newItem = { ...item, id: Date.now() } as unknown as T
     const list = (content[key] as unknown) as T[]
     save({ ...content, [key]: [newItem, ...list] })
     return newItem
   }
-
   function updateItem<T extends { id: number }>(key: keyof SiteContent, id: number, updates: Partial<T>) {
     const list = (content[key] as unknown) as T[]
     save({ ...content, [key]: list.map(i => i.id === id ? { ...i, ...updates } : i) })
   }
-
   function deleteItem<T extends { id: number }>(key: keyof SiteContent, id: number) {
     const list = (content[key] as unknown) as T[]
     save({ ...content, [key]: list.filter(i => i.id !== id) })
   }
+  const resetToDefaults = () => { localStorage.removeItem(STORAGE_KEY); setContent(DEFAULT_CONTENT) }
 
-  const resetToDefaults = () => {
-    localStorage.removeItem(STORAGE_KEY)
-    setContent(DEFAULT_CONTENT)
-  }
+  return (
+    <ContentContext.Provider value={{ content, updateProfile, updateContact, addItem, updateItem, deleteItem, resetToDefaults }}>
+      {children}
+    </ContentContext.Provider>
+  )
+}
 
-  return { content, updateProfile, updateContact, addItem, updateItem, deleteItem, resetToDefaults }
+export function useContent(): Ctx {
+  const ctx = useContext(ContentContext)
+  if (!ctx) throw new Error('useContent must be used inside <ContentProvider>')
+  return ctx
 }

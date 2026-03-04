@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useContent } from '../hooks/useContent'
+import { useContent } from '../hooks/ContentContext'
 import { BlockRenderer } from '../components/BlockEditor'
 
 // ── Shared nav ─────────────────────────────────────────────────
