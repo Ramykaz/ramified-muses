@@ -5,6 +5,8 @@ import BlockEditor from '../components/BlockEditor'
 import type { Block } from '../components/BlockEditor'
 
 const ADMIN_PASSWORD = 'ramified2025'
+const ADMIN_SESSION_KEY = 'rm_admin_session_v1'
+const ADMIN_SESSION_TTL_MS = 1000 * 60 * 60 * 24
 type Tab = 'profile' | 'contact' | 'blog' | 'films' | 'research' | 'books' | 'experience'
 const TABS: { key: Tab; label: string }[] = [
   { key: 'profile', label: 'Profile' }, { key: 'contact', label: 'Contact' },
@@ -49,18 +51,42 @@ const ProfileImageField = ({ value, onChange }: { value: string; onChange: (v: s
 }
 
 const Admin: React.FC = () => {
-  const [auth, setAuth] = useState(false)
+  const [auth, setAuth] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem(ADMIN_SESSION_KEY)
+      if (!raw) return false
+      const startedAt = Number(raw)
+      return Number.isFinite(startedAt) && Date.now() - startedAt < ADMIN_SESSION_TTL_MS
+    } catch {
+      return false
+    }
+  })
   const [pw, setPw] = useState('')
   const [pwErr, setPwErr] = useState(false)
   const [tab, setTab] = useState<Tab>('profile')
   const [flashMsg, setFlashMsg] = useState('')
 
-  const { content, updateProfile, updateContact, addItem, updateItem, deleteItem, resetToDefaults } = useContent()
+  const { content, isLoading, storageMode, updateProfile, updateContact, addItem, updateItem, deleteItem, resetToDefaults } = useContent()
   const [pf, setPf] = useState(content.profile)
   const [cf, setCf] = useState(content.contact)
 
   const toast = (msg: string) => { setFlashMsg(msg); setTimeout(() => setFlashMsg(''), 2500) }
-  const handleLogin = () => { if (pw === ADMIN_PASSWORD) { setAuth(true); setPwErr(false) } else setPwErr(true) }
+  const handleLogin = () => {
+    if (pw === ADMIN_PASSWORD) {
+      setAuth(true)
+      setPwErr(false)
+      localStorage.setItem(ADMIN_SESSION_KEY, String(Date.now()))
+      return
+    }
+    setPwErr(true)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem(ADMIN_SESSION_KEY)
+    setAuth(false)
+    setPw('')
+    setPwErr(false)
+  }
 
   if (!auth) return (
     <div className="notebook-page page-admin">
@@ -68,6 +94,7 @@ const Admin: React.FC = () => {
         <div className="admin-login">
           <h1 className="section-title">Admin</h1>
           <p style={{ opacity: 0.6 }}>Enter password to manage content.</p>
+          <p style={{ opacity: 0.5, fontSize: '0.8rem' }}>{isLoading ? 'Loading content source…' : `Storage mode: ${storageMode === 'db' ? 'Database' : 'Local fallback'}`}</p>
           <Inp type="password" placeholder="Password" value={pw}
             onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()}
             className={`admin-input${pwErr ? ' input-error' : ''}`} autoFocus />
@@ -84,10 +111,14 @@ const Admin: React.FC = () => {
         <div className="admin-header">
           <h1 className="section-title">Admin Panel</h1>
           {flashMsg && <span className="save-badge">{flashMsg}</span>}
+          <span className={`save-badge ${storageMode === 'db' ? 'status-db' : 'status-local'}`}>
+            {storageMode === 'db' ? 'Database connected' : 'Local fallback'}
+          </span>
           <button className="admin-btn danger small" style={{ marginLeft: 'auto' }}
             onClick={() => { if (confirm('Reset ALL content to defaults?')) { resetToDefaults(); toast('Reset!') } }}>
             Reset Defaults
           </button>
+          <button className="admin-btn secondary small" onClick={handleLogout}>Lock</button>
         </div>
 
         <div className="admin-tabs">
@@ -249,12 +280,44 @@ function ListShell<T extends { id: number }>({
 const BlogEditor: React.FC<{ posts: BlogPost[]; onAdd: (p: Omit<BlogPost,'id'>) => void; onUpdate: (id:number, u:Partial<BlogPost>) => void; onDelete: (id:number) => void }> = ({ posts, onAdd, onUpdate, onDelete }) => (
   <ListShell
     items={posts} label="New Post" newLabel="New Blog Post"
-    blankItem={() => ({ title: '', date: new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}), excerpt: '', fullContent: '', blocks: [] as Block[], tags: [], image: '' })}
+    blankItem={() => ({
+      title: '',
+      date: new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}),
+      excerpt: '',
+      fullContent: '',
+      blocks: [] as Block[],
+      tags: [],
+      image: '',
+      stylePreset: 'editorial' as const,
+      bodyFont: 'serif' as const,
+      titleFont: 'serif' as const,
+    })}
     renderSummary={p => (<><strong>{p.title || '(untitled)'}</strong><span className="admin-post-date">{p.date}</span></>)}
     renderForm={(d, ch) => (<>
       <F label="Title"><Inp value={d.title||''} placeholder="Post title..." onChange={e => ch({title:e.target.value})} /></F>
       <F label="Date"><Inp value={d.date||''} placeholder="March 2025" onChange={e => ch({date:e.target.value})} /></F>
       <F label="Excerpt"><Txt rows={2} value={d.excerpt||''} placeholder="Short teaser..." onChange={e => ch({excerpt:e.target.value})} /></F>
+      <F label="Cover Image URL"><Inp value={d.image||''} placeholder="https://..." onChange={e => ch({image:e.target.value})} /></F>
+      <F label="Visual Style">
+        <select className="admin-input" value={d.stylePreset || 'editorial'} title="Blog visual style" onChange={e => ch({ stylePreset: e.target.value as BlogPost['stylePreset'] })}>
+          <option value="editorial">Editorial</option>
+          <option value="cinematic">Cinematic</option>
+          <option value="minimal">Minimal</option>
+        </select>
+      </F>
+      <F label="Title Font">
+        <select className="admin-input" value={d.titleFont || 'serif'} title="Blog title font" onChange={e => ch({ titleFont: e.target.value as BlogPost['titleFont'] })}>
+          <option value="serif">Serif</option>
+          <option value="sans">Sans</option>
+        </select>
+      </F>
+      <F label="Body Font">
+        <select className="admin-input" value={d.bodyFont || 'serif'} title="Blog body font" onChange={e => ch({ bodyFont: e.target.value as BlogPost['bodyFont'] })}>
+          <option value="serif">Serif</option>
+          <option value="sans">Sans</option>
+          <option value="mono">Mono</option>
+        </select>
+      </F>
       <F label="Tags (comma-separated)"><Inp value={(d.tags||[]).join(', ')} placeholder="AI, Research" onChange={e => ch({tags:e.target.value.split(',').map((t:string)=>t.trim()).filter(Boolean)})} /></F>
       <F label="Content" hint="Add paragraphs, headings, quotes, and images in any order. Use 🖼 to insert images between paragraphs.">
         <BlockEditor blocks={d.blocks || []} onChange={blocks => ch({blocks})} />

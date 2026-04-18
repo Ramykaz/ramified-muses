@@ -13,7 +13,7 @@ const FilmReviews: React.FC = () => {
         <div className="section">
           <h2 className="section-title">Recent Analysis</h2>
           {reviews.length === 0 && (
-            <p style={{ opacity: 0.6 }}>No reviews yet — add some from the <Link to="/admin" className="link">admin panel</Link>.</p>
+            <p className="empty-state">No film reviews published yet. Check back for upcoming essays.</p>
           )}
           {reviews.map(review => (
             <Link key={review.id} to={`/film-reviews/${review.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>

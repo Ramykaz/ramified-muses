@@ -25,12 +25,15 @@ const BlogPost: React.FC = () => {
   const prev = idx < all.length - 1 ? all[idx + 1] : null
   const next = idx > 0 ? all[idx - 1] : null
   const hasBlocks = post.blocks && post.blocks.length > 0
+  const stylePreset = post.stylePreset || 'editorial'
+  const bodyFont = post.bodyFont || 'serif'
+  const titleFont = post.titleFont || 'serif'
 
   return (
     <div className="notebook-page page-blog">
       <div className="content-wrapper">
         <button className="back-link" onClick={() => navigate('/blog')}>← Back to Blog</button>
-        <article className="blog-post-full">
+        <article className={`blog-post-full blog-post-style-${stylePreset} blog-post-bodyfont-${bodyFont} blog-post-titlefont-${titleFont}`}>
           {post.image && <img src={post.image} alt={post.title} className="post-hero-image" />}
           <header className="blog-post-header">
             <h1 className="blog-post-title">{post.title}</h1>
@@ -43,7 +46,7 @@ const BlogPost: React.FC = () => {
             ? <BlockRenderer blocks={post.blocks!} />
             : post.fullContent
               ? <div className="blog-post-body">{post.fullContent.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}</div>
-              : <p style={{ opacity: 0.4, fontStyle: 'italic' }}>No content yet.</p>
+              : <p className="empty-state-inline">This draft has not been published yet.</p>
           }
         </article>
         <nav className="post-navigation">

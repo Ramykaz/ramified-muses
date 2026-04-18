@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useContent } from '../hooks/ContentContext'
 
 const Projects: React.FC = () => {
@@ -17,7 +16,7 @@ const Projects: React.FC = () => {
         <div className="section">
           <h2 className="section-title">Professional Experience</h2>
           {workExp.length === 0 && (
-            <p style={{ opacity: 0.6 }}>No entries yet — add from <Link to="/admin" className="link">admin panel</Link>.</p>
+            <p className="empty-state">No project entries published yet.</p>
           )}
           <ul className="content-list">
             {workExp.map(exp => (

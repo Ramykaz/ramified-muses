@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useContent } from '../hooks/ContentContext'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -21,7 +20,7 @@ const ReadingList: React.FC = () => {
         <div className="section">
           <h2 className="section-title">Current Reading</h2>
           {books.length === 0 && (
-            <p style={{ opacity: 0.6 }}>No books yet — add some from the <Link to="/admin" className="link">admin panel</Link>.</p>
+            <p className="empty-state">No books listed yet. Reading notes will be published soon.</p>
           )}
           <ul className="content-list">
             {books.map(book => (

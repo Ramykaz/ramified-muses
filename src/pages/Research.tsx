@@ -12,7 +12,7 @@ const Research: React.FC = () => {
         <div className="section">
           <h2 className="section-title">Current Research Areas</h2>
           {content.researchAreas.length === 0 && (
-            <p style={{ opacity: 0.6 }}>No areas yet — add some from the <Link to="/admin" className="link">admin panel</Link>.</p>
+            <p className="empty-state">Research notes are being prepared and will appear here soon.</p>
           )}
           {content.researchAreas.map(area => (
             <Link key={area.id} to={`/research/${area.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
