@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/blob": "^2.5.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "lowdb": "^7.0.1",
@@ -25,6 +26,7 @@
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@vercel/node": "^5.8.22",
     "@vitejs/plugin-react": "^5.1.0",
     "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9.39.1",
