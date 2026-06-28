@@ -4,10 +4,11 @@ import { useContent } from '../hooks/ContentContext'
 const LOGOS: [string, string][] = [
   ['hacettepe', '/logos/hacettepe.svg'],
   ['undp',      '/logos/undp.svg'],
-  ['oasis',     '/logos/oasis.svg'],
+  ['oasis',     '/logos/oasis.png'],
   ['optima',    '/logos/optima.png'],
   ['orsam',     '/logos/orsam.png'],
-  ['buthur',    '/logos/buthur.svg'],
+  ['buthur',    '/logos/buthur.png'],
+  ['qstp',      '/logos/buthur.png'],
 ]
 
 function getLogo(company: string): string | null {
