@@ -474,6 +474,28 @@ a:hover { text-decoration: underline }
 
 .timeline-item { padding: 1.1rem 0 }
 
+.timeline-company-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.company-logo {
+  height: 28px;
+  width: auto;
+  max-width: 90px;
+  object-fit: contain;
+  border-radius: 2px;
+  flex-shrink: 0;
+  /* slight desaturation to stay consistent with the mono palette */
+  filter: grayscale(20%) contrast(0.95);
+}
+
+:root[data-theme='night'] .company-logo {
+  filter: grayscale(30%) brightness(0.85) contrast(0.9);
+}
+
 .timeline-header {
   display: flex;
   justify-content: space-between;
