@@ -3,71 +3,76 @@ import { useContent } from '../hooks/ContentContext'
 
 const Contact: React.FC = () => {
   const { content } = useContent()
-  const contact = content?.contact
-  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-
-  if (!contact) return null
+  const { contact } = content
 
   return (
-    <div className="notebook-page page-contact">
-      <div className="content-wrapper">
-        <div className="section">
-          <h2 className="section-title">Get In Touch</h2>
-          <div className="content">
-            <p>{contact.intro}</p>
+    <div className="page page-contact">
+      <div className="page-content">
+        <h2 className="section-label">contact</h2>
+
+        <div className="contact-list">
+          {contact.email && (
+            <div className="contact-row">
+              <span className="contact-key">email</span>
+              <a href={`mailto:${contact.email}`} className="contact-val">{contact.email}</a>
+            </div>
+          )}
+          {contact.github && (
+            <div className="contact-row">
+              <span className="contact-key">github</span>
+              <a href={contact.github} target="_blank" rel="noopener noreferrer" className="contact-val">
+                {contact.github.replace('https://', '')}
+              </a>
+            </div>
+          )}
+          {contact.linkedin && (
+            <div className="contact-row">
+              <span className="contact-key">linkedin</span>
+              <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" className="contact-val">
+                ramadan-shemsu-hussen ↗
+              </a>
+            </div>
+          )}
+          <div className="contact-row">
+            <span className="contact-key">scholar</span>
+            <a
+              href="https://scholar.google.com/citations?user=J_m9GIYAAAAJ&hl=en"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-val"
+            >
+              google scholar ↗
+            </a>
           </div>
+          <div className="contact-row">
+            <span className="contact-key">paper</span>
+            <a
+              href="https://ieeexplore.ieee.org/document/11537125"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-val"
+            >
+              IEEE Xplore — ICHORA 2026 ↗
+            </a>
+          </div>
+          {contact.location && (
+            <div className="contact-row">
+              <span className="contact-key">location</span>
+              <span className="contact-val">{contact.location}</span>
+            </div>
+          )}
+          {contact.phone && (
+            <div className="contact-row">
+              <span className="contact-key">phone</span>
+              <span className="contact-val">{contact.phone}</span>
+            </div>
+          )}
         </div>
 
-        <div className="contact-grid">
-          {/* Left: details */}
-          <div className="contact-details-card">
-            <div className="contact-detail-row">
-              <span className="contact-icon">✉</span>
-              <div>
-                <div className="contact-detail-label">Email</div>
-                <a href={`mailto:${contact.email}`} className="link">{contact.email}</a>
-              </div>
-            </div>
-            <div className="contact-detail-row">
-              <span className="contact-icon">☎</span>
-              <div>
-                <div className="contact-detail-label">Phone</div>
-                <span>{contact.phone}</span>
-              </div>
-            </div>
-            <div className="contact-detail-row">
-              <span className="contact-icon">◎</span>
-              <div>
-                <div className="contact-detail-label">Location</div>
-                <span>{contact.location}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: links + CV */}
-          <div className="contact-links-card">
-            {contact.linkedin && (
-              <a href={contact.linkedin} className="contact-link-card" target="_blank" rel="noopener noreferrer">
-                <span className="contact-link-icon">in</span>
-                <span>LinkedIn</span>
-              </a>
-            )}
-            {contact.github && (
-              <a href={contact.github} className="contact-link-card" target="_blank" rel="noopener noreferrer">
-                <span className="contact-link-icon">⌥</span>
-                <span>GitHub</span>
-              </a>
-            )}
-            {contact.cvUrl && (
-              <a href={contact.cvUrl} className="contact-link-card cv-link" target="_blank" rel="noopener noreferrer" download>
-                <span className="contact-link-icon">↓</span>
-                <span>Download CV</span>
-              </a>
-            )}
-          </div>
-        </div>
+        {contact.intro && (
+          <p className="contact-note">{contact.intro}</p>
+        )}
       </div>
-      <div className="date">{currentDate}</div>
     </div>
   )
 }

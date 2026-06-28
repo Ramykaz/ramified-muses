@@ -1,61 +1,46 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useContent } from '../hooks/ContentContext'
+import TerminalGame from '../components/TerminalGame'
 
 const Blog: React.FC = () => {
   const { content } = useContent()
   const posts = content.blogPosts
-  const featured = posts[0]
-  const secondaryPosts = posts.slice(1)
-  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div className="notebook-page page-blog">
-      <div className="content-wrapper">
-        <section className="section blog-shell">
-          <h2 className="section-title">Latest Writings</h2>
+    <div className="page page-blog">
+      <div className="page-content">
+        <h2 className="section-label">writing</h2>
 
-          {posts.length === 0 && (
-            <p className="empty-state">Nothing published yet. Fresh writing will appear here soon.</p>
-          )}
-
-          {featured && (
-            <Link to={`/blog/${featured.id}`} className={`blog-featured blog-post-style-${featured.stylePreset || 'editorial'}`}>
-              {featured.image && <img src={featured.image} alt={featured.title} className="blog-featured-image" />}
-              <div className="blog-featured-content">
-                <p className="blog-featured-kicker">Featured Essay</p>
-                <h3 className="blog-featured-title">{featured.title}</h3>
-                <p className="blog-meta">{featured.date}</p>
-                <p className="blog-excerpt">{featured.excerpt}</p>
-                {featured.tags && featured.tags.length > 0 && (
-                  <div className="blog-tags">
-                    {featured.tags.map(tag => <span key={tag} className="blog-tag">{tag}</span>)}
-                  </div>
-                )}
-                <span className="read-more">Read feature →</span>
-              </div>
-            </Link>
-          )}
-
-          {secondaryPosts.length > 0 && (
-            <div className="blog-grid">
-              {secondaryPosts.map(post => (
-                <Link key={post.id} to={`/blog/${post.id}`} className={`blog-post-card blog-post-style-${post.stylePreset || 'editorial'}`}>
-                  {post.image && <img src={post.image} alt={post.title} className="blog-card-image" />}
-                  <h3 className="blog-title">{post.title}</h3>
-                  <p className="blog-meta">{post.date}</p>
-                  <p className="blog-excerpt">{post.excerpt}</p>
-                  {post.tags && post.tags.length > 0 && (
-                    <div className="blog-tags">{post.tags.map(tag => <span key={tag} className="blog-tag">{tag}</span>)}</div>
-                  )}
-                  <span className="read-more">Read more →</span>
+        {posts.length === 0 ? (
+          <>
+            <p className="blog-empty-msg">// nothing published yet.</p>
+            <p className="blog-empty-sub">play while you wait ↓</p>
+            <TerminalGame />
+          </>
+        ) : (
+          <div className="blog-posts">
+            {posts.map(post => (
+              <div key={post.id} className="blog-post-item">
+                <Link to={`/blog/${post.id}`} className="blog-post-link">
+                  {post.title}
                 </Link>
-              ))}
-            </div>
-          )}
-        </section>
+                <div className="blog-post-meta">
+                  <span>{post.date}</span>
+                  {post.tags && post.tags.length > 0 && (
+                    <span className="blog-post-tags">
+                      {post.tags.map(t => <span key={t} className="post-tag">{t}</span>)}
+                    </span>
+                  )}
+                </div>
+                {post.excerpt && (
+                  <p className="blog-post-excerpt">{post.excerpt}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      <div className="date">{currentDate}</div>
     </div>
   )
 }

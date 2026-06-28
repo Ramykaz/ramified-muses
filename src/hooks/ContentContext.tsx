@@ -37,51 +37,48 @@ export interface SiteContent {
 
 export const DEFAULT_CONTENT: SiteContent = {
   profile: {
-    name: "Ramadan Shemsu Hussen", image: "/profi.jpg",
-    bio: ["My name is Ramadan Shemsu Hussen. I am a Computer Engineering student at Hacettepe University passionate about AI research, computer vision, and building solutions that create impact."],
-    quote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
-    quoteAuthor: "Aristotle",
-    currentWork: "Currently working on computer vision systems for renewable energy and exploring the intersections of AI, cinema, and literature."
+    name: "Ramadan Shemsu Hussen",
+    image: "/profi.jpg",
+    bio: [
+      "Machine learning engineer and researcher building production AI systems. Studying Computer Engineering at Hacettepe University (2022–2026).",
+      "My work spans LLM pipelines and RAG architectures, edge AI deployment, and computer vision — from document intelligence at the UN to TensorRT-optimized object detection on NVIDIA Jetson devices.",
+      "Currently conducting undergraduate research on hardware-aware edge AI optimization for UAV-based search-and-rescue. Published at ICHORA 2026, Ankara."
+    ],
+    quote: "Simplicity is a great virtue but it requires hard work to achieve it and education to appreciate it.",
+    quoteAuthor: "Edsger W. Dijkstra",
+    currentWork: "Undergraduate researcher at Hacettepe BAP — optimizing YOLO/RT-DETR on NVIDIA Jetson Orin Nano for thermal UAV search-and-rescue. Also: generative AI research intern at UNDP SDG AI Lab."
   },
   contact: {
-    email: "Ramadanshemsu341@gmail.com", phone: "+9053 4614 6330",
+    email: "Ramadanshemsu341@gmail.com",
+    phone: "+90 534 614 6330",
     location: "Çankaya, Ankara, Turkey",
     linkedin: "https://linkedin.com/in/ramadan-shemsu-hussen-0b995a191",
     github: "https://github.com/Ramykaz",
-    intro: "If you'd like to reach out for collaborations, inquiries, or just to say hello, feel free to contact me through the following channels.",
+    intro: "Open to research collaborations, ML engineering roles, and interesting projects. Best reached by email.",
     cvUrl: ""
   },
-  blogPosts: [
-    { id: 1, title: "Computer Vision in Renewable Energy", date: "February 2025", excerpt: "Exploring how deep learning models can identify defects in solar panels...", fullContent: "", blocks: [{ type: 'paragraph', text: "Working with drone imagery presents unique challenges for computer vision systems. The fusion of IR, EL, and RGB data requires sophisticated preprocessing and model architectures." }, { type: 'paragraph', text: "Recent advances in attention mechanisms have shown promise for multi-modal defect detection in renewable energy applications." }], tags: ["AI", "Computer Vision", "Renewable Energy"], stylePreset: 'editorial', bodyFont: 'serif', titleFont: 'serif' },
-    { id: 2, title: "Multilingual NLP Challenges", date: "January 2025", excerpt: "Reflections on processing Arabic social media posts...", fullContent: "", blocks: [{ type: 'paragraph', text: "Arabic NLP faces challenges from dialect variations to complex morphology. The gap between Modern Standard Arabic and regional dialects requires careful dataset construction." }, { type: 'paragraph', text: "Transfer learning from larger languages shows potential but requires cultural and linguistic adaptation." }], tags: ["NLP", "Arabic", "Machine Learning"], stylePreset: 'minimal', bodyFont: 'sans', titleFont: 'sans' },
-    { id: 3, title: "Cross-Cultural AI Development", date: "December 2024", excerpt: "Experiences working on AI projects across Turkey and Qatar...", fullContent: "", blocks: [{ type: 'paragraph', text: "Cultural context significantly influences technology development. Working across different regions reveals how user expectations and infrastructure shape AI system design." }, { type: 'paragraph', text: "The most successful projects often incorporate local knowledge from the earliest stages." }], tags: ["AI", "Culture", "Research"], stylePreset: 'cinematic', bodyFont: 'serif', titleFont: 'serif' }
-  ],
-  filmReviews: [
-    { id: 1, title: "Stalker", director: "Andrei Tarkovsky", year: "1979", excerpt: "A profound meditation on desire, faith, and human limitation...", fullReview: "", blocks: [{ type: 'paragraph', text: "The Zone operates as both physical and metaphysical space. The gradual deterioration of film stock mirrors the characters' psychological unraveling." }, { type: 'paragraph', text: "Tarkovsky masterfully uses long takes to create a contemplative rhythm that draws viewers into the philosophical questions at the film's core." }], rating: "★★★★★" },
-    { id: 2, title: "Arrival", director: "Denis Villeneuve", year: "2016", excerpt: "Exceptional exploration of language, time, and communication...", fullReview: "", blocks: [{ type: 'paragraph', text: "The non-linear narrative structure perfectly mirrors the film's thematic concerns about time and perception." }, { type: 'paragraph', text: "The visual design of the heptapod language is particularly innovative." }], rating: "★★★★★" },
-    { id: 3, title: "Parasite", director: "Bong Joon-ho", year: "2019", excerpt: "Masterful class commentary disguised as a genre-blending thriller...", fullReview: "", blocks: [{ type: 'paragraph', text: "The architectural space becomes a character in itself, representing social stratification through vertical composition." }, { type: 'paragraph', text: "The tonal shifts from comedy to thriller to horror are handled with incredible precision." }], rating: "★★★★★" }
-  ],
-  researchAreas: [
-    { id: 1, title: "Computer Vision for Renewable Energy", excerpt: "Using deep learning for solar panel defect detection...", details: "", blocks: [{ type: 'paragraph', text: "Developing computer vision pipelines that analyze IR, EL, and RGB drone imagery to identify micro-cracks, hotspots, and other defects in solar panels." }], tags: ["Computer Vision", "Deep Learning", "Energy"] },
-    { id: 2, title: "Multilingual NLP", excerpt: "Arabic sentiment analysis and cross-cultural AI...", details: "", blocks: [{ type: 'paragraph', text: "Exploring the challenges of Arabic natural language processing, including dialect variations and morphological complexity." }], tags: ["NLP", "Arabic", "AI"] },
-    { id: 3, title: "Real-time AI Systems", excerpt: "Optimizing object detection for security applications...", details: "", blocks: [{ type: 'paragraph', text: "Researching efficient inference pipelines for real-time computer vision applications using YOLO architectures." }], tags: ["YOLO", "Real-time", "Optimization"] }
-  ],
+  blogPosts: [],
+  filmReviews: [],
+  researchAreas: [],
   books: [
-    { id: 1, title: "Gödel, Escher, Bach", author: "Douglas Hofstadter", status: "Reading", notes: "Exploring connections between formal systems, art, and consciousness." },
-    { id: 2, title: "The Order of Time", author: "Carlo Rovelli", status: "Finished", notes: "Beautiful meditation on the nature of time from a theoretical physicist's perspective." },
-    { id: 3, title: "Film Art: An Introduction", author: "Bordwell & Thompson", status: "Reference", notes: "Essential for understanding film form and style." }
+    { id: 1, title: "Gödel, Escher, Bach: An Eternal Golden Braid", author: "Douglas Hofstadter", status: "Reference", notes: "Strange loops through mathematics, music, and mind. The book that made me fall in love with recursion and formal systems." },
+    { id: 2, title: "The Order of Time", author: "Carlo Rovelli", status: "Finished", notes: "Physics meets poetry. Rovelli makes thermal time feel personal." },
+    { id: 3, title: "The Alignment Problem", author: "Brian Christian", status: "Reading", notes: "What it means to build AI that does what we actually want. Terrifying and essential." },
+    { id: 4, title: "Crime and Punishment", author: "Fyodor Dostoevsky", status: "Finished", notes: "Raskolnikov's psychology is as vivid as any model's decision boundary. Literature's answer to the alignment problem." },
+    { id: 5, title: "Thinking, Fast and Slow", author: "Daniel Kahneman", status: "Finished", notes: "System 1 vs System 2. Cognitive bias as the original adversarial examples." },
+    { id: 6, title: "Superintelligence", author: "Nick Bostrom", status: "Want to Read", notes: "" }
   ],
   experiences: [
-    { id: 1, title: "Generative AI Research Intern", company: "UNDP-ICPSD", period: "Nov 2025 - present", details: "Conducting research on generative AI models and their applications in sustainable development.", type: "work" },
-    { id: 2, title: "Computer Vision & AI Intern", company: "Oasis Global Energy", period: "July 2025 - Present", details: "Developing computer vision pipelines for solar panel defect detection using drone imagery.", type: "work" },
-    { id: 3, title: "Frontend Development Intern", company: "BUTHUR QSTP, Qatar", period: "May 2025 - July 2025", details: "Built responsive web interfaces for Arabic learning platform.", type: "work" },
-    { id: 4, title: "Computer Vision Intern", company: "Optima Engineering", period: "Aug 2024 - Oct 2024", details: "Designed real-time driver detection system using YOLOv8.", type: "work" },
-    { id: 5, title: "Data Science Research Intern", company: "ORSAM", period: "Aug 2022 - Oct 2022", details: "Analyzed socio-economic datasets to identify regional trends.", type: "work" },
-    { id: 10, title: "Community Development Volunteer", company: "Habeşistan Kalkınma Derneği", period: "Jan 2022 - Present", details: "Coordinated water well and school construction projects in Ethiopia.", type: "volunteer" }
+    { id: 1, title: "Undergraduate Researcher", company: "Hacettepe University — BAP", period: "May 2026 – Present", details: "Hardware-aware edge AI optimization for real-time UAV-based search-and-rescue. Benchmarked 14 detector variants (YOLO v5–v11, RT-DETR, RF-DETR) across 278 configurations on the WiSARD thermal dataset. Key finding: TensorRT FP16 is the highest-impact optimization. Published at ICHORA 2026.", type: "work" },
+    { id: 2, title: "Generative AI Research Intern", company: "UNDP IICPSD — SDG AI Lab", period: "Nov 2024 – May 2026", details: "Designed and implemented production LLM pipelines for document analysis, QA, and stakeholder intelligence. Sole developer of the AI Stakeholder Mapping Tool — full-stack platform (Django, Next.js, PostgreSQL/pgvector, Celery, Redis) with NER, semantic search, RAG-based summarization, and NL query interface for policy document analysis at scale.", type: "work" },
+    { id: 3, title: "Computer Vision Engineer", company: "Oasis Global Energy Technology Software", period: "Jul 2025 – Sep 2025", details: "End-to-end CV workflows for solar panel defect detection using multi-modal drone imagery (IR, EL, RGB). Trained CNN-based models for field deployment. Automated Python pipelines for defect detection and reporting.", type: "work" },
+    { id: 4, title: "Frontend Development Engineer", company: "BUTHUR QSTP, Doha (Remote)", period: "May 2025 – Jul 2025", details: "Designed and maintained frontend components for a multi-region education platform. Integrated secure REST APIs and role-based authentication workflows.", type: "work" },
+    { id: 5, title: "Computer Vision Engineer", company: "Optima Engineering, Ankara", period: "Aug 2024 – Oct 2024", details: "Built real-time driver and steering wheel detection system (YOLO, Faster R-CNN) optimized for low-latency edge inference. Labeled and augmented datasets for varied lighting conditions.", type: "work" },
+    { id: 6, title: "Data Science Researcher", company: "ORSAM — Center for Middle Eastern Studies", period: "Aug 2023 – Oct 2023", details: "Sentiment and discourse analysis on large-scale Arabic social media datasets. Designed NLP preprocessing pipelines and built interaction networks to identify key influencers and propagation patterns.", type: "work" }
   ]
 }
 
-const STORAGE_KEY = 'ramified_muses_v5'
+const STORAGE_KEY = 'ramified_muses_v6'
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 function safeMerge(stored: Partial<SiteContent>): SiteContent {

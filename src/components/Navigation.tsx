@@ -1,96 +1,89 @@
 import React, { useRef, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import ThemeSwitcher from './ThemeSwitcher'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useTheme } from '../hooks/ThemeContext'
+
+const NAV_ITEMS = [
+  { path: '/projects',     label: 'projects' },
+  { path: '/experience',   label: 'experience' },
+  { path: '/blog',         label: 'blog' },
+  { path: '/reading-list', label: 'reading' },
+  { path: '/contact',      label: 'contact' },
+]
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { theme, setTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [logoTapCount, setLogoTapCount] = useState(0)
-  const logoTapTimer = useRef<number | null>(null)
+  const taps = useRef(0)
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const navItems = [
-    { path: '/',             label: 'Home' },
-    { path: '/projects',     label: 'Projects' },
-    { path: '/reading-list', label: 'Reading List' },
-    { path: '/film-reviews', label: 'Film Reviews' },
-    { path: '/research',     label: 'Research' },
-    { path: '/blog',         label: 'Blog' },
-    { path: '/contact',      label: 'Contact' },
-  ]
-
-  const handleNav = (path: string) => {
-    navigate(path)
-    setMenuOpen(false)
-  }
-
-  const handleSecretDoor = () => {
-    const nextCount = logoTapCount + 1
-    setLogoTapCount(nextCount)
-    if (logoTapTimer.current) window.clearTimeout(logoTapTimer.current)
-    logoTapTimer.current = window.setTimeout(() => setLogoTapCount(0), 1200)
-    if (nextCount >= 5) {
-      setLogoTapCount(0)
-      if (logoTapTimer.current) window.clearTimeout(logoTapTimer.current)
+  const handleHome = () => {
+    taps.current++
+    if (tapTimer.current) clearTimeout(tapTimer.current)
+    tapTimer.current = setTimeout(() => { taps.current = 0 }, 1400)
+    if (taps.current >= 5) {
+      taps.current = 0
       navigate('/admin')
+    } else {
+      navigate('/')
     }
   }
 
-  return (
-    <>
-      <div className="logo-container">
-        <img
-          src="/3-Photoroom1.png"
-          alt="Ramified Muses"
-          className="logo-image"
-          onClick={handleSecretDoor}
-        />
-      </div>
+  const isActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
 
-      <nav className="top-nav">
-        {/* Desktop tabs — hidden on mobile */}
-        <div className="nav-tabs">
-          {navItems.map(item => (
-            <button
+  return (
+    <nav className="site-nav">
+      <div className="nav-inner">
+        <button className="nav-home" onClick={handleHome}>
+          ramadan.sh
+        </button>
+
+        <div className="nav-links">
+          {NAV_ITEMS.map(item => (
+            <Link
               key={item.path}
-              className={`nav-tab ${location.pathname === item.path ? 'active' : ''}`}
-              onClick={() => handleNav(item.path)}
+              to={item.path}
+              className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
             >
               {item.label}
-            </button>
+            </Link>
           ))}
         </div>
 
-        {/* Right side: theme switcher + hamburger */}
-        <div className="nav-right">
-          <ThemeSwitcher />
-          <button
-            className="nav-hamburger"
-            onClick={() => setMenuOpen(o => !o)}
-            aria-label="Toggle menu"
-          >
-            <span className={`bar ${menuOpen ? 'open-top' : ''}`} />
-            <span className={`bar ${menuOpen ? 'open-mid' : ''}`} />
-            <span className={`bar ${menuOpen ? 'open-bot' : ''}`} />
-          </button>
-        </div>
+        <button
+          className="theme-btn"
+          onClick={() => setTheme(theme === 'day' ? 'night' : 'day')}
+          aria-label="Toggle theme"
+        >
+          {theme === 'day' ? '○' : '●'}
+        </button>
 
-        {/* Mobile dropdown */}
-        {menuOpen && (
-          <div className="nav-mobile-menu">
-            {navItems.map(item => (
-              <button
-                key={item.path}
-                className={`nav-mobile-item ${location.pathname === item.path ? 'active' : ''}`}
-                onClick={() => handleNav(item.path)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </nav>
-    </>
+        <button
+          className={`nav-burger ${menuOpen ? 'open' : ''}`}
+          onClick={() => setMenuOpen(o => !o)}
+          aria-label="Menu"
+        >
+          <span /><span /><span />
+        </button>
+      </div>
+
+      {menuOpen && (
+        <div className="nav-mobile">
+          {NAV_ITEMS.map(item => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`nav-mobile-link ${isActive(item.path) ? 'active' : ''}`}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </nav>
   )
 }
 
