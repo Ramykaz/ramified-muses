@@ -4,9 +4,9 @@ export const defaultContent = {
     image: '/profi.jpg',
     subtitle: 'ML Engineer · CS Undergrad · Ankara, Turkey',
     bio: [
-      'Computer engineering student at Hacettepe University, mostly curious about how intelligence — artificial or otherwise — actually works under the hood. I like systems that fold back on themselves: recursive functions, feedback loops, models that learn to see.',
-      'Lately that curiosity has gone into edge AI — fitting detection models onto small, cheap hardware and getting them fast enough to matter. Before that it was RAG pipelines, turning a mountain of UN policy documents into something you could actually ask a question.',
-      'Outside of that: strange loops, the thermodynamics of time, and whatever book currently has me rethinking something I assumed was settled.',
+      'Computer engineering student at Hacettepe University. I like figuring out how things work, mostly AI and computers.',
+      "Right now: edge AI, getting detection models to run fast on small hardware. Before that: an AI tool that helped the UN search through policy documents.",
+      "Outside of that I just read a lot and follow whatever I'm curious about that week.",
     ],
     quote: 'Simplicity is a great virtue but it requires hard work to achieve it and education to appreciate it.',
     quoteAuthor: 'Edsger W. Dijkstra',
