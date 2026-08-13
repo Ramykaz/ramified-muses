@@ -400,7 +400,6 @@ a:hover { text-decoration: underline }
 .repo-item {
   padding: 0.9rem 0;
   border-bottom: 1px solid var(--border);
-  cursor: pointer;
 }
 
 .repo-item:first-child { border-top: 1px solid var(--border) }
@@ -410,28 +409,26 @@ a:hover { text-decoration: underline }
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  margin-bottom: 0.3rem;
 }
 
-.repo-name-row {
-  display: flex;
+.repo-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  margin-bottom: 1.5rem;
 }
 
-.repo-caret {
+.repo-toggle:hover { color: var(--text) }
+
+.repo-toggle-caret {
   font-family: var(--mono);
   font-size: 10px;
-  color: var(--muted);
-  width: 0.8em;
-  flex-shrink: 0;
 }
-
-.repo-collapsible {
-  display: none;
-  margin-top: 0.5rem;
-}
-
-.repo-item.open .repo-collapsible { display: block }
 
 .repo-name {
   font-family: var(--mono);

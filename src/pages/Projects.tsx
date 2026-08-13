@@ -34,16 +34,7 @@ const Projects: React.FC = () => {
   const [repos, setRepos] = useState<GHRepo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
-
-  const toggleRepo = (id: number) => {
-    setExpanded(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  const [reposOpen, setReposOpen] = useState(false)
 
   useEffect(() => {
     fetch('https://api.github.com/users/Ramykaz/repos?sort=pushed&per_page=30')
@@ -99,35 +90,35 @@ const Projects: React.FC = () => {
 
         <hr className="divider" />
 
-        <h2 className="section-label">github repos</h2>
-        <div className="repo-list">
-          {loading && <p className="gh-status">// fetching repos...</p>}
-          {error && <p className="gh-status">// could not reach github — check back later.</p>}
-          {!loading && !error && repos.length === 0 && (
-            <p className="gh-status">// no public repos found.</p>
-          )}
-          {repos.map(repo => {
-            const isOpen = expanded.has(repo.id)
-            return (
-              <div
-                key={repo.id}
-                className={`repo-item${isOpen ? ' open' : ''}`}
-                onClick={() => toggleRepo(repo.id)}
-              >
+        <button
+          type="button"
+          className="section-label repo-toggle"
+          onClick={() => setReposOpen(o => !o)}
+          aria-expanded={reposOpen}
+        >
+          github repos{!loading && !error ? ` (${repos.length})` : ''}
+          <span className="repo-toggle-caret">{reposOpen ? '▾' : '▸'}</span>
+        </button>
+
+        {reposOpen && (
+          <div className="repo-list">
+            {loading && <p className="gh-status">// fetching repos...</p>}
+            {error && <p className="gh-status">// could not reach github — check back later.</p>}
+            {!loading && !error && repos.length === 0 && (
+              <p className="gh-status">// no public repos found.</p>
+            )}
+            {repos.map(repo => (
+              <div key={repo.id} className="repo-item">
                 <div className="repo-top">
-                  <span className="repo-name-row">
-                    <span className="repo-caret">{isOpen ? '▾' : '▸'}</span>
-                    <a
-                      href={repo.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="repo-name"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      {repo.name}
-                    </a>
-                  </span>
-                  <div className="repo-links" onClick={e => e.stopPropagation()}>
+                  <a
+                    href={repo.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="repo-name"
+                  >
+                    {repo.name}
+                  </a>
+                  <div className="repo-links">
                     {repo.homepage && (
                       <a
                         href={repo.homepage}
@@ -148,29 +139,27 @@ const Projects: React.FC = () => {
                     </a>
                   </div>
                 </div>
-                <div className="repo-collapsible">
-                  {repo.description && (
-                    <p className="repo-desc">{repo.description}</p>
+                {repo.description && (
+                  <p className="repo-desc">{repo.description}</p>
+                )}
+                <div className="repo-meta">
+                  {repo.language && (
+                    <span className="repo-lang">
+                      <span
+                        className="lang-dot"
+                        style={{ background: LANG_COLORS[repo.language] ?? '#666' }}
+                      />
+                      {repo.language}
+                    </span>
                   )}
-                  <div className="repo-meta">
-                    {repo.language && (
-                      <span className="repo-lang">
-                        <span
-                          className="lang-dot"
-                          style={{ background: LANG_COLORS[repo.language] ?? '#666' }}
-                        />
-                        {repo.language}
-                      </span>
-                    )}
-                    {repo.stargazers_count > 0 && (
-                      <span className="repo-stars">★ {repo.stargazers_count}</span>
-                    )}
-                  </div>
+                  {repo.stargazers_count > 0 && (
+                    <span className="repo-stars">★ {repo.stargazers_count}</span>
+                  )}
                 </div>
               </div>
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
       </div>
     </div>
