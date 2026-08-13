@@ -49,7 +49,11 @@ const Experience: React.FC = () => {
                   <span className="timeline-period">{exp.period}</span>
                 </div>
                 {exp.details && (
-                  <p className="timeline-details">{exp.details}</p>
+                  <ul className="bullet-list">
+                    {exp.details.split('\n').map(line => line.trim()).filter(Boolean).map((line, li) => (
+                      <li key={li}>{line}</li>
+                    ))}
+                  </ul>
                 )}
                 {i < experiences.length - 1 && <hr className="timeline-rule" />}
               </div>
