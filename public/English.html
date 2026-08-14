@@ -744,8 +744,8 @@
         <span class="lang-en">Check Your Level</span>
       </h2>
       <span class="underline"></span>
-      <p class="lang-tr">Aşağıdaki 10 soruyu cevaplayarak İngilizce seviyeni öğrenebilirsin. Bu hızlı bir tahmindir — asıl değerlendirmeyi ilk dersimizde birlikte yaparız.</p>
-      <p class="lang-en">Answer the 10 questions below to get a sense of your English level. This is a quick estimate — we'll do the real assessment together in our first lesson.</p>
+      <p class="lang-tr">Aşağıdaki 30 soruyu cevaplayarak İngilizce seviyeni öğrenebilirsin. Sorular dil bilgisi, kelime bilgisi ve okuduğunu anlama karışımıdır ve giderek zorlaşır. Bu hızlı bir tahmindir — asıl değerlendirmeyi ilk dersimizde birlikte yaparız.</p>
+      <p class="lang-en">Answer the 30 questions below to get a sense of your English level. The questions mix grammar, vocabulary, and reading comprehension, and get progressively harder. This is a quick estimate — we'll do the real assessment together in our first lesson.</p>
     </div>
 
     <div class="quiz-card reveal delay-1">
@@ -1089,22 +1089,63 @@
      PLACEMENT QUIZ
      ================================================================ */
   var quizQuestions = [
+    /* ---- A1 (6) ---- */
     { level:'A1', prompt:'I ___ a student.', options:['am','is','are','be'], correct:0 },
     { level:'A1', prompt:'She ___ from Turkey.', options:['am','is','are','be'], correct:1 },
+    { level:'A1', prompt:'This is ___ apple.', options:['a','an','the','—'], correct:1 },
+    { level:'A1', prompt:'They ___ my friends.', options:['is','am','are','be'], correct:2 },
+    { level:'A1', prompt:"Hello, how ___ you today?", options:['is','are','am','be'], correct:1 },
+    { level:'A1', prompt:"What is the opposite of 'big'?", options:['small','tall','fast','happy'], correct:0 },
+
+    /* ---- A2 (6) ---- */
     { level:'A2', prompt:'Yesterday, I ___ to the market.', options:['go','goes','went','going'], correct:2 },
     { level:'A2', prompt:"Choose the word that means 'happy':", options:['sad','angry','glad','tired'], correct:2 },
+    { level:'A2', prompt:'There ___ many people at the party last night.', options:['is','are','was','were'], correct:3 },
+    { level:'A2', prompt:'My sister is ___ than me.', options:['tall','taller','tallest','more tall'], correct:1 },
+    { level:'A2', prompt:'He usually ___ breakfast at 7 am.', options:['eat','eats','ate','eating'], correct:1 },
+    { level:'A2', prompt:'One child, two ___.', options:['childs',"child's",'children','childes'], correct:2 },
+
+    /* ---- B1 (6) ---- */
     { level:'B1', prompt:'I have never ___ sushi before.', options:['eat','ate','eaten','eating'], correct:2 },
     { level:'B1', prompt:'If it rains tomorrow, I ___ at home.', options:['stay','stayed','will stay','would stay'], correct:2 },
+    { level:'B1', prompt:"You ___ smoke in here, it's not allowed.", options:['must','mustn\'t',"don't have to",'could'], correct:1 },
+    { level:'B1', prompt:'She has lived in Ankara ___ 2019.', options:['for','since','from','at'], correct:1 },
+    { level:'B1', prompt:"Choose the word closest in meaning to 'purchase':", options:['sell','buy','borrow','lend'], correct:1 },
+    {
+      level:'B1',
+      passage:'Mert works at a bank in the city center. He usually takes the bus to work, but today he decided to walk because the weather was nice.',
+      prompt:'Why did Mert walk to work today?',
+      options:['Because the bus was late','Because the weather was nice','Because he lost his bus pass','Because he wanted exercise'],
+      correct:1
+    },
+
+    /* ---- B2 (6) ---- */
     { level:'B2', prompt:'The letter ___ by the manager yesterday.', options:['wrote','was written','is written','has written'], correct:1 },
     { level:'B2', prompt:"Choose the word closest in meaning to 'meticulous':", options:['careless','careful and precise','fast','lazy'], correct:1 },
+    { level:'B2', prompt:'She said that she ___ tired.', options:['is','was','be','been'], correct:1 },
+    { level:'B2', prompt:'If I ___ more time, I would travel more.', options:['have','had','has','having'], correct:1 },
+    { level:'B2', prompt:'Despite ___ hard, he failed the exam.', options:['study','studied','studying','to study'], correct:2 },
+    {
+      level:'B2',
+      passage:"The museum's new exhibit has attracted record numbers of visitors since it opened last month. Critics have praised its use of interactive technology, though some argue the artworks themselves receive too little attention as a result.",
+      prompt:'What is one criticism mentioned in the passage?',
+      options:['The museum is too crowded','The technology overshadows the art','Ticket prices are too high','The exhibit closes too early'],
+      correct:1
+    },
+
+    /* ---- C1 (6) ---- */
+    { level:'C1', prompt:'Not only ___ the deadline, but she also exceeded expectations.', options:['she met','did she meet','she did meet','met she'], correct:1 },
+    { level:'C1', prompt:'It is essential that he ___ present at the meeting.', options:['is','be','was','being'], correct:1 },
+    { level:'C1', prompt:"Choose the word closest in meaning to 'ubiquitous':", options:['rare','everywhere','expensive','hidden'], correct:1 },
+    { level:'C1', prompt:'Had I known about the traffic, I ___ earlier.', options:['would leave','would have left','left','had left'], correct:1 },
+    { level:'C1', prompt:"'To bite the bullet' means:", options:['to eat quickly','to face a difficult situation bravely','to argue with someone','to give up'], correct:1 },
     {
       level:'C1',
       passage:"Despite the company's efforts to cut costs, profits continued to decline throughout the year. Analysts suggest that the downturn was largely due to increased competition rather than internal mismanagement. The board is now considering a complete change in strategy.",
       prompt:'According to the passage, what does the author suggest is the main cause of declining profits?',
       options:['Poor management decisions','External competitive pressure','Lack of marketing','Employee turnover'],
       correct:1
-    },
-    { level:'C1', prompt:'Not only ___ the deadline, but she also exceeded expectations.', options:['she met','did she meet','she did meet','met she'], correct:1 }
+    }
   ];
 
   var quizState = { current:0, answers:new Array(quizQuestions.length).fill(null), finished:false };
@@ -1156,10 +1197,10 @@
   };
 
   function scoreToLevel(score){
-    if(score <= 2) return 'A1';
-    if(score <= 4) return 'A2';
-    if(score <= 6) return 'B1';
-    if(score <= 8) return 'B2';
+    if(score <= 6) return 'A1';
+    if(score <= 12) return 'A2';
+    if(score <= 18) return 'B1';
+    if(score <= 24) return 'B2';
     return 'C1';
   }
 
