@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="tr" data-lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-tr="İngilizce Özel Ders — Ramadan Shemsu Hussen" data-en="Private English Lessons — Ramadan Shemsu Hussen">İngilizce Özel Ders — Ramadan Shemsu Hussen</title>
+<meta name="description" content="Ankara'da özel İngilizce dersleri: konuşma, TOEFL, SAT, YÖKDİL/YDS ve akademik yazı hazırlığı.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#FAFAF8;
+    --cream:#F4F1EB;
+    --text:#1a1a2e;
+    --muted:#5c5c6e;
+    --gold:#C9A84C;
+    --gold-soft:rgba(201,168,76,0.16);
+    --teal:#1a6b72;
+    --teal-soft:rgba(26,107,114,0.10);
+    --card:#FFFFFF;
+    --shadow-sm:0 4px 16px rgba(26,26,46,0.06);
+    --shadow-md:0 10px 34px rgba(26,26,46,0.10);
+    --shadow-lg:0 18px 50px rgba(26,26,46,0.14);
+    --radius:16px;
+    --radius-sm:10px;
+    --serif:'DM Serif Display', Georgia, serif;
+    --sans:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  img{ max-width:100%; display:block; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; }
+  ul{ list-style:none; }
+
+  /* language toggle visibility --------------------------------------- */
+  [data-lang="tr"] .lang-en{ display:none !important; }
+  [data-lang="en"] .lang-tr{ display:none !important; }
+
+  .container{ max-width:1080px; margin:0 auto; padding:0 24px; }
+
+  /* section rhythm ------------------------------------------------------ */
+  section{ padding:110px 0; position:relative; }
+  section.alt{ background:var(--cream); }
+
+  .eyebrow{
+    font-family:var(--sans);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin-bottom:14px;
+    display:block;
+  }
+
+  h1,h2,h3{ font-family:var(--serif); font-weight:400; color:var(--text); }
+  h2{ font-size:clamp(28px,4vw,42px); margin-bottom:10px; }
+  h3{ font-size:22px; }
+
+  .section-head{ text-align:center; max-width:640px; margin:0 auto 56px; }
+  .section-head p{ color:var(--muted); font-size:17px; margin-top:14px; }
+
+  .underline{
+    display:block;
+    width:64px;
+    height:3px;
+    margin:18px auto 0;
+    background:var(--gold);
+    border-radius:3px;
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.8s cubic-bezier(.25,.8,.25,1);
+  }
+  .section-head.left .underline{ margin:18px 0 0; transform-origin:left; }
+  .reveal.in-view .underline{ transform:scaleX(1); }
+
+  /* reveal-on-scroll ------------------------------------------------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(28px);
+    transition:opacity 0.8s ease, transform 0.8s cubic-bezier(.25,.8,.25,1);
+  }
+  .reveal.in-view{ opacity:1; transform:translateY(0); }
+  .reveal.delay-1.in-view{ transition-delay:0.08s; }
+  .reveal.delay-2.in-view{ transition-delay:0.16s; }
+  .reveal.delay-3.in-view{ transition-delay:0.24s; }
+  .reveal.delay-4.in-view{ transition-delay:0.32s; }
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal, .reveal.in-view, .underline{ transition:none !important; opacity:1 !important; transform:none !important; }
+    *{ animation:none !important; }
+  }
+
+  /* buttons ------------------------------------------------------------ */
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:15px 30px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    border:2px solid transparent;
+    transition:transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
+    white-space:nowrap;
+  }
+  .btn:hover{ transform:translateY(-3px); }
+  .btn-teal{ background:var(--teal); color:#fff; box-shadow:0 8px 22px rgba(26,107,114,0.28); }
+  .btn-teal:hover{ box-shadow:0 12px 28px rgba(26,107,114,0.36); }
+  .btn-gold-outline{ background:transparent; color:var(--gold); border-color:var(--gold); }
+  .btn-gold-outline:hover{ background:var(--gold); color:#fff; }
+  .btn-block{ width:100%; }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; }
+
+  /* ===================== LANG TOGGLE ===================== */
+  #langToggle{
+    position:fixed;
+    top:20px;
+    right:20px;
+    z-index:10000;
+    background:var(--card);
+    color:var(--teal);
+    border:2px solid var(--teal);
+    border-radius:999px;
+    width:52px;
+    height:52px;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.04em;
+    box-shadow:var(--shadow-md);
+    cursor:pointer;
+    transition:transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+  }
+  #langToggle:hover{ background:var(--teal); color:#fff; transform:translateY(-2px) scale(1.04); }
+
+  /* ===================== WHATSAPP FAB ===================== */
+  .wa-fab-wrap{ position:fixed; bottom:26px; right:26px; z-index:9999; }
+  .wa-fab{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:#25D366;
+    box-shadow:0 8px 24px rgba(37,211,102,0.45);
+  }
+  .wa-fab svg{ width:30px; height:30px; }
+  .wa-fab::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background:#25D366;
+    animation:waPulse 2.4s ease-out infinite;
+    z-index:-1;
+  }
+  @keyframes waPulse{
+    0%{ transform:scale(1); opacity:0.55; }
+    100%{ transform:scale(1.9); opacity:0; }
+  }
+  .wa-tooltip{
+    position:absolute;
+    right:72px;
+    top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--text);
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    padding:8px 14px;
+    border-radius:8px;
+    white-space:nowrap;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s ease, transform 0.2s ease;
+  }
+  .wa-tooltip::after{
+    content:'';
+    position:absolute;
+    left:100%;
+    top:50%;
+    transform:translateY(-50%);
+    border:6px solid transparent;
+    border-left-color:var(--text);
+  }
+  .wa-fab-wrap:hover .wa-tooltip{ opacity:1; transform:translateY(-50%) translateX(0); }
+
+  /* ===================== HERO ===================== */
+  #hero{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    padding:140px 24px 80px;
+  }
+  #hero::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:0.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    z-index:1;
+  }
+  .blob{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(70px);
+    opacity:0.35;
+    z-index:0;
+    animation:drift 22s ease-in-out infinite alternate;
+  }
+  .blob-1{ width:420px; height:420px; background:var(--gold); top:-120px; left:-100px; }
+  .blob-2{ width:380px; height:380px; background:var(--teal); bottom:-140px; right:-80px; animation-duration:26s; animation-delay:-4s; }
+  .blob-3{ width:260px; height:260px; background:var(--gold); bottom:10%; left:8%; opacity:0.22; animation-duration:18s; animation-delay:-9s; }
+  @keyframes drift{
+    0%{ transform:translate(0,0) scale(1); }
+    100%{ transform:translate(40px,30px) scale(1.08); }
+  }
+
+  .hero-inner{ position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; }
+
+  .hero-photo-wrap{ position:relative; width:180px; height:180px; margin-bottom:28px; }
+  .hero-photo{
+    width:180px; height:180px; border-radius:50%;
+    object-fit:cover;
+    border:4px solid var(--gold);
+    box-shadow:var(--shadow-lg);
+    background:var(--cream);
+  }
+  .hero-photo-fallback{
+    display:none;
+    width:180px; height:180px; border-radius:50%;
+    border:4px solid var(--gold);
+    box-shadow:var(--shadow-lg);
+    background:linear-gradient(135deg, var(--teal), var(--gold));
+    color:#fff;
+    font-family:var(--serif);
+    font-size:56px;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .hero-name{ font-size:clamp(32px,5.2vw,52px); margin-bottom:8px; }
+  .hero-title{ font-size:18px; color:var(--teal); font-weight:700; margin-bottom:20px; letter-spacing:0.01em; }
+  .hero-tagline{ font-family:var(--serif); font-style:italic; font-size:clamp(20px,3vw,26px); color:var(--muted); max-width:560px; margin-bottom:40px; }
+
+  .hero-ctas{ display:flex; gap:18px; flex-wrap:wrap; justify-content:center; }
+
+  .scroll-cue{
+    position:absolute;
+    bottom:34px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:2;
+    width:24px; height:38px;
+    border:2px solid var(--muted);
+    border-radius:14px;
+    opacity:0.55;
+  }
+  .scroll-cue::before{
+    content:'';
+    position:absolute;
+    top:6px; left:50%;
+    width:4px; height:8px;
+    background:var(--teal);
+    border-radius:2px;
+    transform:translateX(-50%);
+    animation:scrollCue 1.8s ease-in-out infinite;
+  }
+  @keyframes scrollCue{
+    0%{ opacity:1; top:6px; }
+    70%{ opacity:0; top:18px; }
+    100%{ opacity:0; top:6px; }
+  }
+
+  /* ===================== ABOUT ===================== */
+  .about-grid{
+    display:grid;
+    grid-template-columns:0.85fr 1.15fr;
+    gap:64px;
+    align-items:center;
+  }
+  .about-stats{ display:flex; flex-direction:column; gap:26px; }
+  .stat-block{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:26px 28px;
+    box-shadow:var(--shadow-sm);
+    border-left:4px solid var(--gold);
+  }
+  .stat-number{ font-family:var(--serif); font-size:34px; color:var(--teal); line-height:1; margin-bottom:6px; }
+  .stat-label{ color:var(--muted); font-size:14.5px; }
+  .about-text p{ margin-bottom:20px; font-size:16.5px; color:var(--text); }
+  .about-text p:last-child{ margin-bottom:0; }
+
+  /* ===================== SERVICES ===================== */
+  .services-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+  }
+  .service-card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:30px 26px;
+    box-shadow:var(--shadow-sm);
+    border-left:4px solid transparent;
+    transition:transform 0.3s cubic-bezier(.25,.8,.25,1), box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .service-card:hover{
+    transform:translateY(-6px);
+    box-shadow:var(--shadow-md);
+    border-left-color:var(--gold);
+  }
+  .service-icon{ font-size:30px; margin-bottom:14px; display:block; }
+  .service-card h3{ font-size:19px; margin-bottom:8px; }
+  .service-card p{ color:var(--muted); font-size:14.5px; }
+
+  /* ===================== QUIZ ===================== */
+  .quiz-card{
+    max-width:660px;
+    margin:0 auto;
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-md);
+    padding:40px;
+  }
+  .quiz-progress-track{
+    width:100%; height:8px;
+    background:var(--cream);
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:10px;
+  }
+  .quiz-progress-fill{
+    height:100%;
+    width:10%;
+    background:linear-gradient(90deg, var(--gold), var(--teal));
+    border-radius:999px;
+    transition:width 0.4s cubic-bezier(.25,.8,.25,1);
+  }
+  .quiz-progress-label{ font-size:13px; color:var(--muted); margin-bottom:26px; font-weight:600; }
+
+  .quiz-question{ min-height:230px; }
+  .quiz-passage{
+    background:var(--cream);
+    border-radius:var(--radius-sm);
+    padding:18px 20px;
+    font-size:15px;
+    color:var(--text);
+    margin-bottom:18px;
+    line-height:1.7;
+  }
+  .quiz-q-text{ font-size:20px; font-weight:600; margin-bottom:22px; line-height:1.5; }
+  .quiz-options{ display:flex; flex-direction:column; gap:12px; margin-bottom:10px; }
+  .quiz-option{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 18px;
+    border-radius:var(--radius-sm);
+    border:2px solid var(--cream);
+    cursor:pointer;
+    transition:border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+    font-size:15.5px;
+  }
+  .quiz-option:hover{ border-color:var(--gold); transform:translateX(3px); }
+  .quiz-option.selected{ border-color:var(--teal); background:var(--teal-soft); font-weight:700; }
+  .quiz-option .dot{
+    width:18px; height:18px; border-radius:50%;
+    border:2px solid var(--muted);
+    flex-shrink:0;
+    position:relative;
+  }
+  .quiz-option.selected .dot{ border-color:var(--teal); }
+  .quiz-option.selected .dot::after{
+    content:'';
+    position:absolute; inset:3px;
+    border-radius:50%;
+    background:var(--teal);
+  }
+
+  .quiz-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:28px; gap:14px; }
+  .quiz-nav-btn{
+    background:transparent;
+    border:2px solid var(--teal);
+    color:var(--teal);
+    padding:12px 22px;
+    border-radius:999px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.2s ease;
+  }
+  .quiz-nav-btn:hover:not(:disabled){ background:var(--teal); color:#fff; }
+  .quiz-nav-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+  .quiz-nav-btn.primary{ background:var(--teal); color:#fff; }
+  .quiz-nav-btn.primary:hover:not(:disabled){ background:#134f54; }
+
+  .quiz-result{ text-align:center; }
+  .quiz-badge{
+    width:130px; height:130px;
+    border-radius:50%;
+    margin:0 auto 22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    color:#fff;
+    background:linear-gradient(135deg, var(--teal), var(--gold));
+    box-shadow:var(--shadow-lg);
+    font-family:var(--serif);
+    animation:badgePop 0.5s cubic-bezier(.25,.8,.25,1);
+  }
+  @keyframes badgePop{ 0%{ transform:scale(0.6); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
+  .quiz-badge-level{ font-size:32px; line-height:1; }
+  .quiz-badge-name{ font-size:12px; font-family:var(--sans); letter-spacing:0.05em; margin-top:4px; }
+  .quiz-result h3{ margin-bottom:12px; }
+  .quiz-result p{ color:var(--muted); max-width:460px; margin:0 auto 26px; }
+
+  /* ===================== FORM ===================== */
+  .form-card{
+    max-width:720px;
+    margin:0 auto;
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-md);
+    padding:44px;
+  }
+  .form-group{ margin-bottom:34px; }
+  .form-group:last-of-type{ margin-bottom:0; }
+  .form-group-title{
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin-bottom:16px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--cream);
+  }
+  .field{ margin-bottom:18px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label.field-label{ display:block; font-size:14.5px; font-weight:600; margin-bottom:8px; }
+  .field input[type="text"],
+  .field input[type="tel"],
+  .field select,
+  .field textarea{
+    width:100%;
+    padding:13px 16px;
+    border-radius:var(--radius-sm);
+    border:1.5px solid #e6e2d8;
+    background:var(--bg);
+    font-family:var(--sans);
+    font-size:15px;
+    color:var(--text);
+    transition:border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field textarea{ resize:vertical; min-height:90px; }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--teal);
+    box-shadow:0 0 0 4px var(--teal-soft);
+  }
+  .phone-hint{ font-size:12.5px; color:var(--muted); margin-top:6px; }
+  .field-note{ font-size:13px; color:var(--muted); margin-top:8px; }
+
+  .choice-row{ display:flex; flex-wrap:wrap; gap:10px; }
+  .choice-pill{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 16px;
+    border-radius:999px;
+    border:1.5px solid #e6e2d8;
+    cursor:pointer;
+    font-size:14.5px;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .choice-pill:hover{ border-color:var(--gold); }
+  .choice-pill input{ accent-color:var(--teal); width:15px; height:15px; }
+  .choice-pill.checked{ border-color:var(--teal); background:var(--teal-soft); font-weight:700; }
+
+  #otherGoalWrap{ margin-top:12px; display:none; }
+
+  .flash{ animation:flashHighlight 1.1s ease; }
+  @keyframes flashHighlight{
+    0%{ box-shadow:0 0 0 6px var(--gold-soft); }
+    100%{ box-shadow:0 0 0 0 transparent; }
+  }
+
+  .thankyou-card{ display:none; text-align:center; padding:20px 0; }
+  .thankyou-card .check{
+    width:70px; height:70px; border-radius:50%;
+    background:var(--teal); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 20px; font-size:32px;
+  }
+  .thankyou-card p{ color:var(--muted); max-width:460px; margin:0 auto 24px; }
+
+  .form-error{
+    display:none;
+    background:#fdecec; color:#a13a3a;
+    padding:12px 16px; border-radius:var(--radius-sm);
+    font-size:14px; margin-top:16px;
+  }
+
+  /* ===================== CREDENTIALS ===================== */
+  .credentials-strip{
+    display:flex;
+    gap:18px;
+    overflow-x:auto;
+    padding:6px 6px 20px;
+    scroll-snap-type:x proximity;
+  }
+  .credentials-strip::-webkit-scrollbar{ height:6px; }
+  .credentials-strip::-webkit-scrollbar-thumb{ background:var(--gold-soft); border-radius:4px; }
+  .cred-card{
+    scroll-snap-align:start;
+    flex:0 0 240px;
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);
+    padding:26px 22px;
+    transition:transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .cred-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow-md); }
+  .cred-icon{ font-size:26px; margin-bottom:12px; display:block; }
+  .cred-card h4{ font-family:var(--sans); font-weight:700; font-size:15px; margin-bottom:6px; }
+  .cred-card p{ font-size:13.5px; color:var(--muted); }
+
+  /* ===================== FOOTER ===================== */
+  footer{
+    background:var(--text);
+    color:#f1f0ec;
+    padding:52px 0;
+    text-align:center;
+  }
+  footer .footer-name{ font-family:var(--serif); font-size:22px; margin-bottom:6px; }
+  footer .footer-role{ color:var(--gold); font-size:14px; font-weight:700; margin-bottom:20px; }
+  footer .footer-contact{ display:flex; justify-content:center; gap:26px; flex-wrap:wrap; font-size:14px; color:#c8c7d8; margin-bottom:20px; }
+  footer .footer-copy{ font-size:12.5px; color:#8a8a9c; }
+
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width:900px){
+    .about-grid{ grid-template-columns:1fr; gap:40px; }
+    .services-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+  @media (max-width:600px){
+    section{ padding:76px 0; }
+    .services-grid{ grid-template-columns:1fr; }
+    .hero-ctas{ flex-direction:column; width:100%; }
+    .hero-ctas .btn{ width:100%; }
+    .quiz-card, .form-card{ padding:26px 20px; }
+    .quiz-q-text{ font-size:18px; }
+    #langToggle{ width:44px; height:44px; font-size:12px; top:14px; right:14px; }
+    .wa-fab-wrap{ bottom:18px; right:18px; }
+    .wa-fab{ width:54px; height:54px; }
+  }
+</style>
+</head>
+<body>
+
+<button id="langToggle" aria-label="Switch language">EN</button>
+
+<div class="wa-fab-wrap">
+  <span class="wa-tooltip lang-tr">WhatsApp ile ulaş</span>
+  <span class="wa-tooltip lang-en">Reach me on WhatsApp</span>
+  <a class="wa-fab" href="https://wa.me/905346146330?text=Merhaba%2C%20%C4%B0ngilizce%20dersi%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+    <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16.004 3C9.377 3 4 8.373 4 15c0 2.386.7 4.605 1.91 6.47L4 29l7.72-1.87A11.93 11.93 0 0 0 16.004 27C22.63 27 28 21.627 28 15S22.63 3 16.004 3Zm0 21.8a9.75 9.75 0 0 1-4.97-1.36l-.357-.213-4.583 1.11 1.13-4.47-.234-.366A9.73 9.73 0 0 1 5.2 15c0-5.965 4.84-10.8 10.804-10.8 5.963 0 10.8 4.835 10.8 10.8 0 5.964-4.837 10.8-10.8 10.8Zm5.936-8.09c-.325-.163-1.923-.95-2.222-1.06-.298-.108-.514-.162-.732.163-.217.325-.84 1.06-1.03 1.278-.19.217-.38.244-.706.081-.325-.163-1.374-.507-2.618-1.616-.968-.863-1.622-1.93-1.812-2.255-.19-.325-.02-.5.143-.663.147-.146.325-.38.488-.57.163-.19.217-.325.325-.542.108-.217.054-.407-.027-.57-.081-.163-.732-1.766-1.003-2.418-.264-.635-.532-.55-.732-.56l-.624-.011c-.217 0-.57.081-.868.407-.298.325-1.138 1.113-1.138 2.715 0 1.602 1.165 3.15 1.328 3.368.163.217 2.293 3.502 5.556 4.912.776.335 1.382.535 1.854.684.779.248 1.488.213 2.049.13.625-.094 1.923-.786 2.194-1.546.271-.76.271-1.412.19-1.547-.081-.135-.298-.217-.623-.38Z"/>
+    </svg>
+  </a>
+</div>
+
+<!-- ============ HERO ============ -->
+<header id="hero">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="hero-inner">
+    <div class="hero-photo-wrap">
+      <img class="hero-photo" src="/assets/english-profile.jpg" alt="Ramadan Shemsu Hussen"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="hero-photo-fallback">RS</div>
+    </div>
+    <h1 class="hero-name">Ramadan Shemsu Hussen</h1>
+    <p class="hero-title">
+      <span class="lang-tr">İngilizce Öğretmeni · Ankara</span>
+      <span class="lang-en">English Teacher · Ankara</span>
+    </p>
+    <p class="hero-tagline">
+      <span class="lang-tr">“Konuşarak öğrenin. Güvenle konuşun.”</span>
+      <span class="lang-en">“Learn by speaking. Speak with confidence.”</span>
+    </p>
+    <div class="hero-ctas">
+      <button class="btn btn-teal" onclick="scrollToId('apply')">
+        <span class="lang-tr">Ders Başvurusu Yap</span>
+        <span class="lang-en">Apply for a Lesson</span>
+      </button>
+      <button class="btn btn-gold-outline" onclick="scrollToId('quiz')">
+        <span class="lang-tr">Seviyeni Öğren</span>
+        <span class="lang-en">Check Your Level</span>
+      </button>
+    </div>
+  </div>
+  <div class="scroll-cue"></div>
+</header>
+
+<!-- ============ ABOUT ============ -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-stats reveal">
+        <div class="stat-block">
+          <div class="stat-number">3+ <span class="lang-tr" style="font-size:16px;">yıl</span><span class="lang-en" style="font-size:16px;">years</span></div>
+          <div class="stat-label lang-tr">Özel ders deneyimi</div>
+          <div class="stat-label lang-en">Private tutoring experience</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-number">2 <span class="lang-tr" style="font-size:16px;">kurum</span><span class="lang-en" style="font-size:16px;">schools</span></div>
+          <div class="stat-label lang-tr">English Time dahil</div>
+          <div class="stat-label lang-en">Including English Time</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-number lang-tr" style="font-size:26px;">Her seviye</div>
+          <div class="stat-number lang-en" style="font-size:26px;">Every level</div>
+          <div class="stat-label lang-tr">A1'den C1'e</div>
+          <div class="stat-label lang-en">From A1 to C1</div>
+        </div>
+      </div>
+      <div class="about-text reveal delay-1">
+        <span class="eyebrow lang-tr">Hakkımda</span>
+        <span class="eyebrow lang-en">About Me</span>
+        <h2 style="margin-bottom:22px;">
+          <span class="lang-tr">Merhaba, ben Ramadan.</span>
+          <span class="lang-en">Hi, I'm Ramadan.</span>
+        </h2>
+        <p class="lang-tr">Hacettepe Üniversitesi'nde Bilgisayar Mühendisliği okurken, 2022'den bu yana özel İngilizce dersleri veriyorum. Öğrenciyle birlikte gerçekçi bir hedef koyup, o hedefe göre ilerleyen bir program kuruyorum.</p>
+        <p class="lang-en">While studying Computer Engineering at Hacettepe University, I've been giving private English lessons since 2022. I work with each student to set a realistic goal and build a plan around it.</p>
+        <p class="lang-tr">English Time dil okulunda yarı zamanlı öğretmen olarak çocuklara, gençlere ve yetişkinlere ders veriyorum — yaz kursları dahil. Farklı yaş grupları ve seviyelerle çalışmak, her öğrenciye göre yaklaşımımı ayarlamayı öğretti.</p>
+        <p class="lang-en">I also teach part-time at English Time language school — children, teenagers, and adults, including summer courses. Working across different ages and levels has taught me to adapt my approach to each student.</p>
+        <p class="lang-tr">Özellikle konuşmaya, telaffuza ve gerçek hayatta işe yarayacak bir İngilizceye odaklanıyorum. Sınav hazırlığı da yapıyorum: TOEFL, SAT, YÖKDİL, YDS ve diğer ÖSYM İngilizce sınavları.</p>
+        <p class="lang-en">I focus especially on speaking, pronunciation, and English that actually works in real life. I also do exam prep: TOEFL, SAT, YÖKDİL, YDS, and other ÖSYM English exams.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SERVICES ============ -->
+<section id="services" class="alt">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow lang-tr">Neler Öğretiyorum</span>
+      <span class="eyebrow lang-en">What I Teach</span>
+      <h2>
+        <span class="lang-tr">Verebileceğim Dersler</span>
+        <span class="lang-en">Lessons I Offer</span>
+      </h2>
+      <span class="underline"></span>
+    </div>
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <span class="service-icon">🗣️</span>
+        <h3><span class="lang-tr">Konuşma &amp; Günlük İngilizce</span><span class="lang-en">Speaking &amp; Everyday English</span></h3>
+        <p class="lang-tr">Akıcı konuşma, doğal ritim, telaffuz</p>
+        <p class="lang-en">Fluent speaking, natural rhythm, pronunciation</p>
+      </div>
+      <div class="service-card reveal delay-1">
+        <span class="service-icon">📝</span>
+        <h3><span class="lang-tr">TOEFL Hazırlık</span><span class="lang-en">TOEFL Prep</span></h3>
+        <p class="lang-tr">Tüm bölümler, özellikle Speaking &amp; Writing</p>
+        <p class="lang-en">All sections, with a focus on Speaking &amp; Writing</p>
+      </div>
+      <div class="service-card reveal delay-2">
+        <span class="service-icon">📐</span>
+        <h3><span class="lang-tr">SAT Hazırlık</span><span class="lang-en">SAT Prep</span></h3>
+        <p class="lang-tr">Reading, Writing ve dil bilgisi odaklı</p>
+        <p class="lang-en">Focused on Reading, Writing, and grammar</p>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon">🎓</span>
+        <h3><span class="lang-tr">YÖKDİL / YDS Hazırlık</span><span class="lang-en">YÖKDİL / YDS Prep</span></h3>
+        <p class="lang-tr">Akademik İngilizce, sınav stratejisi</p>
+        <p class="lang-en">Academic English, exam strategy</p>
+      </div>
+      <div class="service-card reveal delay-1">
+        <span class="service-icon">📋</span>
+        <h3><span class="lang-tr">Diğer ÖSYM Sınavları</span><span class="lang-en">Other ÖSYM Exams</span></h3>
+        <p class="lang-tr">e-YDS ve benzeri sınavlara hazırlık</p>
+        <p class="lang-en">Prep for e-YDS and similar exams</p>
+      </div>
+      <div class="service-card reveal delay-2">
+        <span class="service-icon">✍️</span>
+        <h3><span class="lang-tr">Akademik Yazı &amp; Essay</span><span class="lang-en">Academic Writing &amp; Essays</span></h3>
+        <p class="lang-tr">Üniversite başvuru yazıları, paragraf yapısı</p>
+        <p class="lang-en">University application essays, paragraph structure</p>
+      </div>
+      <div class="service-card reveal">
+        <span class="service-icon">👦</span>
+        <h3><span class="lang-tr">Çocuklar &amp; Gençler</span><span class="lang-en">Kids &amp; Teens</span></h3>
+        <p class="lang-tr">8–15 yaş, eğlenceli ve sabırlı yaklaşım</p>
+        <p class="lang-en">Ages 8–15, fun and patient approach</p>
+      </div>
+      <div class="service-card reveal delay-1">
+        <span class="service-icon">👔</span>
+        <h3><span class="lang-tr">Yetişkinler</span><span class="lang-en">Adults</span></h3>
+        <p class="lang-tr">İş İngilizcesi veya genel gelişim</p>
+        <p class="lang-en">Business English or general improvement</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow lang-tr">Ücretsiz Test</span>
+      <span class="eyebrow lang-en">Free Test</span>
+      <h2>
+        <span class="lang-tr">Seviyeni Test Et</span>
+        <span class="lang-en">Check Your Level</span>
+      </h2>
+      <span class="underline"></span>
+      <p class="lang-tr">Aşağıdaki 10 soruyu cevaplayarak İngilizce seviyeni öğrenebilirsin. Bu hızlı bir tahmindir — asıl değerlendirmeyi ilk dersimizde birlikte yaparız.</p>
+      <p class="lang-en">Answer the 10 questions below to get a sense of your English level. This is a quick estimate — we'll do the real assessment together in our first lesson.</p>
+    </div>
+
+    <div class="quiz-card reveal delay-1">
+      <div id="quizProgressTrack" class="quiz-progress-track">
+        <div id="quizProgressFill" class="quiz-progress-fill"></div>
+      </div>
+      <div id="quizProgressLabel" class="quiz-progress-label"></div>
+
+      <div id="quizQuestionWrap" class="quiz-question"></div>
+
+      <div id="quizNav" class="quiz-nav">
+        <button id="quizPrevBtn" class="quiz-nav-btn" onclick="quizPrev()"></button>
+        <button id="quizNextBtn" class="quiz-nav-btn primary" onclick="quizNext()"></button>
+      </div>
+
+      <div id="quizResult" class="quiz-result" style="display:none;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APPLICATION FORM ============ -->
+<section id="apply" class="alt">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow lang-tr">Başlayalım</span>
+      <span class="eyebrow lang-en">Let's Start</span>
+      <h2>
+        <span class="lang-tr">Ders Başvurusu</span>
+        <span class="lang-en">Apply for a Session</span>
+      </h2>
+      <span class="underline"></span>
+      <p class="lang-tr">Aşağıdaki formu doldur, 24 saat içinde seninle iletişime geçeyim.</p>
+      <p class="lang-en">Fill out the form below and I'll get in touch with you within 24 hours.</p>
+    </div>
+
+    <div class="form-card reveal delay-1">
+      <!--
+        FORMSPREE: replace REPLACE_WITH_YOUR_FORMSPREE_ID below with your
+        actual Formspree form ID (from https://formspree.io) before going live.
+      -->
+      <form id="applyForm" action="https://formspree.io/f/REPLACE_WITH_YOUR_FORMSPREE_ID" method="POST">
+
+        <div class="form-group">
+          <div class="form-group-title lang-tr">Kişisel Bilgiler</div>
+          <div class="form-group-title lang-en">Personal Information</div>
+
+          <div class="field">
+            <label class="field-label" for="fullName">
+              <span class="lang-tr">Ad Soyad</span><span class="lang-en">Full Name</span>
+            </label>
+            <input type="text" id="fullName" name="fullName" required
+                   data-tr-ph="Adınız ve soyadınız" data-en-ph="Your full name">
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="phone">
+              <span class="lang-tr">Telefon numarası</span><span class="lang-en">Phone Number</span>
+            </label>
+            <input type="tel" id="phone" name="phone" required
+                   data-tr-ph="+90 5xx xxx xx xx" data-en-ph="+90 5xx xxx xx xx">
+            <p class="phone-hint">🇹🇷 <span class="lang-tr">Türkiye numarası olması yeterli</span><span class="lang-en">A Turkish number is fine</span></p>
+          </div>
+
+          <div class="field">
+            <label class="field-label"><span class="lang-tr">Yaş grubu</span><span class="lang-en">Age Group</span></label>
+            <div class="choice-row" id="ageGroupRow">
+              <label class="choice-pill"><input type="radio" name="ageGroup" value="15 yaş altı" required><span class="lang-tr">15 yaş altı</span><span class="lang-en">Under 15</span></label>
+              <label class="choice-pill"><input type="radio" name="ageGroup" value="15-18"><span>15–18</span></label>
+              <label class="choice-pill"><input type="radio" name="ageGroup" value="18-25"><span>18–25</span></label>
+              <label class="choice-pill"><input type="radio" name="ageGroup" value="25+"><span>25+</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-title lang-tr">Ders Hedefi</div>
+          <div class="form-group-title lang-en">Your Goal</div>
+
+          <div class="field">
+            <label class="field-label">
+              <span class="lang-tr">Neden İngilizce öğrenmek istiyorsunuz?</span>
+              <span class="lang-en">Why do you want to learn English?</span>
+            </label>
+            <div class="choice-row" id="goalsRow">
+              <label class="choice-pill"><input type="checkbox" name="goals" value="Günlük konuşma & akıcılık"><span class="lang-tr">Günlük konuşma &amp; akıcılık</span><span class="lang-en">Everyday speaking &amp; fluency</span></label>
+              <label class="choice-pill"><input type="checkbox" name="goals" value="TOEFL hazırlığı"><span class="lang-tr">TOEFL hazırlığı</span><span class="lang-en">TOEFL prep</span></label>
+              <label class="choice-pill"><input type="checkbox" name="goals" value="SAT hazırlığı"><span class="lang-tr">SAT hazırlığı</span><span class="lang-en">SAT prep</span></label>
+              <label class="choice-pill"><input type="checkbox" name="goals" value="YÖKDİL / YDS hazırlığı"><span class="lang-tr">YÖKDİL / YDS hazırlığı</span><span class="lang-en">YÖKDİL / YDS prep</span></label>
+              <label class="choice-pill"><input type="checkbox" name="goals" value="Diğer ÖSYM sınavı"><span class="lang-tr">Diğer ÖSYM sınavı (e-YDS vb.)</span><span class="lang-en">Other ÖSYM exam (e-YDS etc.)</span></label>
+              <label class="choice-pill"><input type="checkbox" name="goals" value="Akademik yazı / essay"><span class="lang-tr">Akademik yazı / essay</span><span class="lang-en">Academic writing / essays</span></label>
+              <label class="choice-pill"><input type="checkbox" name="goals" value="Üniversite başvuru metni"><span class="lang-tr">Üniversite başvuru metni</span><span class="lang-en">University application text</span></label>
+              <label class="choice-pill"><input type="checkbox" name="goals" value="Genel gelişim"><span class="lang-tr">Genel gelişim</span><span class="lang-en">General improvement</span></label>
+              <label class="choice-pill"><input type="checkbox" id="otherGoalCheck" name="goals" value="Diğer"><span class="lang-tr">Diğer</span><span class="lang-en">Other</span></label>
+            </div>
+            <div class="field" id="otherGoalWrap">
+              <input type="text" id="otherGoal" name="otherGoal" data-tr-ph="Lütfen belirtin…" data-en-ph="Please specify…">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-title lang-tr">Mevcut Seviye</div>
+          <div class="form-group-title lang-en">Current Level</div>
+          <div class="field">
+            <select id="currentLevel" name="currentLevel">
+              <option value="unknown" data-tr="Bilmiyorum" data-en="I don't know">Bilmiyorum</option>
+              <option value="A1" data-tr="A1 Başlangıç" data-en="A1 Beginner">A1 Başlangıç</option>
+              <option value="A2" data-tr="A2 Temel" data-en="A2 Elementary">A2 Temel</option>
+              <option value="B1" data-tr="B1 Orta" data-en="B1 Intermediate">B1 Orta</option>
+              <option value="B2" data-tr="B2 Üst-Orta" data-en="B2 Upper-Intermediate">B2 Üst-Orta</option>
+              <option value="C1" data-tr="C1 İleri" data-en="C1 Advanced">C1 İleri</option>
+            </select>
+            <p class="field-note">
+              <span class="lang-tr">Seviyeni bilmiyorsan yukarıdaki testi yapabilirsin ↑</span>
+              <span class="lang-en">If you're not sure, take the test above ↑</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-title lang-tr">Ders Tercihleri</div>
+          <div class="form-group-title lang-en">Lesson Preferences</div>
+
+          <div class="field">
+            <label class="field-label"><span class="lang-tr">Format</span><span class="lang-en">Format</span></label>
+            <div class="choice-row">
+              <label class="choice-pill"><input type="radio" name="format" value="Online" checked><span class="lang-tr">Online</span><span class="lang-en">Online</span></label>
+              <label class="choice-pill"><input type="radio" name="format" value="Yüz yüze (Ankara)"><span class="lang-tr">Yüz yüze (Ankara)</span><span class="lang-en">In person (Ankara)</span></label>
+              <label class="choice-pill"><input type="radio" name="format" value="Fark etmez"><span class="lang-tr">Fark etmez</span><span class="lang-en">No preference</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label"><span class="lang-tr">Uygun günler</span><span class="lang-en">Available Days</span></label>
+            <div class="choice-row">
+              <label class="choice-pill"><input type="checkbox" name="availableDays" value="Hafta içi sabah"><span class="lang-tr">Hafta içi sabah</span><span class="lang-en">Weekday mornings</span></label>
+              <label class="choice-pill"><input type="checkbox" name="availableDays" value="Hafta içi öğleden sonra"><span class="lang-tr">Hafta içi öğleden sonra</span><span class="lang-en">Weekday afternoons</span></label>
+              <label class="choice-pill"><input type="checkbox" name="availableDays" value="Hafta içi akşam"><span class="lang-tr">Hafta içi akşam</span><span class="lang-en">Weekday evenings</span></label>
+              <label class="choice-pill"><input type="checkbox" name="availableDays" value="Hafta sonu"><span class="lang-tr">Hafta sonu</span><span class="lang-en">Weekends</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="referral"><span class="lang-tr">Beni nereden duydunuz?</span><span class="lang-en">How did you hear about me?</span></label>
+            <select id="referral" name="referral">
+              <option value="Arkadaş tavsiyesi" data-tr="Arkadaş tavsiyesi" data-en="Friend recommendation">Arkadaş tavsiyesi</option>
+              <option value="Instagram" data-tr="Instagram" data-en="Instagram">Instagram</option>
+              <option value="Web sitesi" data-tr="Web sitesi" data-en="Website">Web sitesi</option>
+              <option value="Diğer" data-tr="Diğer" data-en="Other">Diğer</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="notes"><span class="lang-tr">Eklemek istediğiniz bir şey var mı?</span><span class="lang-en">Anything else you'd like to add?</span></label>
+            <textarea id="notes" name="notes" data-tr-ph="İsteğe bağlı…" data-en-ph="Optional…"></textarea>
+          </div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-teal btn-block">
+          <span class="lang-tr">Başvuruyu Gönder</span>
+          <span class="lang-en">Send Application</span>
+        </button>
+
+        <div id="formError" class="form-error">
+          <span class="lang-tr">Bir şeyler ters gitti. Lütfen tekrar deneyin ya da WhatsApp'tan ulaşın.</span>
+          <span class="lang-en">Something went wrong. Please try again or reach out on WhatsApp.</span>
+        </div>
+      </form>
+
+      <div id="thankYou" class="thankyou-card">
+        <div class="check">✓</div>
+        <h3><span class="lang-tr">Teşekkürler!</span><span class="lang-en">Thank you!</span></h3>
+        <p>
+          <span class="lang-tr">En kısa sürede — genellikle 24 saat içinde — seninle iletişime geçeceğim. Dilerseniz hemen WhatsApp'tan da ulaşabilirsiniz 👇</span>
+          <span class="lang-en">I'll get back to you soon — usually within 24 hours. You can also reach out on WhatsApp right away 👇</span>
+        </p>
+        <a class="btn btn-teal" href="https://wa.me/905346146330?text=Merhaba%2C%20%C4%B0ngilizce%20dersi%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" rel="noopener noreferrer">
+          <span class="lang-tr">WhatsApp'tan Yaz</span>
+          <span class="lang-en">Message on WhatsApp</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CREDENTIALS ============ -->
+<section id="credentials">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow lang-tr">Özet</span>
+      <span class="eyebrow lang-en">Summary</span>
+      <h2>
+        <span class="lang-tr">Hızlı Bilgiler</span>
+        <span class="lang-en">Quick Facts</span>
+      </h2>
+      <span class="underline"></span>
+    </div>
+
+    <div class="credentials-strip reveal delay-1">
+      <div class="cred-card">
+        <span class="cred-icon">📅</span>
+        <h4 class="lang-tr">2022'den beri özel ders</h4>
+        <h4 class="lang-en">Private lessons since 2022</h4>
+        <p class="lang-tr">Kesintisiz öğretmenlik deneyimi</p>
+        <p class="lang-en">Continuous teaching experience</p>
+      </div>
+      <div class="cred-card">
+        <span class="cred-icon">🏫</span>
+        <h4 class="lang-tr">English Time Dil Okulu</h4>
+        <h4 class="lang-en">English Time Language School</h4>
+        <p class="lang-tr">Yarı Zamanlı Öğretmen (2025–devam)</p>
+        <p class="lang-en">Part-time Teacher (2025–present)</p>
+      </div>
+      <div class="cred-card">
+        <span class="cred-icon">☀️</span>
+        <h4 class="lang-tr">2025 Yaz Kursu</h4>
+        <h4 class="lang-en">2025 Summer Course</h4>
+        <p class="lang-tr">English Time</p>
+        <p class="lang-en">English Time</p>
+      </div>
+      <div class="cred-card">
+        <span class="cred-icon">🎓</span>
+        <h4 class="lang-tr">Hacettepe Üniversitesi</h4>
+        <h4 class="lang-en">Hacettepe University</h4>
+        <p class="lang-tr">Bilgisayar Mühendisliği (2022–2027)</p>
+        <p class="lang-en">Computer Engineering (2022–2027)</p>
+      </div>
+      <div class="cred-card">
+        <span class="cred-icon">🏆</span>
+        <h4 class="lang-tr">Türkiye Bursları</h4>
+        <h4 class="lang-en">Türkiye Scholarships</h4>
+        <p class="lang-tr">T.C. Cumhurbaşkanlığı Tam Bursu (2021)</p>
+        <p class="lang-en">Full Scholarship, Presidency of Türkiye (2021)</p>
+      </div>
+      <div class="cred-card">
+        <span class="cred-icon">🌍</span>
+        <h4 class="lang-tr">Türkçe C1</h4>
+        <h4 class="lang-en">Turkish C1</h4>
+        <p class="lang-tr">Yabancı dil öğrenmenin ne olduğunu biliyorum</p>
+        <p class="lang-en">I know first-hand what learning a language feels like</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <div class="footer-name">Ramadan Shemsu Hussen</div>
+    <div class="footer-role lang-tr">İngilizce Öğretmeni</div>
+    <div class="footer-role lang-en">English Teacher</div>
+    <div class="footer-contact">
+      <span>Ramadanshemsu341@gmail.com</span>
+      <span>+90 534 614 6330</span>
+    </div>
+    <div class="footer-copy">© 2026 Ramadan Shemsu Hussen</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ LANGUAGE TOGGLE ============ */
+  var root = document.documentElement;
+  var langBtn = document.getElementById('langToggle');
+  var currentLang = sessionStorage.getItem('englishPageLang') || 'tr';
+
+  function applyAttrTranslations(lang){
+    document.querySelectorAll('[data-tr], [data-en]').forEach(function(el){
+      // only elements that are meant as attribute-swap targets (title, options)
+      if(el.tagName === 'TITLE' || el.tagName === 'OPTION'){
+        var val = lang === 'tr' ? el.getAttribute('data-tr') : el.getAttribute('data-en');
+        if(val !== null) el.textContent = val;
+      }
+    });
+    document.querySelectorAll('[data-tr-ph]').forEach(function(el){
+      var val = lang === 'tr' ? el.getAttribute('data-tr-ph') : el.getAttribute('data-en-ph');
+      if(val !== null) el.setAttribute('placeholder', val);
+    });
+  }
+
+  function setLang(lang){
+    currentLang = lang;
+    root.setAttribute('data-lang', lang);
+    root.lang = lang;
+    langBtn.textContent = lang === 'tr' ? 'EN' : 'TR';
+    sessionStorage.setItem('englishPageLang', lang);
+    applyAttrTranslations(lang);
+    renderQuiz();
+  }
+
+  langBtn.addEventListener('click', function(){
+    setLang(currentLang === 'tr' ? 'en' : 'tr');
+  });
+
+  /* ============ SMOOTH SCROLL ============ */
+  window.scrollToId = function(id){
+    var el = document.getElementById(id);
+    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  };
+
+  /* ============ SCROLL REVEAL ============ */
+  var revealEls = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('in-view');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold:0.15, rootMargin:'0px 0px -60px 0px' });
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('in-view'); });
+  }
+
+  /* ============ OTHER GOAL TOGGLE ============ */
+  var otherGoalCheck = document.getElementById('otherGoalCheck');
+  var otherGoalWrap = document.getElementById('otherGoalWrap');
+  otherGoalCheck.addEventListener('change', function(){
+    otherGoalWrap.style.display = this.checked ? 'block' : 'none';
+  });
+
+  /* ============ CHOICE PILL VISUAL STATE ============ */
+  document.querySelectorAll('.choice-pill input').forEach(function(input){
+    input.closest('.choice-pill').classList.toggle('checked', input.checked);
+    input.addEventListener('change', function(){
+      if(input.type === 'radio'){
+        document.querySelectorAll('input[name="' + input.name + '"]').forEach(function(sib){
+          sib.closest('.choice-pill').classList.toggle('checked', sib.checked);
+        });
+      } else {
+        input.closest('.choice-pill').classList.toggle('checked', input.checked);
+      }
+    });
+  });
+
+  /* ================================================================
+     PLACEMENT QUIZ
+     ================================================================ */
+  var quizQuestions = [
+    { level:'A1', prompt:'I ___ a student.', options:['am','is','are','be'], correct:0 },
+    { level:'A1', prompt:'She ___ from Turkey.', options:['am','is','are','be'], correct:1 },
+    { level:'A2', prompt:'Yesterday, I ___ to the market.', options:['go','goes','went','going'], correct:2 },
+    { level:'A2', prompt:"Choose the word that means 'happy':", options:['sad','angry','glad','tired'], correct:2 },
+    { level:'B1', prompt:'I have never ___ sushi before.', options:['eat','ate','eaten','eating'], correct:2 },
+    { level:'B1', prompt:'If it rains tomorrow, I ___ at home.', options:['stay','stayed','will stay','would stay'], correct:2 },
+    { level:'B2', prompt:'The letter ___ by the manager yesterday.', options:['wrote','was written','is written','has written'], correct:1 },
+    { level:'B2', prompt:"Choose the word closest in meaning to 'meticulous':", options:['careless','careful and precise','fast','lazy'], correct:1 },
+    {
+      level:'C1',
+      passage:"Despite the company's efforts to cut costs, profits continued to decline throughout the year. Analysts suggest that the downturn was largely due to increased competition rather than internal mismanagement. The board is now considering a complete change in strategy.",
+      prompt:'According to the passage, what does the author suggest is the main cause of declining profits?',
+      options:['Poor management decisions','External competitive pressure','Lack of marketing','Employee turnover'],
+      correct:1
+    },
+    { level:'C1', prompt:'Not only ___ the deadline, but she also exceeded expectations.', options:['she met','did she meet','she did meet','met she'], correct:1 }
+  ];
+
+  var quizState = { current:0, answers:new Array(quizQuestions.length).fill(null), finished:false };
+
+  var quizWrap = document.getElementById('quizQuestionWrap');
+  var progressFill = document.getElementById('quizProgressFill');
+  var progressLabel = document.getElementById('quizProgressLabel');
+  var prevBtn = document.getElementById('quizPrevBtn');
+  var nextBtn = document.getElementById('quizNextBtn');
+  var quizNav = document.getElementById('quizNav');
+  var quizResultEl = document.getElementById('quizResult');
+  var quizCardTop = document.querySelector('.quiz-progress-track').parentElement;
+
+  var quizStrings = {
+    tr:{
+      questionOf:function(n,total){ return 'Soru ' + n + ' / ' + total; },
+      chooseOption:'Doğru seçeneği seçin:',
+      readPassage:'Aşağıdaki paragrafı okuyun ve soruyu cevaplayın.',
+      prev:'← Geri',
+      next:'İleri →',
+      seeResult:'Sonucu Gör',
+      resultIntro:'Seviyen:',
+      ctaApply:'Bu seviyeyle başvur',
+      levels:{
+        A1:{ name:'A1 Başlangıç', desc:'Temel kelimeler ve kalıplarla basit cümleler kurabiliyorsun. Birlikte kelime dağarcığını ve temel dil bilgisini sağlam bir zemine oturtacağız.' },
+        A2:{ name:'A2 Temel', desc:'Günlük konularda basit iletişim kurabiliyorsun. Konuşma pratiği ve daha geniş bir kelime dağarcığıyla akıcılığını artıracağız.' },
+        B1:{ name:'B1 Orta', desc:'Tanıdık konularda kendini rahatça ifade edebiliyorsun. Karmaşık zamanlar ve doğal konuşma kalıpları üzerinde çalışacağız.' },
+        B2:{ name:'B2 Üst-Orta', desc:'Soyut konularda bile akıcı konuşabiliyorsun. Sınav stratejileri, ileri düzey yapılar ve incelik üzerine odaklanacağız.' },
+        C1:{ name:'C1 İleri', desc:'İngilizceyi neredeyse anadil seviyesinde kullanıyorsun. Akademik yazı, ileri düzey sınav stratejileri ve nüans üzerinde çalışacağız.' }
+      }
+    },
+    en:{
+      questionOf:function(n,total){ return 'Question ' + n + ' / ' + total; },
+      chooseOption:'Choose the correct option:',
+      readPassage:'Read the paragraph below and answer the question.',
+      prev:'← Back',
+      next:'Next →',
+      seeResult:'See Result',
+      resultIntro:'Your level:',
+      ctaApply:'Apply with this level',
+      levels:{
+        A1:{ name:'A1 Beginner', desc:"You can build simple sentences with basic words and patterns. We'll build a solid base of vocabulary and core grammar together." },
+        A2:{ name:'A2 Elementary', desc:"You can handle simple everyday communication. We'll grow your vocabulary and build fluency through speaking practice." },
+        B1:{ name:'B1 Intermediate', desc:"You can express yourself comfortably on familiar topics. We'll work on more complex tenses and natural speaking patterns." },
+        B2:{ name:'B2 Upper-Intermediate', desc:"You can speak fluently even on abstract topics. We'll focus on exam strategy, advanced structures, and nuance." },
+        C1:{ name:'C1 Advanced', desc:"You use English at a near-native level. We'll work on academic writing, advanced exam strategy, and nuance." }
+      }
+    }
+  };
+
+  function scoreToLevel(score){
+    if(score <= 2) return 'A1';
+    if(score <= 4) return 'A2';
+    if(score <= 6) return 'B1';
+    if(score <= 8) return 'B2';
+    return 'C1';
+  }
+
+  function renderQuiz(){
+    var strings = quizStrings[currentLang];
+
+    if(quizState.finished){
+      quizWrap.style.display = 'none';
+      quizNav.style.display = 'none';
+      progressFill.parentElement.style.display = 'none';
+      progressLabel.style.display = 'none';
+      renderQuizResult(strings);
+      return;
+    }
+
+    quizWrap.style.display = 'block';
+    quizNav.style.display = 'flex';
+    progressFill.parentElement.style.display = 'block';
+    progressLabel.style.display = 'block';
+    quizResultEl.style.display = 'none';
+
+    var i = quizState.current;
+    var q = quizQuestions[i];
+    var total = quizQuestions.length;
+
+    progressFill.style.width = (((i+1)/total) * 100) + '%';
+    progressLabel.textContent = strings.questionOf(i+1, total);
+
+    var html = '';
+    if(q.passage){
+      html += '<p style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;">' + strings.readPassage + '</p>';
+      html += '<div class="quiz-passage">' + q.passage + '</div>';
+    } else {
+      html += '<p style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:10px;">' + strings.chooseOption + '</p>';
+    }
+    html += '<div class="quiz-q-text">' + q.prompt + '</div>';
+    html += '<div class="quiz-options">';
+    q.options.forEach(function(opt, idx){
+      var selected = quizState.answers[i] === idx;
+      html += '<div class="quiz-option' + (selected ? ' selected' : '') + '" data-idx="' + idx + '">' +
+              '<span class="dot"></span><span>' + opt + '</span></div>';
+    });
+    html += '</div>';
+    quizWrap.innerHTML = html;
+
+    quizWrap.querySelectorAll('.quiz-option').forEach(function(optEl){
+      optEl.addEventListener('click', function(){
+        quizState.answers[i] = parseInt(optEl.getAttribute('data-idx'), 10);
+        renderQuiz();
+      });
+    });
+
+    prevBtn.textContent = strings.prev;
+    prevBtn.disabled = (i === 0);
+    var isLast = (i === total - 1);
+    nextBtn.textContent = isLast ? strings.seeResult : strings.next;
+    nextBtn.disabled = (quizState.answers[i] === null);
+  }
+
+  function renderQuizResult(strings){
+    var score = quizState.answers.reduce(function(sum, ans, idx){
+      return sum + (ans === quizQuestions[idx].correct ? 1 : 0);
+    }, 0);
+    var levelKey = scoreToLevel(score);
+    var level = strings.levels[levelKey];
+
+    quizResultEl.style.display = 'block';
+    quizResultEl.innerHTML =
+      '<div class="quiz-badge"><span class="quiz-badge-level">' + levelKey + '</span><span class="quiz-badge-name">' + level.name + '</span></div>' +
+      '<h3>' + strings.resultIntro + ' ' + level.name + '</h3>' +
+      '<p>' + level.desc + '</p>' +
+      '<button class="btn btn-teal" id="quizCtaBtn">' + strings.ctaApply + '</button>';
+
+    document.getElementById('quizCtaBtn').addEventListener('click', function(){
+      var select = document.getElementById('currentLevel');
+      select.value = levelKey;
+      scrollToId('apply');
+      select.classList.add('flash');
+      setTimeout(function(){ select.classList.remove('flash'); }, 1200);
+    });
+  }
+
+  window.quizNext = function(){
+    var isLast = (quizState.current === quizQuestions.length - 1);
+    if(isLast){
+      quizState.finished = true;
+    } else {
+      quizState.current++;
+    }
+    renderQuiz();
+  };
+
+  window.quizPrev = function(){
+    if(quizState.current > 0){
+      quizState.current--;
+      renderQuiz();
+    }
+  };
+
+  /* ============ FORM SUBMISSION (Formspree AJAX) ============ */
+  var applyForm = document.getElementById('applyForm');
+  var thankYou = document.getElementById('thankYou');
+  var formError = document.getElementById('formError');
+  var submitBtn = document.getElementById('submitBtn');
+
+  applyForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    formError.style.display = 'none';
+    submitBtn.disabled = true;
+
+    var data = new FormData(applyForm);
+    fetch(applyForm.action, {
+      method:'POST',
+      body:data,
+      headers:{ 'Accept':'application/json' }
+    }).then(function(response){
+      if(response.ok){
+        applyForm.style.display = 'none';
+        thankYou.style.display = 'block';
+      } else {
+        formError.style.display = 'block';
+        submitBtn.disabled = false;
+      }
+    }).catch(function(){
+      formError.style.display = 'block';
+      submitBtn.disabled = false;
+    });
+  });
+
+  /* ============ INIT ============ */
+  setLang(currentLang);
+})();
+</script>
+
+</body>
+</html>
