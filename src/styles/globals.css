@@ -449,11 +449,11 @@ a:hover { text-decoration: underline }
 
 .repo-link {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--link);
   letter-spacing: 0.03em;
 }
 
-.repo-link:hover { color: var(--link); text-decoration: none }
+.repo-link:hover { text-decoration: underline }
 
 .repo-desc {
   font-family: var(--serif);
