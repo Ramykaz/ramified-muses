@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useContent } from '../hooks/ContentContext'
+import { DomainIcon } from '../components/DomainIcons'
 
 interface GHRepo {
   id: number
@@ -63,9 +64,12 @@ const Projects: React.FC = () => {
           {featured.map((proj, i) => (
             <div key={i} className="featured-item">
               <div className="featured-header">
-                <div>
-                  <span className="featured-name">{proj.name}</span>
-                  <span className="featured-org"> — {proj.org} · {proj.period}</span>
+                <div className="featured-title-row">
+                  <DomainIcon text={`${proj.name} ${proj.org} ${proj.description} ${proj.stack.join(' ')}`} />
+                  <div>
+                    <span className="featured-name">{proj.name}</span>
+                    <span className="featured-org"> — {proj.org} · {proj.period}</span>
+                  </div>
                 </div>
                 {proj.links.length > 0 && (
                   <div className="featured-links">

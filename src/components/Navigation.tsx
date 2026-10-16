@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useTheme } from '../hooks/ThemeContext'
+import ThemeToggleChain from './ThemeToggleChain'
 
 const NAV_ITEMS = [
   { path: '/projects',     label: 'projects' },
@@ -13,7 +13,6 @@ const NAV_ITEMS = [
 const Navigation: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { theme, setTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
   const taps = useRef(0)
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -34,56 +33,51 @@ const Navigation: React.FC = () => {
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
 
   return (
-    <nav className="site-nav">
-      <div className="nav-inner">
-        <button className="nav-home" onClick={handleHome}>
-          ramadan.sh
-        </button>
+    <>
+      <nav className="site-nav">
+        <div className="nav-inner">
+          <button className="nav-home" onClick={handleHome}>
+            ramadan.sh
+          </button>
 
-        <div className="nav-links">
-          {NAV_ITEMS.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          <div className="nav-links">
+            {NAV_ITEMS.map(item => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          <button
+            className={`nav-burger ${menuOpen ? 'open' : ''}`}
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Menu"
+          >
+            <span /><span /><span />
+          </button>
         </div>
 
-        <button
-          className="theme-btn"
-          onClick={() => setTheme(theme === 'day' ? 'night' : 'day')}
-          aria-label="Toggle theme"
-        >
-          {theme === 'day' ? '○' : '●'}
-        </button>
-
-        <button
-          className={`nav-burger ${menuOpen ? 'open' : ''}`}
-          onClick={() => setMenuOpen(o => !o)}
-          aria-label="Menu"
-        >
-          <span /><span /><span />
-        </button>
-      </div>
-
-      {menuOpen && (
-        <div className="nav-mobile">
-          {NAV_ITEMS.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`nav-mobile-link ${isActive(item.path) ? 'active' : ''}`}
-              onClick={() => setMenuOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </nav>
+        {menuOpen && (
+          <div className="nav-mobile">
+            {NAV_ITEMS.map(item => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`nav-mobile-link ${isActive(item.path) ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+      </nav>
+      <ThemeToggleChain />
+    </>
   )
 }
 

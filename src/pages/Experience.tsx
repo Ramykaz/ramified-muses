@@ -1,5 +1,6 @@
 import React from 'react'
 import { useContent } from '../hooks/ContentContext'
+import { DomainIcon } from '../components/DomainIcons'
 
 const LOGOS: [string, string][] = [
   ['hacettepe', '/logos/hacettepe.svg'],
@@ -32,18 +33,21 @@ const Experience: React.FC = () => {
             return (
               <div key={exp.id} className="timeline-item">
                 <div className="timeline-header">
-                  <div className="timeline-meta">
-                    <span className="timeline-title">{exp.title}</span>
-                    <div className="timeline-company-row">
-                      {logo && (
-                        <img
-                          src={logo}
-                          alt=""
-                          className="company-logo"
-                          onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                        />
-                      )}
-                      <span className="timeline-company">{exp.company}</span>
+                  <div className="timeline-title-row">
+                    <DomainIcon text={`${exp.title} ${exp.company} ${exp.details}`} />
+                    <div className="timeline-meta">
+                      <span className="timeline-title">{exp.title}</span>
+                      <div className="timeline-company-row">
+                        {logo && (
+                          <img
+                            src={logo}
+                            alt=""
+                            className="company-logo"
+                            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                          />
+                        )}
+                        <span className="timeline-company">{exp.company}</span>
+                      </div>
                     </div>
                   </div>
                   <span className="timeline-period">{exp.period}</span>
@@ -65,13 +69,16 @@ const Experience: React.FC = () => {
 
         <div className="exp-footer">
           <p className="exp-footer-text">
-            B.Sc. Computer Engineering · Hacettepe University · 2022–2026
+            B.Sc. Computer Engineering · Hacettepe University · 2022–2027 (expected)
+          </p>
+          <p className="exp-footer-text">
+            Türkiye Bursları — Turkish Government Scholarship · full tuition · 2021
           </p>
           <p className="exp-footer-text">
             MENA ML Winter School · Google DeepMind &amp; QCRI · Doha, Qatar · Feb 2025
           </p>
           <p className="exp-footer-text">
-            Frontier Tech Leaders ML Bootcamp · UNDP ICPSD · 2024 <span className="exp-badge">Hackathon Winner</span>
+            Frontier Tech Leaders ML Bootcamp · UNDP ICPSD · Mar–Jun 2024 <span className="exp-badge">Hackathon Winner</span>
           </p>
         </div>
       </div>
