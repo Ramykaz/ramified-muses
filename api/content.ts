@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '../src/db/index.js'
 import {
   profile, contact, blogPosts, filmReviews,
-  researchAreas, books, experiences, projects,
+  researchAreas, books, experiences, projects, clientSites,
 } from '../src/db/schema.js'
 import { defaultContent } from '../server/defaultContent.js'
 
@@ -19,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'GET') {
     try {
-      const [[profileRow], [contactRow], blogRows, filmRows, researchRows, bookRows, expRows, projRows] =
+      const [[profileRow], [contactRow], blogRows, filmRows, researchRows, bookRows, expRows, projRows, clientSiteRows] =
         await Promise.all([
           db.select().from(profile).limit(1),
           db.select().from(contact).limit(1),
@@ -29,6 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           db.select().from(books),
           db.select().from(experiences),
           db.select().from(projects),
+          db.select().from(clientSites),
         ])
 
       // Auto-seed on first request if DB is empty
@@ -97,6 +98,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }))
           )
         }
+        if (defaultContent.clientSites.length > 0) {
+          await db.insert(clientSites).values(
+            defaultContent.clientSites.map(c => ({
+              id: c.id,
+              name: c.name,
+              url: c.url,
+              description: c.description,
+              tag: c.tag,
+            }))
+          )
+        }
 
         return res.status(200).json({
           profile: defaultContent.profile,
@@ -107,6 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           books: defaultContent.books,
           experiences: defaultContent.experiences,
           projects: defaultContent.projects,
+          clientSites: defaultContent.clientSites,
         })
       }
 
@@ -138,6 +151,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const proj = projRows.length > 0 ? projRows : defaultContent.projects
 
+      // Seed client sites if table is empty and it's a migrated DB
+      if (clientSiteRows.length === 0 && defaultContent.clientSites.length > 0) {
+        await db.insert(clientSites).values(
+          defaultContent.clientSites.map(c => ({
+            id: c.id,
+            name: c.name,
+            url: c.url,
+            description: c.description,
+            tag: c.tag,
+          }))
+        )
+      }
+
+      const clientSitesOut = clientSiteRows.length > 0 ? clientSiteRows : defaultContent.clientSites
+
       return res.status(200).json({
         profile: {
           name: profileRow.name,
@@ -167,6 +195,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         books: bookRows,
         experiences: expRows,
         projects: proj,
+        clientSites: clientSitesOut,
       })
     } catch (err) {
       console.error('GET /api/content failed:', err)
@@ -277,6 +306,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (data.projects?.length) await db.insert(projects).values(data.projects.map((p: any) => ({
         id: p.id, name: p.name, org: p.org ?? '', period: p.period ?? '',
         description: p.description ?? '', stack: p.stack ?? [], links: p.links ?? [],
+      })))
+
+      await db.delete(clientSites)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (data.clientSites?.length) await db.insert(clientSites).values(data.clientSites.map((c: any) => ({
+        id: c.id, name: c.name, url: c.url ?? '', description: c.description ?? '', tag: c.tag ?? '',
       })))
 
       return res.status(200).json({ ok: true })

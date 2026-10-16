@@ -91,4 +91,12 @@ export const defaultContent = {
       links: [],
     },
   ],
+  clientSites: [
+    { id: 1, name: 'Sapanca Business Group', url: 'https://www.sapancabusinessgroup.com/', tag: 'Client website', description: 'Corporate site for a cross-border consultancy connecting Ethiopia and Türkiye — education, health, and trade services for students, patients, and investors.' },
+    { id: 2, name: 'ANTSAR Foreign Trade Agency', url: 'https://antsartrade.com/', tag: 'Client website', description: 'Corporate site for a foreign trade agency offering international trade and commerce facilitation services.' },
+    { id: 3, name: 'SmartPark MQTT', url: 'https://smartpark-mqtt.vercel.app/', tag: 'Personal project', description: 'IoT parking system — an MQTT broker, a React dashboard, and a FastAPI bridge tying live sensor data to a real-time occupancy view.' },
+    { id: 4, name: 'Tracker.ME', url: 'https://trackerme-two.vercel.app', tag: 'Personal project', description: 'Personal goal and habit tracker — sign in, set objectives, and log progress toward them over time.' },
+    { id: 5, name: 'UAV Search-and-Rescue Demo', url: 'https://uav-sar.vercel.app/', tag: 'Research demo', description: 'Live front-end for the Hacettepe BAP edge AI research — visualizing thermal UAV search-and-rescue detection.' },
+    { id: 6, name: 'Stakeholder Mapping Tool', url: 'https://stakemapper.ramyfied.me/', tag: 'Research demo', description: 'Live deployment of the AI Stakeholder Mapping Tool — upload policy documents, get back structured stakeholder reports.' },
+  ],
 }

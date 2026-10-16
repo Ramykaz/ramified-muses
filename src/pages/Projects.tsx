@@ -31,6 +31,7 @@ const LANG_COLORS: Record<string, string> = {
 const Projects: React.FC = () => {
   const { content } = useContent()
   const featured = content.projects ?? []
+  const clientSites = content.clientSites ?? []
   const [repos, setRepos] = useState<GHRepo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -89,6 +90,30 @@ const Projects: React.FC = () => {
         </div>
 
         <hr className="divider" />
+
+        {clientSites.length > 0 && (
+          <>
+            <h2 className="section-label">client &amp; organization sites</h2>
+            <div className="featured-list">
+              {clientSites.map(site => (
+                <div key={site.id} className="client-site-item">
+                  <div className="client-site-header">
+                    <span className="client-site-name-row">
+                      <span className="featured-name">{site.name}</span>
+                      {site.tag && <span className="client-site-tag">{site.tag}</span>}
+                    </span>
+                    <a href={site.url} target="_blank" rel="noopener noreferrer" className="repo-link">
+                      visit site ↗
+                    </a>
+                  </div>
+                  <p className="client-site-desc">{site.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <hr className="divider" />
+          </>
+        )}
 
         <button
           type="button"

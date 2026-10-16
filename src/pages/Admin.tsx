@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import '../styles/admin.css'
 import { useContent } from '../hooks/ContentContext'
-import type { BlogPost, Book, Experience, FeaturedProject } from '../hooks/ContentContext'
+import type { BlogPost, Book, Experience, FeaturedProject, ClientSite } from '../hooks/ContentContext'
 import BlockEditor from '../components/BlockEditor'
 import type { Block } from '../components/BlockEditor'
 
@@ -9,7 +9,7 @@ const ADMIN_PASSWORD = 'ramified2025'
 const ADMIN_SESSION_KEY = 'rm_admin_session_v1'
 const SESSION_TTL = 1000 * 60 * 60 * 24
 
-type Tab = 'profile' | 'contact' | 'blog' | 'books' | 'experience' | 'projects'
+type Tab = 'profile' | 'contact' | 'blog' | 'books' | 'experience' | 'projects' | 'clientSites'
 const TABS: { key: Tab; label: string }[] = [
   { key: 'profile',    label: 'Profile' },
   { key: 'contact',   label: 'Contact' },
@@ -17,6 +17,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'books',     label: 'Books' },
   { key: 'experience',label: 'Experience' },
   { key: 'projects',  label: 'Projects' },
+  { key: 'clientSites', label: 'Client Sites' },
 ]
 
 // ── Small UI helpers ─────────────────────────────────────────────
@@ -283,6 +284,18 @@ const Admin: React.FC = () => {
               onAdd={p => { addItem<FeaturedProject>('projects', p); toast('Project added') }}
               onUpdate={(id, u) => { updateItem<FeaturedProject>('projects', id, u); toast('Saved') }}
               onDelete={id => { deleteItem('projects', id); toast('Deleted') }}
+            />
+          </div>
+        )}
+
+        {/* ── Client Sites ── */}
+        {tab === 'clientSites' && (
+          <div className="admin-section">
+            <ClientSiteEditor
+              sites={content.clientSites ?? []}
+              onAdd={s => { addItem<ClientSite>('clientSites', s); toast('Site added') }}
+              onUpdate={(id, u) => { updateItem<ClientSite>('clientSites', id, u); toast('Saved') }}
+              onDelete={id => { deleteItem('clientSites', id); toast('Deleted') }}
             />
           </div>
         )}
@@ -576,6 +589,43 @@ const ProjectEditor: React.FC<{
           ))}
           <button className="admin-btn secondary small" style={{ marginTop: '0.4rem' }}
             onClick={() => ch({ links: [...(d.links ?? []), { label: '', href: '' }] })}>+ Add link</button>
+        </F>
+      </>
+    )}
+    onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete}
+  />
+)
+
+// ── Client Site Editor ───────────────────────────────────────────
+const ClientSiteEditor: React.FC<{
+  sites: ClientSite[]
+  onAdd: (s: Omit<ClientSite, 'id'>) => void
+  onUpdate: (id: number, u: Partial<ClientSite>) => void
+  onDelete: (id: number) => void
+}> = ({ sites, onAdd, onUpdate, onDelete }) => (
+  <ListShell
+    items={sites}
+    addLabel="New Site"
+    newLabel="New client site"
+    blank={() => ({ name: '', url: '', description: '', tag: 'Client website' })}
+    renderSummary={s => (
+      <>
+        <strong>{s.name || '(untitled)'}</strong>
+        <span className="list-meta">{s.tag} · {s.url}</span>
+      </>
+    )}
+    renderForm={(d, ch) => (
+      <>
+        <div className="admin-two-col">
+          <F label="Site Name"><Inp value={d.name ?? ''} placeholder="Sapanca Business Group" onChange={e => ch({ name: e.target.value })} /></F>
+          <F label="Tag" hint="Short label shown next to the name"><Inp value={d.tag ?? ''} placeholder="Client website" onChange={e => ch({ tag: e.target.value })} /></F>
+        </div>
+        <F label="URL"><Inp value={d.url ?? ''} placeholder="https://…" onChange={e => ch({ url: e.target.value })} /></F>
+        <F label="Description">
+          <Txt rows={3} value={d.description ?? ''}
+            onChange={e => ch({ description: e.target.value })}
+            style={{ fontFamily: 'var(--serif)', fontSize: '15px', lineHeight: '1.6' }}
+            placeholder="One sentence describing what the site is for…" />
         </F>
       </>
     )}

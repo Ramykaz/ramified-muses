@@ -31,6 +31,9 @@ export interface FeaturedProject {
   id: number; name: string; org: string; period: string
   description: string; stack: string[]; links: HomeLink[]
 }
+export interface ClientSite {
+  id: number; name: string; url: string; description: string; tag: string
+}
 export interface SiteContent {
   profile: {
     name: string; image: string; bio: string[]
@@ -46,6 +49,7 @@ export interface SiteContent {
   books: Book[]
   experiences: Experience[]
   projects: FeaturedProject[]
+  clientSites: ClientSite[]
 }
 
 export const DEFAULT_CONTENT: SiteContent = {
@@ -105,6 +109,14 @@ export const DEFAULT_CONTENT: SiteContent = {
     { id: 2, name: "Edge AI for UAV Search-and-Rescue", org: "Hacettepe University BAP", period: "2026", stack: ["TensorRT", "NVIDIA Jetson Orin Nano", "YOLO v5–v11", "RT-DETR", "RF-DETR", "PyTorch", "Python"], description: "Benchmarked 14 detector architectures across 278 configurations for real-time thermal human detection on edge hardware.\nTensorRT FP16 quantization was the single highest-impact optimization — more than any architecture swap.\nPresented at ICHORA 2026, Ankara.", links: [{ label: "IEEE paper ↗", href: "https://ieeexplore.ieee.org/document/11537125" }, { label: "Google Scholar ↗", href: "https://scholar.google.com/citations?user=J_m9GIYAAAAJ&hl=en" }] },
     { id: 3, name: "Solar Panel Defect Detection", org: "Oasis Global Energy Technology Software", period: "2025", stack: ["PyTorch", "OpenCV", "CNN", "IR imaging", "EL imaging", "RGB", "Python"], description: "Multi-modal CV pipeline fusing infrared, electroluminescence, and RGB drone imagery.\nCatches micro-cracks, hotspots, and delamination invisible to a standard camera.\nAutomated reporting pipeline turns flagged defects into actionable field maintenance reports.", links: [] },
     { id: 4, name: "Real-time Driver Detection System", org: "Optima Engineering", period: "2024", stack: ["YOLO", "Faster R-CNN", "Python", "edge deployment"], description: "Real-time driver-presence and steering-wheel detection (YOLO, Faster R-CNN) for continuous low-latency edge inference.\nCustom data labeling and augmentation pipeline to handle varied cabin lighting conditions.", links: [] },
+  ],
+  clientSites: [
+    { id: 1, name: "Sapanca Business Group", url: "https://www.sapancabusinessgroup.com/", tag: "Client website", description: "Corporate site for a cross-border consultancy connecting Ethiopia and Türkiye — education, health, and trade services for students, patients, and investors." },
+    { id: 2, name: "ANTSAR Foreign Trade Agency", url: "https://antsartrade.com/", tag: "Client website", description: "Corporate site for a foreign trade agency offering international trade and commerce facilitation services." },
+    { id: 3, name: "SmartPark MQTT", url: "https://smartpark-mqtt.vercel.app/", tag: "Personal project", description: "IoT parking system — an MQTT broker, a React dashboard, and a FastAPI bridge tying live sensor data to a real-time occupancy view." },
+    { id: 4, name: "Tracker.ME", url: "https://trackerme-two.vercel.app", tag: "Personal project", description: "Personal goal and habit tracker — sign in, set objectives, and log progress toward them over time." },
+    { id: 5, name: "UAV Search-and-Rescue Demo", url: "https://uav-sar.vercel.app/", tag: "Research demo", description: "Live front-end for the Hacettepe BAP edge AI research — visualizing thermal UAV search-and-rescue detection." },
+    { id: 6, name: "Stakeholder Mapping Tool", url: "https://stakemapper.ramyfied.me/", tag: "Research demo", description: "Live deployment of the AI Stakeholder Mapping Tool — upload policy documents, get back structured stakeholder reports." },
   ]
 }
 
@@ -121,6 +133,7 @@ function safeMerge(stored: Partial<SiteContent>): SiteContent {
     books: Array.isArray(stored.books) ? stored.books : DEFAULT_CONTENT.books,
     experiences: Array.isArray(stored.experiences) ? stored.experiences : DEFAULT_CONTENT.experiences,
     projects: Array.isArray(stored.projects) ? stored.projects : DEFAULT_CONTENT.projects,
+    clientSites: Array.isArray(stored.clientSites) ? stored.clientSites : DEFAULT_CONTENT.clientSites,
   }
 }
 
@@ -163,9 +176,9 @@ interface Ctx {
   storageMode: 'db' | 'local'
   updateProfile: (p: Partial<SiteContent['profile']>) => void
   updateContact: (c: Partial<SiteContent['contact']>) => void
-  addItem: <T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects', item: Omit<T, 'id'>) => T
-  updateItem: <T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects', id: number, updates: Partial<T>) => void
-  deleteItem: (key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects', id: number) => void
+  addItem: <T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects' | 'clientSites', item: Omit<T, 'id'>) => T
+  updateItem: <T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects' | 'clientSites', id: number, updates: Partial<T>) => void
+  deleteItem: (key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects' | 'clientSites', id: number) => void
   resetToDefaults: () => void
   reloadFromSource: () => Promise<void>
 }
@@ -227,17 +240,17 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateContact = (c: Partial<SiteContent['contact']>) =>
     save({ ...content, contact: { ...content.contact, ...c } })
 
-  function addItem<T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects', item: Omit<T, 'id'>): T {
+  function addItem<T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects' | 'clientSites', item: Omit<T, 'id'>): T {
     const newItem = { ...item, id: Date.now() } as unknown as T
     const list = (content[key] as unknown) as T[]
     save({ ...content, [key]: [newItem, ...list] })
     return newItem
   }
-  function updateItem<T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects', id: number, updates: Partial<T>) {
+  function updateItem<T extends { id: number }>(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects' | 'clientSites', id: number, updates: Partial<T>) {
     const list = (content[key] as unknown) as T[]
     save({ ...content, [key]: list.map(i => i.id === id ? { ...i, ...updates } : i) })
   }
-  function deleteItem(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects', id: number) {
+  function deleteItem(key: 'blogPosts' | 'filmReviews' | 'researchAreas' | 'books' | 'experiences' | 'projects' | 'clientSites', id: number) {
     const list = content[key] as { id: number }[]
     save({ ...content, [key]: list.filter(i => i.id !== id) })
   }

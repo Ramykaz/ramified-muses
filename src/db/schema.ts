@@ -92,3 +92,11 @@ export const projects = pgTable('projects', {
   stack: text('stack').array().notNull(),
   links: jsonb('links').notNull(),
 })
+
+export const clientSites = pgTable('client_sites', {
+  id: bigint('id', { mode: 'number' }).primaryKey(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  description: text('description').notNull(),
+  tag: text('tag').notNull(),
+})
