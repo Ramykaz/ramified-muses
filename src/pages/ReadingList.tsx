@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useContent } from '../hooks/ContentContext'
 import type { Book } from '../hooks/ContentContext'
-import { MarginDoodle, NotebookStamp, BookStackDoodle, CoffeeRingDoodle } from '../components/Doodles'
 
 const STATUS_CLASS: Record<string, string> = {
   'Reading':      'status-reading',
@@ -44,10 +43,7 @@ const ReadingList: React.FC = () => {
 
   return (
     <div className="page page-reading">
-      <MarginDoodle top="160px" side="left" offset="5%" rotate={-7} accent><BookStackDoodle /></MarginDoodle>
-      <MarginDoodle top="560px" side="right" offset="6%" rotate={5}><CoffeeRingDoodle /></MarginDoodle>
       <div className="page-content">
-        <NotebookStamp>ex libris</NotebookStamp>
         <h2 className="section-label">reading</h2>
 
         {books.length === 0 && (

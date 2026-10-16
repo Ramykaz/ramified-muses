@@ -1,6 +1,5 @@
 import React from 'react'
 import { useContent } from '../hooks/ContentContext'
-import { MarginDoodle, NotebookStamp, PinDoodle, BriefcaseDoodle } from '../components/Doodles'
 
 const LOGOS: [string, string][] = [
   ['hacettepe', '/logos/hacettepe.svg'],
@@ -24,10 +23,7 @@ const Experience: React.FC = () => {
 
   return (
     <div className="page page-experience">
-      <MarginDoodle top="170px" side="left" offset="5%" rotate={-5} accent><PinDoodle /></MarginDoodle>
-      <MarginDoodle top="620px" side="right" offset="5%" rotate={7}><BriefcaseDoodle /></MarginDoodle>
       <div className="page-content">
-        <NotebookStamp>logbook</NotebookStamp>
         <h2 className="section-label">experience</h2>
 
         <div className="timeline">

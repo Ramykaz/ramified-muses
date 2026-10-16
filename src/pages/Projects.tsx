@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useContent } from '../hooks/ContentContext'
-import { MarginDoodle, NotebookStamp, GearDoodle, CircuitDoodle, RadarDoodle } from '../components/Doodles'
 
 interface GHRepo {
   id: number
@@ -57,12 +56,8 @@ const Projects: React.FC = () => {
 
   return (
     <div className="page page-projects">
-      <MarginDoodle top="160px" side="left" offset="5%" rotate={-6} accent><GearDoodle /></MarginDoodle>
-      <MarginDoodle top="520px" side="right" offset="5%" rotate={8}><CircuitDoodle /></MarginDoodle>
-      <MarginDoodle top="900px" side="left" offset="6%" rotate={4}><RadarDoodle /></MarginDoodle>
       <div className="page-content">
 
-        <NotebookStamp>lab notebook</NotebookStamp>
         <h2 className="section-label">featured projects</h2>
         <div className="featured-list">
           {featured.map((proj, i) => (

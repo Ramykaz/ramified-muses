@@ -1,6 +1,5 @@
 import React from 'react'
 import { useContent } from '../hooks/ContentContext'
-import { MarginDoodle, NotebookStamp, EnvelopeDoodle, PaperPlaneDoodle } from '../components/Doodles'
 
 const Contact: React.FC = () => {
   const { content } = useContent()
@@ -8,10 +7,7 @@ const Contact: React.FC = () => {
 
   return (
     <div className="page page-contact">
-      <MarginDoodle top="170px" side="left" offset="5%" rotate={-6} accent><EnvelopeDoodle /></MarginDoodle>
-      <MarginDoodle top="480px" side="right" offset="6%" rotate={9}><PaperPlaneDoodle /></MarginDoodle>
       <div className="page-content">
-        <NotebookStamp>transmission</NotebookStamp>
         <h2 className="section-label">contact</h2>
 
         <div className="contact-list">
