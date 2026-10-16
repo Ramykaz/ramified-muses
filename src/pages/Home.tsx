@@ -1,5 +1,6 @@
 import React from 'react'
 import { useContent } from '../hooks/ContentContext'
+import { MarginDoodle, NotebookStamp, CompassDoodle, BulbDoodle } from '../components/Doodles'
 
 const Home: React.FC = () => {
   const { content } = useContent()
@@ -7,7 +8,10 @@ const Home: React.FC = () => {
 
   return (
     <div className="page page-home">
+      <MarginDoodle top="150px" side="left" offset="5%" rotate={-8}><CompassDoodle /></MarginDoodle>
+      <MarginDoodle top="460px" side="right" offset="6%" rotate={6} accent><BulbDoodle /></MarginDoodle>
       <div className="page-content">
+        <NotebookStamp>field notes</NotebookStamp>
         <div className="home-header">
           <div className="home-header-text">
             <h1 className="home-name">{profile.name}</h1>
