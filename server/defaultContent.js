@@ -21,6 +21,12 @@ export const defaultContent = {
       { label: 'email ↗', href: 'mailto:Ramadanshemsu341@gmail.com' },
       { label: 'IEEE paper ↗', href: 'https://ieeexplore.ieee.org/document/11537125' },
     ],
+    // Experience page footer — one line per entry; a trailing [text] renders as a badge
+    experienceFooter: [
+      'B.Sc. Computer Engineering · Hacettepe University · 2022–2027 (expected)',
+      'MENA ML Winter School · Google DeepMind & QCRI · Doha, Qatar · Feb 2025',
+      'Frontier Tech Leaders ML Bootcamp · UNDP ICPSD · Mar–Jun 2024 [Hackathon Winner]',
+    ].join('\n'),
   },
   contact: {
     email: 'Ramadanshemsu341@gmail.com',

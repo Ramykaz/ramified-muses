@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import ThemeToggleChain from './ThemeToggleChain'
-
+import { useTheme } from '../hooks/ThemeContext'
 const NAV_ITEMS = [
   { path: '/projects',     label: 'projects' },
   { path: '/experience',   label: 'experience' },
@@ -14,6 +14,8 @@ const Navigation: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const lightOn = theme === 'day'
   const taps = useRef(0)
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -73,6 +75,15 @@ const Navigation: React.FC = () => {
                 {item.label}
               </Link>
             ))}
+            {/* the bulb retracts once you scroll on mobile, so the spell lives here */}
+            <button
+              type="button"
+              className="nav-mobile-spell"
+              onClick={() => setTheme(lightOn ? 'night' : 'day')}
+              aria-label={lightOn ? 'Turn the light off (night mode)' : 'Turn the light on (day mode)'}
+            >
+              {lightOn ? 'nox' : 'lumos'}
+            </button>
           </div>
         )}
       </nav>

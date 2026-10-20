@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '../src/db/index.js'
 import {
   profile, contact, blogPosts, filmReviews,
@@ -13,9 +13,26 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
+// Columns added after the DB was first created — make sure they exist so
+// selects don't fail on a database that hasn't had `db:push` run yet.
+// Runs once per function instance.
+let schemaReady: Promise<unknown> | null = null
+function ensureSchema() {
+  schemaReady ??= db
+    .execute(sql`ALTER TABLE profile ADD COLUMN IF NOT EXISTS experience_footer text`)
+    .catch(err => { schemaReady = null; throw err })
+  return schemaReady
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (const [k, v] of Object.entries(CORS)) res.setHeader(k, v)
   if (req.method === 'OPTIONS') return res.status(200).end()
+
+  try {
+    await ensureSchema()
+  } catch (err) {
+    console.error('schema check failed:', err)
+  }
 
   if (req.method === 'GET') {
     try {
@@ -47,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           languages: defaultContent.profile.languages,
           studying: defaultContent.profile.studying,
           links: defaultContent.profile.links,
+          experienceFooter: defaultContent.profile.experienceFooter,
         })
         await db.insert(contact).values({
           id: 1,
@@ -179,6 +197,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           languages: profileRow.languages ?? defaultContent.profile.languages,
           studying: profileRow.studying ?? defaultContent.profile.studying,
           links: (profileRow.links as Array<{ label: string; href: string }> | null) ?? defaultContent.profile.links,
+          experienceFooter: profileRow.experienceFooter ?? defaultContent.profile.experienceFooter,
         },
         contact: {
           email: contactRow?.email ?? '',
@@ -221,6 +240,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           languages: data.profile.languages ?? '',
           studying: data.profile.studying ?? '',
           links: data.profile.links ?? [],
+          experienceFooter: data.profile.experienceFooter ?? null,
         }).onConflictDoUpdate({
           target: profile.id,
           set: {
@@ -235,6 +255,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             languages: data.profile.languages ?? '',
             studying: data.profile.studying ?? '',
             links: data.profile.links ?? [],
+            experienceFooter: data.profile.experienceFooter ?? null,
           },
         })
       }

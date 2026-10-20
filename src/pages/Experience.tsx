@@ -1,5 +1,5 @@
 import React from 'react'
-import { useContent } from '../hooks/ContentContext'
+import { useContent, DEFAULT_CONTENT } from '../hooks/ContentContext'
 import { DomainIcon } from '../components/DomainIcons'
 
 const LOGOS: [string, string][] = [
@@ -21,6 +21,8 @@ function getLogo(company: string): string | null {
 const Experience: React.FC = () => {
   const { content } = useContent()
   const experiences = (content?.experiences ?? []).filter(e => e.type === 'work')
+  const footerLines = (content?.profile.experienceFooter ?? DEFAULT_CONTENT.profile.experienceFooter ?? '')
+    .split('\n').map(line => line.trim()).filter(Boolean)
 
   return (
     <div className="page page-experience">
@@ -65,22 +67,23 @@ const Experience: React.FC = () => {
           })}
         </div>
 
-        <hr className="divider" />
+        {footerLines.length > 0 && (
+          <>
+            <hr className="divider" />
 
-        <div className="exp-footer">
-          <p className="exp-footer-text">
-            B.Sc. Computer Engineering · Hacettepe University · 2022–2027 (expected)
-          </p>
-          <p className="exp-footer-text">
-            Türkiye Bursları — Turkish Government Scholarship · full tuition · 2021
-          </p>
-          <p className="exp-footer-text">
-            MENA ML Winter School · Google DeepMind &amp; QCRI · Doha, Qatar · Feb 2025
-          </p>
-          <p className="exp-footer-text">
-            Frontier Tech Leaders ML Bootcamp · UNDP ICPSD · Mar–Jun 2024 <span className="exp-badge">Hackathon Winner</span>
-          </p>
-        </div>
+            <div className="exp-footer">
+              {footerLines.map((line, i) => {
+                // a trailing "[text]" becomes a badge
+                const m = line.match(/^(.*?)\s*\[([^\]]+)\]$/)
+                return (
+                  <p key={i} className="exp-footer-text">
+                    {m ? <>{m[1]} <span className="exp-badge">{m[2]}</span></> : line}
+                  </p>
+                )
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

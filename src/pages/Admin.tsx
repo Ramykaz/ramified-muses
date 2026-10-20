@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import '../styles/admin.css'
-import { useContent } from '../hooks/ContentContext'
+import { useContent, DEFAULT_CONTENT } from '../hooks/ContentContext'
 import type { BlogPost, Book, Experience, FeaturedProject, ClientSite } from '../hooks/ContentContext'
 import BlockEditor from '../components/BlockEditor'
 import type { Block } from '../components/BlockEditor'
@@ -191,6 +191,14 @@ const Admin: React.FC = () => {
             </F>
             <F label="Studying" hint="Shown in the meta section on the home page">
               <Inp value={pf.studying ?? ''} placeholder="B.Sc. Computer Engineering, … (2022–2026)" onChange={e => setPf(f => ({ ...f, studying: e.target.value }))} />
+            </F>
+            <F label="Experience page footer" hint="Education, schools, awards — one line per entry. End a line with [text] to show it as a badge. Leave empty to hide the footer.">
+              <Txt
+                rows={4}
+                value={pf.experienceFooter ?? DEFAULT_CONTENT.profile.experienceFooter ?? ''}
+                placeholder="B.Sc. Computer Engineering · Hacettepe University · 2022–2027"
+                onChange={e => setPf(f => ({ ...f, experienceFooter: e.target.value }))}
+              />
             </F>
             <F label="Home page links" hint="All links shown below the bio. Label and URL for each.">
               {(pf.links ?? []).map((link, i) => (

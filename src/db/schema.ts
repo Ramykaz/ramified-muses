@@ -13,6 +13,7 @@ export const profile = pgTable('profile', {
   languages: text('languages'),
   studying: text('studying'),
   links: jsonb('links'),
+  experienceFooter: text('experience_footer'),
 })
 
 export const contact = pgTable('contact', {
