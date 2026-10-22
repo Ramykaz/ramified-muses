@@ -127,14 +127,21 @@ body {
    fallback (admin). SVG patterns can't read CSS vars, so those carry a
    night-mode copy with light ink. */
 
-/* home — lined notebook paper with an accent margin line */
+/* home — textured watercolor paper: fine fibre grain + a soft accent wash
+   at the top. No lines, so nothing competes with the text. */
 .page-home {
   background-image:
-    linear-gradient(90deg, transparent var(--margin-x, 56px),
-      color-mix(in srgb, var(--accent) 40%, transparent) var(--margin-x, 56px),
-      color-mix(in srgb, var(--accent) 40%, transparent) calc(var(--margin-x, 56px) + 1.5px), transparent calc(var(--margin-x, 56px) + 1.5px)),
-    linear-gradient(transparent 29px, var(--ink) 29px);
-  background-size: 100% 100%, 100% 30px;
+    radial-gradient(ellipse 90% 55% at 50% 0%,
+      color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 180px 180px;
+  background-repeat: no-repeat, repeat;
+}
+:root[data-theme='night'] .page-home {
+  background-image:
+    radial-gradient(ellipse 90% 55% at 50% 0%,
+      color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* projects — engineering paper: fine grid, heavier line every 5 squares */
@@ -1563,9 +1570,6 @@ a.contact-val:hover { text-decoration: underline }
      oversized and "in your face" on a narrow phone screen. */
   .page { padding-top: calc(var(--nav-h) + 2.2rem); padding-bottom: 3rem }
   .page::before { height: 3px }
-  /* keep the notebook margin line clear of the text column */
-  .page-home { --margin-x: 8px }
-
   .section-label { font-size: 10px; padding: 6px 13px; margin-bottom: 1.2rem }
 
   .home-name { font-size: 22px }
