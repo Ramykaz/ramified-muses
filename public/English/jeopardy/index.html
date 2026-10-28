@@ -548,8 +548,9 @@ She teaches children. = a teacher</pre>
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   };
   const K_GAMES = "qb.games.v1", K_MATCH = "qb.match.v1", K_SOUND = "qb.sound.v1", K_TOPICS = "wb.topics.v1";
-  const K_SYNC = "qb.sync.v1", K_DEL = "qb.deleted.v1";
+  const K_SYNC = "qb.sync.v1", K_DEL = "qb.deleted.v1", K_PUB = "qb.public.v1";
   let games = store.get(K_GAMES, []);
+  let publicGames = store.get(K_PUB, []); // games the site owner published, shown to everyone
   let match = store.get(K_MATCH, null);
   let soundOn = store.get(K_SOUND, true);
   let setupGameId = null, teamCount = 2, bTeamCount = 2, editing = null;
@@ -571,7 +572,7 @@ She teaches children. = a teacher</pre>
   const symbolSvg = (name, vb) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", vb); s.setAttribute("aria-hidden", "true"); const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-" + name); s.append(u); return s; };
   const heart = on => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); s.style.color = on ? "#E2725B" : "#E7E2D8"; const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-heart"); s.append(u); return s; };
   const catIcon = (c, i) => c.icon && ICONS.includes(c.icon) ? c.icon : ICONS[i % ICONS.length];
-  const allGames = () => [SAMPLE, ...games];
+  const allGames = () => [SAMPLE, ...games, ...publicGames.filter(p => !games.some(g => g.id === p.id))];
   const findGame = id => allGames().find(g => g.id === id);
   const uid = () => "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const valueOf = (g, r) => (g.values && g.values[r]) || (r + 1) * 100;
@@ -617,15 +618,16 @@ She teaches children. = a teacher</pre>
     for (const g of allGames()) {
       const n = g.categories.reduce((s, c) => s + c.clues.filter(x => x.q.trim()).length, 0);
       list.append(el("article", { class: "card" },
-        g.sample ? el("div", { class: "tag" }, "Example game") : null,
+        g.sample ? el("div", { class: "tag" }, "Example game") : g.pub ? el("div", { class: "tag" }, "Shared game") : g.published ? el("div", { class: "tag", style: "color:var(--teal)" }, "Public: everyone can see it") : null,
         el("h3", {}, g.title || "Untitled game"),
         el("div", { class: "meta" }, `${g.categories.length} categories · ${n} clues`),
         el("div", { class: "chips" }, g.categories.map((c, i) => el("span", { class: "chip", style: `--cc:${CAT_COLORS[i % 6]}` }, c.name || "Category"))),
         el("div", { class: "row" },
           el("button", { class: "btn gold", onclick: () => openSetup(g.id) }, "Play"),
-          el("button", { class: "btn", onclick: () => openEditor(g) }, g.sample ? "Edit a copy" : "Edit"),
-          g.sample ? null : el("button", { class: "btn", onclick: () => { const c = JSON.parse(JSON.stringify(g)); c.id = uid(); c.title = "Copy of " + g.title; c.updatedAt = Date.now(); games.push(c); saveGames(); renderHome(); toast("Copy made"); } }, "Duplicate"),
-          g.sample ? null : el("button", { class: "btn danger", onclick: e => askDelete(e.currentTarget, g) }, "Delete"))));
+          el("button", { class: "btn", onclick: () => openEditor(g) }, g.sample || g.pub ? "Edit a copy" : "Edit"),
+          g.sample || g.pub ? null : el("button", { class: g.published ? "btn" : "btn teal", onclick: () => togglePublish(g) }, g.published ? "Unpublish" : "Publish"),
+          g.sample || g.pub ? null : el("button", { class: "btn", onclick: () => { const c = JSON.parse(JSON.stringify(g)); c.id = uid(); c.title = "Copy of " + g.title; delete c.published; c.updatedAt = Date.now(); games.push(c); saveGames(); renderHome(); toast("Copy made"); } }, "Duplicate"),
+          g.sample || g.pub ? null : el("button", { class: "btn danger", onclick: e => askDelete(e.currentTarget, g) }, "Delete"))));
     }
   }
   function askDelete(btn, g) {
@@ -810,7 +812,7 @@ She teaches children. = a teacher</pre>
   function blankGame(nc = 5, nr = 5) { return { id: uid(), title: "", categories: Array.from({ length: nc }, (_, i) => ({ name: "", icon: ICONS[i % 6], clues: Array.from({ length: nr }, () => ({ q: "", a: "", img: "" })) })), values: Array.from({ length: nr }, (_, i) => (i + 1) * 100) }; }
   function openEditor(g) {
     if (!g) { editing = blankGame(); $("#edEyebrow").textContent = "New game"; }
-    else if (g.sample) { editing = JSON.parse(JSON.stringify(g)); editing.id = uid(); delete editing.sample; editing.title = g.title + " (my copy)"; $("#edEyebrow").textContent = "Copy of the example"; }
+    else if (g.sample || g.pub) { editing = JSON.parse(JSON.stringify(g)); editing.id = uid(); delete editing.sample; delete editing.pub; delete editing.published; editing.title = g.title + " (my copy)"; $("#edEyebrow").textContent = g.sample ? "Copy of the example" : "Copy of a shared game"; }
     else { editing = JSON.parse(JSON.stringify(g)); $("#edEyebrow").textContent = "Edit game"; }
     const rows = Math.max(...editing.categories.map(c => c.clues.length));
     editing.values = editing.values || Array.from({ length: rows }, (_, i) => (i + 1) * 100);
@@ -1070,7 +1072,9 @@ Category: (next category name)
       for (const [id, t] of Object.entries(nowDels)) { if (id in sent && t <= sent[id]) delete nowDels[id]; else { result.delete(id); syncAgain = true; } }
       games = [...result.values()].sort((a, b) => (order.get(a.id) ?? 1e9) - (order.get(b.id) ?? 1e9));
       store.set(K_GAMES, games); store.set(K_DEL, nowDels);
-      store.set(K_SYNC, { ...cfg, last: Date.now() });
+      store.set(K_SYNC, { ...cfg, last: Date.now(), canPublish: j.canPublish !== false });
+      if (j.canPublish === false && payload.some(x => x.data && x.data.published)) toast("Only the website owner's sync code can publish games");
+      loadPublic();
       if (!$("#home").hidden && !document.querySelector("#gameList .confirm")) renderHome();
       paintSync("ok");
     } catch (e) {
@@ -1079,6 +1083,25 @@ Category: (next category name)
       syncing = false;
       if (syncAgain) { syncAgain = false; scheduleSync(300); }
     }
+  }
+  async function loadPublic() {
+    try {
+      const r = await fetch("/api/class-games", { cache: "no-store" }); if (!r.ok) return;
+      const j = await r.json();
+      publicGames = j.games.map(x => ({ ...x.data, id: x.id, updatedAt: x.updatedAt, pub: true }));
+      store.set(K_PUB, publicGames);
+      if (!$("#home").hidden && !document.querySelector("#gameList .confirm")) renderHome();
+    } catch (e) { /* offline: keep the last list we saw */ }
+  }
+  function togglePublish(g) {
+    const cfg = syncCfg();
+    if (!cfg) {
+      toast("Turn on sync first, so the game is saved online");
+      const p = $("#syncer"); p.hidden = false; renderSyncPanel(); p.scrollIntoView({ behavior: "smooth", block: "start" }); return;
+    }
+    if (cfg.canPublish === false) { toast("Only the website owner's sync code can publish games"); return; }
+    g.published = !g.published; g.updatedAt = Date.now(); saveGames(); renderHome();
+    toast(g.published ? "Published: everyone who opens this page can play it" : "Unpublished: only your devices can see it");
   }
   function paintSync(state, msg) {
     if (state) syncState = state; if (msg !== undefined) syncMsg = msg; else if (state) syncMsg = "";
@@ -1114,6 +1137,7 @@ Category: (next category name)
         el("button", { class: "btn", onclick: async () => { try { await navigator.clipboard.writeText(showCode(normCode(cfg.code))); toast("Code copied"); } catch (e) { toast("Write the code down instead"); } } }, "Copy code"),
         el("button", { class: "btn teal", onclick: () => sync() }, "Sync now"),
         el("button", { class: "btn", onclick: () => { store.set(K_SYNC, null); paintSync("off"); toast("Sync is off on this device. Your games are still here."); } }, "Turn off on this device")),
+      el("p", {}, "Want students to play a game on their own phones? Press Publish on it. Anyone who opens this page will see it, but only your code can change it."),
       el("p", {}, "Keep this code to yourself: anyone who has it can see and change your games."));
   }
 
@@ -1225,9 +1249,9 @@ Category: (next category name)
   $("#importToggle").onclick = () => { $("#importer").hidden = !$("#importer").hidden; if (!$("#importer").hidden) { $("#importer").scrollIntoView({ behavior: "smooth", block: "start" }); $("#importText").focus({ preventScroll: true }); } };
   $("#importCancel").onclick = closeImporter;
   $("#syncToggle").onclick = () => { const p = $("#syncer"); p.hidden = !p.hidden; if (!p.hidden) { renderSyncPanel(); p.scrollIntoView({ behavior: "smooth", block: "start" }); } };
-  addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") scheduleSync(100); });
+  addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { scheduleSync(100); if (!syncCfg()) loadPublic(); } });
   addEventListener("online", () => scheduleSync(100));
-  setInterval(() => { if (document.visibilityState === "visible" && !$("#home").hidden) scheduleSync(0); }, 60000);
+  setInterval(() => { if (document.visibilityState === "visible" && !$("#home").hidden) { if (syncCfg()) scheduleSync(0); else loadPublic(); } }, 60000);
   $("#importText").addEventListener("input", () => { clearTimeout(checkPaste.t); checkPaste.t = setTimeout(checkPaste, 200); });
   $("#importBtn").onclick = () => doImport();
   $("#importPlay").onclick = () => doImport("play");
@@ -1239,7 +1263,7 @@ Category: (next category name)
   $("#bBack").onclick = () => { renderHome(); show("home"); };
   addEventListener("resize", () => { const c = $("#confetti"); if (!$("#winner").hidden) { c.width = innerWidth; c.height = innerHeight; } });
 
-  paintSound(); paintSync(); renderHome(); show("home"); scheduleSync(0);
+  paintSound(); paintSync(); renderHome(); show("home"); scheduleSync(0); loadPublic();
 })();
 </script>
 

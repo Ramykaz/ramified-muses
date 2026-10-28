@@ -7,10 +7,14 @@ import { db } from '../src/db/index.js'
 // sync code the teacher types on each device; only a hash of it is stored.
 // Each game is last-write-wins on updatedAt, and deletes are kept as
 // tombstones so they spread to other devices.
+//
+// Games marked `published` are shown to every visitor (GET). Only one code may
+// publish: CLASS_GAMES_OWNER_CODE if set, otherwise the first code that
+// publishes a game claims the site.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
@@ -28,8 +32,19 @@ function ensureSchema() {
       deleted boolean NOT NULL DEFAULT false,
       PRIMARY KEY (owner, id)
     )`)
+    .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS class_games_site (k text PRIMARY KEY, owner text NOT NULL)`))
     .catch(err => { schemaReady = null; throw err })
   return schemaReady
+}
+
+const ownerOf = (code: string) => createHash('sha256').update('class-games:' + code).digest('hex')
+const normCode = (code: unknown) => String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+
+async function getPublisher(): Promise<string | null> {
+  const fixed = normCode(process.env.CLASS_GAMES_OWNER_CODE)
+  if (fixed) return ownerOf(fixed)
+  const r = await db.execute(sql`SELECT owner FROM class_games_site WHERE k = 'publisher'`)
+  return (r.rows[0] as { owner?: string } | undefined)?.owner ?? null
 }
 
 type IncomingGame = { id?: unknown; updatedAt?: unknown; deleted?: unknown; data?: unknown }
@@ -37,10 +52,30 @@ type IncomingGame = { id?: unknown; updatedAt?: unknown; deleted?: unknown; data
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (const [k, v] of Object.entries(CORS)) res.setHeader(k, v)
   if (req.method === 'OPTIONS') return res.status(200).end()
+
+  if (req.method === 'GET') {
+    try {
+      await ensureSchema()
+      const publisher = await getPublisher()
+      if (!publisher) return res.status(200).json({ games: [] })
+      const result = await db.execute(sql`
+        SELECT id, data, updated_at FROM class_games
+        WHERE owner = ${publisher} AND NOT deleted AND data->>'published' = 'true'
+        ORDER BY updated_at`)
+      const games = (result.rows as Array<{ id: string; data: unknown; updated_at: string | number }>)
+        .map(r => ({ id: r.id, data: r.data, updatedAt: Number(r.updated_at) }))
+      res.setHeader('Cache-Control', 'public, s-maxage=5')
+      return res.status(200).json({ games })
+    } catch (err) {
+      console.error('GET /api/class-games failed:', err)
+      return res.status(500).json({ error: 'read failed' })
+    }
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
 
   const body = (req.body ?? {}) as { code?: unknown; games?: unknown }
-  const code = String(body.code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+  const code = normCode(body.code)
   if (code.length < 8 || code.length > 64) return res.status(400).json({ error: 'The sync code must be 8 to 64 letters or numbers.' })
   const incoming = Array.isArray(body.games) ? (body.games as IncomingGame[]) : []
   if (incoming.length > MAX_GAMES * 2) return res.status(400).json({ error: 'Too many games.' })
@@ -60,9 +95,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   if (rows.filter(r => !r.deleted).length > MAX_GAMES) return res.status(400).json({ error: `You can sync up to ${MAX_GAMES} games.` })
 
-  const owner = createHash('sha256').update('class-games:' + code).digest('hex')
+  const owner = ownerOf(code)
   try {
     await ensureSchema()
+    const isPublished = (d: unknown) => !!d && (d as { published?: unknown }).published === true
+    let publisher = await getPublisher()
+    if (!publisher && rows.some(r => isPublished(r.data))) {
+      await db.execute(sql`INSERT INTO class_games_site (k, owner) VALUES ('publisher', ${owner}) ON CONFLICT (k) DO NOTHING`)
+      publisher = await getPublisher()
+    }
+    const canPublish = !publisher || publisher === owner
+    if (!canPublish) for (const r of rows) if (isPublished(r.data)) r.data = { ...(r.data as object), published: false }
     if (rows.length) {
       await db.execute(sql`
         INSERT INTO class_games (owner, id, data, updated_at, deleted)
@@ -77,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       WHERE owner = ${owner} ORDER BY updated_at`)
     const games = (result.rows as Array<{ id: string; data: unknown; updated_at: string | number; deleted: boolean }>)
       .map(r => ({ id: r.id, data: r.data, updatedAt: Number(r.updated_at), deleted: r.deleted }))
-    return res.status(200).json({ games })
+    return res.status(200).json({ games, canPublish })
   } catch (err) {
     console.error('POST /api/class-games failed:', err)
     return res.status(500).json({ error: 'sync failed' })
