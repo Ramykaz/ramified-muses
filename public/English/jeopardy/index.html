@@ -105,6 +105,11 @@ h2 { font: 400 30px/1.15 var(--serif); margin: 0; }
 .card.new .plus { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #fff; font: 800 32px/1 var(--sans); }
 .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--red); font-weight: 600; }
 .importer { display: grid; gap: 12px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
+.sync-code { font: 700 clamp(24px, 5vw, 34px)/1.1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .08em; color: var(--teal); overflow-wrap: anywhere; }
+.sync-in { display: flex; gap: 8px; flex-wrap: wrap; }
+.sync-in input { flex: 1 1 200px; text-transform: uppercase; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+#syncToggle.on { border-color: var(--teal); color: var(--teal); }
+#syncToggle.err { border-color: var(--red); color: var(--red); }
 .importer h3 { font: 400 23px/1.15 var(--serif); margin: 0; }
 .importer p { margin: 0; color: var(--muted); font-size: 14.5px; }
 #importText { font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; min-height: 220px; }
@@ -345,7 +350,11 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
 
       <div class="section-head" id="quizList">
         <h2>Quiz Board games</h2>
-        <button class="btn" id="importToggle">Paste a game</button>
+        <div class="tools"><button class="btn" id="syncToggle">Sync: off</button><button class="btn" id="importToggle">Paste a game</button></div>
+      </div>
+      <div class="importer" id="syncer" hidden>
+        <h3>Your games on every device</h3>
+        <div id="syncBody" style="display:grid;gap:12px"></div>
       </div>
       <div class="importer" id="importer" hidden>
         <h3>Paste a whole game</h3>
@@ -539,6 +548,7 @@ She teaches children. = a teacher</pre>
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   };
   const K_GAMES = "qb.games.v1", K_MATCH = "qb.match.v1", K_SOUND = "qb.sound.v1", K_TOPICS = "wb.topics.v1";
+  const K_SYNC = "qb.sync.v1", K_DEL = "qb.deleted.v1";
   let games = store.get(K_GAMES, []);
   let match = store.get(K_MATCH, null);
   let soundOn = store.get(K_SOUND, true);
@@ -614,13 +624,13 @@ She teaches children. = a teacher</pre>
         el("div", { class: "row" },
           el("button", { class: "btn gold", onclick: () => openSetup(g.id) }, "Play"),
           el("button", { class: "btn", onclick: () => openEditor(g) }, g.sample ? "Edit a copy" : "Edit"),
-          g.sample ? null : el("button", { class: "btn", onclick: () => { const c = JSON.parse(JSON.stringify(g)); c.id = uid(); c.title = "Copy of " + g.title; games.push(c); store.set(K_GAMES, games); renderHome(); toast("Copy made"); } }, "Duplicate"),
+          g.sample ? null : el("button", { class: "btn", onclick: () => { const c = JSON.parse(JSON.stringify(g)); c.id = uid(); c.title = "Copy of " + g.title; c.updatedAt = Date.now(); games.push(c); saveGames(); renderHome(); toast("Copy made"); } }, "Duplicate"),
           g.sample ? null : el("button", { class: "btn danger", onclick: e => askDelete(e.currentTarget, g) }, "Delete"))));
     }
   }
   function askDelete(btn, g) {
     btn.parentElement.replaceWith(el("div", { class: "confirm" }, "Delete this game?",
-      el("button", { class: "btn danger", onclick: () => { games = games.filter(x => x.id !== g.id); store.set(K_GAMES, games); if (match && match.gameId === g.id) { match = null; store.set(K_MATCH, null); } renderHome(); toast("Game deleted"); } }, "Yes, delete"),
+      el("button", { class: "btn danger", onclick: () => { games = games.filter(x => x.id !== g.id); const dels = store.get(K_DEL, {}); dels[g.id] = Date.now(); store.set(K_DEL, dels); saveGames(); if (match && match.gameId === g.id) { match = null; store.set(K_MATCH, null); } renderHome(); toast("Game deleted"); } }, "Yes, delete"),
       el("button", { class: "btn", onclick: () => renderHome() }, "Keep it")));
   }
 
@@ -847,8 +857,9 @@ She teaches children. = a teacher</pre>
     if (!editing.title) { $("#edTitle").focus(); toast("Give your game a title first"); return; }
     if (!editing.categories.some(c => c.clues.some(x => x.q.trim()))) { toast("Write at least one clue"); return; }
     editing.categories.forEach((c, i) => { if (!c.name) c.name = `Category ${i + 1}`; });
+    editing.updatedAt = Date.now();
     const i = games.findIndex(g => g.id === editing.id); if (i >= 0) games[i] = editing; else games.push(editing);
-    const ok = store.set(K_GAMES, games);
+    const ok = saveGames();
     if (match && match.gameId === editing.id) { match = null; store.set(K_MATCH, null); }
     toast(ok ? "Game saved" : "Saved for now, but this browser can't keep it after closing");
     if (play) openSetup(editing.id); else { renderHome(); show("home"); }
@@ -1015,15 +1026,95 @@ Category: (next category name)
   function closeImporter() { $("#importer").hidden = true; $("#importText").value = ""; checkPaste(); }
   function doImport(then) {
     checkPaste(); if (!pasted) { toast("Fix the text first"); return; }
-    const g = { ...pasted, id: uid() };
+    const g = { ...pasted, id: uid(), updatedAt: Date.now() };
     if (then === "edit") { closeImporter(); openEditor(g); $("#edEyebrow").textContent = "Pasted game: check it, then save"; return; }
-    games.push(g); const ok = store.set(K_GAMES, games); closeImporter(); renderHome();
+    games.push(g); const ok = saveGames(); closeImporter(); renderHome();
     toast(ok ? "Game created" : "Created for now, but this browser can't keep it after closing");
     if (then === "play") openSetup(g.id);
   }
   async function copyPrompt() {
     try { await navigator.clipboard.writeText(AI_PROMPT); toast("Prompt copied. Add your topic, then paste it into ChatGPT."); }
     catch (e) { $("#importText").value = AI_PROMPT; checkPaste(); $("#importText").select(); toast("Copy this prompt, then clear the box"); }
+  }
+
+  /* ================= sync across devices ================= */
+  // Games live in this browser and, when a sync code is set, also in the site's
+  // database under that code, so every device with the same code sees them.
+  let syncing = false, syncAgain = false, syncState = "off", syncMsg = "";
+  const syncCfg = () => store.get(K_SYNC, null);
+  const normCode = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const showCode = c => c.match(/.{1,4}/g).join("-");
+  function saveGames() { const ok = store.set(K_GAMES, games); scheduleSync(); return ok; }
+  function scheduleSync(ms = 800) { if (!syncCfg()) return; clearTimeout(scheduleSync.t); scheduleSync.t = setTimeout(sync, ms); }
+  function newCode() {
+    const abc = "ABCDEFGHJKMNPQRSTUVWXYZ23456789", r = new Uint32Array(12); crypto.getRandomValues(r);
+    return [...r].map(n => abc[n % abc.length]).join("");
+  }
+  async function sync() {
+    const cfg = syncCfg(); if (!cfg) return;
+    if (syncing) { syncAgain = true; return; }
+    syncing = true; paintSync("busy");
+    const dels = store.get(K_DEL, {}), sent = {};
+    const payload = games.map(g => { g.updatedAt = g.updatedAt || 1; sent[g.id] = g.updatedAt; return { id: g.id, updatedAt: g.updatedAt, deleted: false, data: g }; })
+      .concat(Object.entries(dels).map(([id, t]) => { sent[id] = t; return { id, updatedAt: t, deleted: true }; }));
+    try {
+      const r = await fetch("/api/class-games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: cfg.code, games: payload }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw { told: j.error };
+      if (normCode((syncCfg() || {}).code) !== normCode(cfg.code)) return; // sync was turned off meanwhile
+      const order = new Map(games.map((g, i) => [g.id, i]));
+      const result = new Map(j.games.filter(x => !x.deleted && x.data).map(x => [x.id, { ...x.data, id: x.id, updatedAt: x.updatedAt }]));
+      // keep anything changed here while the request was on its way
+      const nowDels = store.get(K_DEL, {});
+      for (const g of games) if (!(g.id in sent) || g.updatedAt > sent[g.id]) { result.set(g.id, g); syncAgain = true; }
+      for (const [id, t] of Object.entries(nowDels)) { if (id in sent && t <= sent[id]) delete nowDels[id]; else { result.delete(id); syncAgain = true; } }
+      games = [...result.values()].sort((a, b) => (order.get(a.id) ?? 1e9) - (order.get(b.id) ?? 1e9));
+      store.set(K_GAMES, games); store.set(K_DEL, nowDels);
+      store.set(K_SYNC, { ...cfg, last: Date.now() });
+      if (!$("#home").hidden && !document.querySelector("#gameList .confirm")) renderHome();
+      paintSync("ok");
+    } catch (e) {
+      paintSync("err", (e && e.told) || "Couldn't reach the sync server. Your games are safe on this device and will sync later.");
+    } finally {
+      syncing = false;
+      if (syncAgain) { syncAgain = false; scheduleSync(300); }
+    }
+  }
+  function paintSync(state, msg) {
+    if (state) syncState = state; if (msg !== undefined) syncMsg = msg; else if (state) syncMsg = "";
+    const b = $("#syncToggle"), on = !!syncCfg();
+    b.textContent = !on ? "Sync: off" : syncState === "busy" ? "Syncing…" : syncState === "err" ? "Sync: not synced" : "Sync: on ✓";
+    b.className = "btn" + (on ? (syncState === "err" ? " err" : " on") : "");
+    if (!$("#syncer").hidden) renderSyncPanel();
+  }
+  function ago(t) { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? "just now" : s < 3600 ? Math.round(s / 60) + " min ago" : s < 86400 ? Math.round(s / 3600) + " h ago" : new Date(t).toLocaleDateString(); }
+  function connect(code) {
+    code = normCode(code);
+    if (code.length < 8) { toast("A sync code has at least 8 letters or numbers"); return; }
+    store.set(K_SYNC, { code }); paintSync("busy"); sync();
+  }
+  function renderSyncPanel() {
+    const box = $("#syncBody"), cfg = syncCfg();
+    if (!cfg) {
+      const inp = el("input", { type: "text", id: "syncCodeIn", placeholder: "e.g. K7QM-2XPA-R9TD", autocomplete: "off", spellcheck: "false", "aria-label": "Sync code", onkeydown: e => { if (e.key === "Enter") connect(inp.value); } });
+      box.replaceChildren(
+        el("p", {}, "Right now your games are saved only in this browser. Turn on sync to see the same games on your phone, laptop and the classroom computer."),
+        el("div", { class: "row" }, el("button", { class: "btn gold", onclick: () => connect(newCode()) }, "Make a sync code")),
+        el("label", { class: "f", for: "syncCodeIn" }, "Already made a code on another device? Type it here:"),
+        el("div", { class: "sync-in" }, inp, el("button", { class: "btn teal", onclick: () => connect(inp.value) }, "Connect")),
+        el("p", {}, "Games already on this device are added to your synced games, nothing is lost."));
+      return;
+    }
+    const status = syncState === "busy" ? "Syncing…" : syncState === "err" ? syncMsg : cfg.last ? "Synced " + ago(cfg.last) + "." : "";
+    box.replaceChildren(
+      el("p", {}, "Sync is on. Type this code on your other devices (Sync, then Connect):"),
+      el("div", { class: "sync-code" }, showCode(normCode(cfg.code))),
+      el("div", { class: "imp-status " + (syncState === "err" ? "is-bad" : "is-ok") }, status),
+      el("div", { class: "row" },
+        el("button", { class: "btn", onclick: async () => { try { await navigator.clipboard.writeText(showCode(normCode(cfg.code))); toast("Code copied"); } catch (e) { toast("Write the code down instead"); } } }, "Copy code"),
+        el("button", { class: "btn teal", onclick: () => sync() }, "Sync now"),
+        el("button", { class: "btn", onclick: () => { store.set(K_SYNC, null); paintSync("off"); toast("Sync is off on this device. Your games are still here."); } }, "Turn off on this device")),
+      el("p", {}, "Keep this code to yourself: anyone who has it can see and change your games."));
   }
 
   /* ================= word bomb ================= */
@@ -1133,6 +1224,10 @@ Category: (next category name)
   $("#edCopy").onclick = copyEditor;
   $("#importToggle").onclick = () => { $("#importer").hidden = !$("#importer").hidden; if (!$("#importer").hidden) { $("#importer").scrollIntoView({ behavior: "smooth", block: "start" }); $("#importText").focus({ preventScroll: true }); } };
   $("#importCancel").onclick = closeImporter;
+  $("#syncToggle").onclick = () => { const p = $("#syncer"); p.hidden = !p.hidden; if (!p.hidden) { renderSyncPanel(); p.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+  addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") scheduleSync(100); });
+  addEventListener("online", () => scheduleSync(100));
+  setInterval(() => { if (document.visibilityState === "visible" && !$("#home").hidden) scheduleSync(0); }, 60000);
   $("#importText").addEventListener("input", () => { clearTimeout(checkPaste.t); checkPaste.t = setTimeout(checkPaste, 200); });
   $("#importBtn").onclick = () => doImport();
   $("#importPlay").onclick = () => doImport("play");
@@ -1144,7 +1239,7 @@ Category: (next category name)
   $("#bBack").onclick = () => { renderHome(); show("home"); };
   addEventListener("resize", () => { const c = $("#confetti"); if (!$("#winner").hidden) { c.width = innerWidth; c.height = innerHeight; } });
 
-  paintSound(); renderHome(); show("home");
+  paintSound(); paintSync(); renderHome(); show("home"); scheduleSync(0);
 })();
 </script>
 
