@@ -1,23 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createHash } from 'node:crypto'
 import { sql } from 'drizzle-orm'
 import { db } from '../src/db/index.js'
 
-// Sync for the Class Games page (/English/jeopardy). Games are grouped by a
-// sync code the teacher types on each device; only a hash of it is stored.
-// Each game is last-write-wins on updatedAt, and deletes are kept as
-// tombstones so they spread to other devices.
-//
-// Games marked `published` are shown to every visitor (GET). Only one code may
-// publish: CLASS_GAMES_OWNER_CODE if set, otherwise the first code that
-// publishes a game claims the site.
+// Online storage for the Class Games page (/English/jeopardy). The site has one
+// shared game library, so every device sees the same games. The page sends all
+// its games on each sync; each game is last-write-wins on updatedAt, and
+// deletes are kept as tombstones so they spread to other devices.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
 
+const OWNER = 'site'
 const MAX_GAMES = 300
 const MAX_GAME_BYTES = 100_000
 
@@ -32,19 +28,13 @@ function ensureSchema() {
       deleted boolean NOT NULL DEFAULT false,
       PRIMARY KEY (owner, id)
     )`)
-    .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS class_games_site (k text PRIMARY KEY, owner text NOT NULL)`))
+    // games saved under the old per-code libraries join the shared one
+    .then(() => db.execute(sql`
+      INSERT INTO class_games (owner, id, data, updated_at, deleted)
+      SELECT ${OWNER}, id, data, updated_at, deleted FROM class_games WHERE owner <> ${OWNER}
+      ON CONFLICT (owner, id) DO NOTHING`))
     .catch(err => { schemaReady = null; throw err })
   return schemaReady
-}
-
-const ownerOf = (code: string) => createHash('sha256').update('class-games:' + code).digest('hex')
-const normCode = (code: unknown) => String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
-
-async function getPublisher(): Promise<string | null> {
-  const fixed = normCode(process.env.CLASS_GAMES_OWNER_CODE)
-  if (fixed) return ownerOf(fixed)
-  const r = await db.execute(sql`SELECT owner FROM class_games_site WHERE k = 'publisher'`)
-  return (r.rows[0] as { owner?: string } | undefined)?.owner ?? null
 }
 
 type IncomingGame = { id?: unknown; updatedAt?: unknown; deleted?: unknown; data?: unknown }
@@ -52,31 +42,9 @@ type IncomingGame = { id?: unknown; updatedAt?: unknown; deleted?: unknown; data
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (const [k, v] of Object.entries(CORS)) res.setHeader(k, v)
   if (req.method === 'OPTIONS') return res.status(200).end()
-
-  if (req.method === 'GET') {
-    try {
-      await ensureSchema()
-      const publisher = await getPublisher()
-      if (!publisher) return res.status(200).json({ games: [] })
-      const result = await db.execute(sql`
-        SELECT id, data, updated_at FROM class_games
-        WHERE owner = ${publisher} AND NOT deleted AND data->>'published' = 'true'
-        ORDER BY updated_at`)
-      const games = (result.rows as Array<{ id: string; data: unknown; updated_at: string | number }>)
-        .map(r => ({ id: r.id, data: r.data, updatedAt: Number(r.updated_at) }))
-      res.setHeader('Cache-Control', 'public, s-maxage=5')
-      return res.status(200).json({ games })
-    } catch (err) {
-      console.error('GET /api/class-games failed:', err)
-      return res.status(500).json({ error: 'read failed' })
-    }
-  }
-
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
 
-  const body = (req.body ?? {}) as { code?: unknown; games?: unknown }
-  const code = normCode(body.code)
-  if (code.length < 8 || code.length > 64) return res.status(400).json({ error: 'The sync code must be 8 to 64 letters or numbers.' })
+  const body = (req.body ?? {}) as { games?: unknown }
   const incoming = Array.isArray(body.games) ? (body.games as IncomingGame[]) : []
   if (incoming.length > MAX_GAMES * 2) return res.status(400).json({ error: 'Too many games.' })
 
@@ -90,26 +58,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const deleted = g.deleted === true
     const data = deleted ? null : g.data
     if (!deleted && (!data || typeof data !== 'object')) continue
-    if (data && JSON.stringify(data).length > MAX_GAME_BYTES) return res.status(400).json({ error: 'One of the games is too big to sync.' })
+    if (data && JSON.stringify(data).length > MAX_GAME_BYTES) return res.status(400).json({ error: 'One of the games is too big to save online.' })
     rows.push({ id, updated_at: updatedAt, deleted, data })
   }
-  if (rows.filter(r => !r.deleted).length > MAX_GAMES) return res.status(400).json({ error: `You can sync up to ${MAX_GAMES} games.` })
+  if (rows.filter(r => !r.deleted).length > MAX_GAMES) return res.status(400).json({ error: `You can save up to ${MAX_GAMES} games online.` })
 
-  const owner = ownerOf(code)
   try {
     await ensureSchema()
-    const isPublished = (d: unknown) => !!d && (d as { published?: unknown }).published === true
-    let publisher = await getPublisher()
-    if (!publisher && rows.some(r => isPublished(r.data))) {
-      await db.execute(sql`INSERT INTO class_games_site (k, owner) VALUES ('publisher', ${owner}) ON CONFLICT (k) DO NOTHING`)
-      publisher = await getPublisher()
-    }
-    const canPublish = !publisher || publisher === owner
-    if (!canPublish) for (const r of rows) if (isPublished(r.data)) r.data = { ...(r.data as object), published: false }
     if (rows.length) {
       await db.execute(sql`
         INSERT INTO class_games (owner, id, data, updated_at, deleted)
-        SELECT ${owner}, x.id, x.data, x.updated_at, x.deleted
+        SELECT ${OWNER}, x.id, x.data, x.updated_at, x.deleted
         FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS x(id text, data jsonb, updated_at bigint, deleted boolean)
         ON CONFLICT (owner, id) DO UPDATE
           SET data = excluded.data, updated_at = excluded.updated_at, deleted = excluded.deleted
@@ -117,12 +76,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const result = await db.execute(sql`
       SELECT id, data, updated_at, deleted FROM class_games
-      WHERE owner = ${owner} ORDER BY updated_at`)
+      WHERE owner = ${OWNER} ORDER BY updated_at`)
     const games = (result.rows as Array<{ id: string; data: unknown; updated_at: string | number; deleted: boolean }>)
       .map(r => ({ id: r.id, data: r.data, updatedAt: Number(r.updated_at), deleted: r.deleted }))
-    return res.status(200).json({ games, canPublish })
+    return res.status(200).json({ games })
   } catch (err) {
     console.error('POST /api/class-games failed:', err)
-    return res.status(500).json({ error: 'sync failed' })
+    return res.status(500).json({ error: 'save failed' })
   }
 }
