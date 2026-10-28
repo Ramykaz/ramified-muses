@@ -104,7 +104,18 @@ h2 { font: 400 30px/1.15 var(--serif); margin: 0; }
 .card.new { border: 2px dashed var(--gold); background: rgba(201,168,76,.06); place-items: center; text-align: center; min-height: 200px; box-shadow: none; }
 .card.new .plus { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #fff; font: 800 32px/1 var(--sans); }
 .confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--red); font-weight: 600; }
-.importer { display: grid; gap: 10px; padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin-bottom: 18px; }
+.importer { display: grid; gap: 12px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
+.importer h3 { font: 400 23px/1.15 var(--serif); margin: 0; }
+.importer p { margin: 0; color: var(--muted); font-size: 14.5px; }
+#importText { font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; min-height: 220px; }
+.imp-status { font-size: 14.5px; font-weight: 700; color: var(--muted); display: grid; gap: 8px; }
+.imp-status.is-ok { color: var(--teal); }
+.imp-status.is-bad { color: var(--red); }
+.imp-status .warn { font-weight: 600; color: var(--muted); }
+.importer .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.importer details { font-size: 14.5px; color: var(--muted); }
+.importer summary { cursor: pointer; font-weight: 700; color: var(--teal); }
+.importer pre { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; overflow-x: auto; font-size: 13px; margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* forms */
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 26px; display: grid; gap: 20px; max-width: 780px; margin: 18px auto 50px; box-shadow: var(--shadow); }
@@ -331,12 +342,42 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
 
       <div class="section-head" id="quizList">
         <h2>Quiz Board games</h2>
-        <button class="btn" id="importToggle">Import a game</button>
+        <button class="btn" id="importToggle">Paste a game</button>
       </div>
       <div class="importer" id="importer" hidden>
-        <label class="f" for="importText">Paste the game text you copied from the editor</label>
-        <textarea id="importText" rows="5" placeholder='{"title": "...", "categories": [...]}'></textarea>
-        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn teal" id="importBtn">Import</button><button class="btn" id="importCancel">Cancel</button></div>
+        <h3>Paste a whole game</h3>
+        <p>Paste all your categories, clues and answers at once. Simple text or JSON both work. You can also copy the AI prompt, ask ChatGPT for a game, and paste its answer here.</p>
+        <label class="f" for="importText">Your game</label>
+        <textarea id="importText" rows="12" spellcheck="false" placeholder="Title: Unit 3 Review&#10;&#10;Category: Jobs&#10;He works in a hospital. = a doctor&#10;She teaches children. = a teacher&#10;&#10;Category: Food&#10;It's yellow and monkeys love it. = a banana"></textarea>
+        <div class="imp-status" id="importStatus" aria-live="polite"></div>
+        <div class="row">
+          <button class="btn gold" id="importPlay" disabled>Create and play</button>
+          <button class="btn teal" id="importBtn" disabled>Create game</button>
+          <button class="btn" id="importEdit" disabled>Check it in the editor</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="importExample">Fill with an example</button>
+          <button class="btn" id="importPrompt">Copy AI prompt</button>
+          <button class="btn" id="importCancel">Cancel</button>
+        </div>
+        <details>
+          <summary>What can I paste?</summary>
+          <p style="margin-top:8px"><b>Simple text.</b> A <code>Title:</code> line, then a <code>Category:</code> line before each group of clues. Write each clue as <code>clue = answer</code> (a <code>|</code> or a tab also works). Clues go from easiest to hardest.</p>
+          <pre>Title: Unit 3 Review
+Points: 100, 200, 300, 400, 500
+
+Category: Jobs
+He works in a hospital. = a doctor
+She teaches children. = a teacher</pre>
+          <p>You can also write <code>Q: clue</code> on one line and <code>A: answer</code> on the next.</p>
+          <p style="margin-top:8px"><b>JSON.</b> The text from "Copy game text" in the editor, or any JSON like this:</p>
+          <pre>{"title": "Unit 3 Review",
+ "categories": [
+  {"name": "Jobs", "clues": [
+   {"q": "He works in a hospital.", "a": "a doctor"},
+   ["She teaches children.", "a teacher"]]}]}</pre>
+          <p>Up to 6 categories and 6 clues in each.</p>
+        </details>
       </div>
       <div class="games" id="gameList"></div>
     </section>
@@ -382,8 +423,8 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
       <div class="ed-head"><div class="eyebrow" id="edEyebrow">New game</div><h2 style="margin-top:4px">Build your Quiz Board</h2></div>
       <div class="ed-settings">
         <label class="f" for="edTitle">Game title<input type="text" id="edTitle" placeholder="e.g. Unit 1: Jobs and Routines"></label>
-        <label class="f" for="edCats">Categories<select id="edCats"><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
-        <label class="f" for="edRows">Clues per category<select id="edRows"><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
+        <label class="f" for="edCats">Categories<select id="edCats"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
+        <label class="f" for="edRows">Clues per category<select id="edRows"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
       </div>
       <div class="ed-cats" id="edCatsBox"></div>
       <div class="ed-foot">
@@ -558,6 +599,8 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
     const list = $("#gameList"); list.replaceChildren();
     list.append(el("button", { class: "card new", onclick: () => openEditor(null) },
       el("div", { class: "plus" }, "+"), el("h3", {}, "Create a new Quiz Board"), el("div", { class: "meta" }, "Your categories, clues and answers")));
+    list.append(el("button", { class: "card new", onclick: () => { if ($("#importer").hidden) $("#importToggle").click(); else $("#importText").focus(); } },
+      el("div", { class: "plus", style: "font-size:22px" }, "{ }"), el("h3", {}, "Paste a whole game"), el("div", { class: "meta" }, "Paste all the clues at once, or use an AI prompt")));
     for (const g of allGames()) {
       const n = g.categories.reduce((s, c) => s + c.clues.filter(x => x.q.trim()).length, 0);
       list.append(el("article", { class: "card" },
@@ -794,17 +837,175 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
   }
   async function copyEditor() {
     readEditor(); const { id, ...rest } = editing; const text = JSON.stringify(rest, null, 1);
-    try { await navigator.clipboard.writeText(text); toast("Game text copied. Paste it into Import on another device."); }
+    try { await navigator.clipboard.writeText(text); toast("Game text copied. Use Paste a game on another device."); }
     catch (e) { const ta = el("textarea", { rows: 6, "aria-label": "Game text", style: "margin-top:8px" }, text); $("#edNote").replaceChildren("Select this text and copy it:", ta); ta.focus(); ta.select(); }
   }
-  function doImport() {
+  /* ================= paste a game ================= */
+  const EXAMPLE_TEXT = `Title: Daily Life Review
+Points: 100, 200, 300, 400, 500
+
+Category: Jobs
+He works in a hospital and helps sick people. = a doctor
+She teaches children at school. = a teacher
+He cooks food in a restaurant. = a chef
+She flies planes. = a pilot
+He fixes cars. = a mechanic
+
+Category: Daily Routines
+You do this with a toothbrush. = brush your teeth
+You do this in the shower. = have a shower / wash
+The first meal of the day. = breakfast
+You do this at night in bed. = sleep
+You do this when the alarm rings. = wake up / get up
+
+Category: Food
+It's yellow and monkeys love it. = a banana
+Turkish breakfast bread with sesame seeds. = simit
+You drink it from a small tulip glass. = tea (çay)
+It's white and comes from a cow. = milk
+Italian food with cheese and tomato. = pizza`;
+  const AI_PROMPT = `Make a Jeopardy-style quiz game for my English class.
+Topic: [WRITE YOUR TOPIC]
+Level: [e.g. A2]
+Make 5 categories with 5 clues each. In each category, put the clues from easiest to hardest. Keep the clues short and use simple English.
+
+Reply with ONLY the game in exactly this format, nothing else:
+
+Title: (game title)
+
+Category: (category name)
+(clue) = (answer)
+(clue) = (answer)
+(clue) = (answer)
+(clue) = (answer)
+(clue) = (answer)
+
+Category: (next category name)
+...`;
+
+  const str = v => v == null ? "" : String(v).trim();
+  // turn any reasonable JSON shape into a game
+  function gameFromJson(o) {
+    if (Array.isArray(o)) o = { categories: o };
+    if (!o || typeof o !== "object") throw "That JSON doesn't look like a game.";
+    let cats = o.categories || o.board || o.cats || o.topics;
+    if (cats && !Array.isArray(cats) && typeof cats === "object") cats = Object.entries(cats).map(([name, clues]) => ({ name, clues }));
+    if (!Array.isArray(cats)) throw "The JSON needs a \"categories\" list.";
+    const clue = x => {
+      if (Array.isArray(x)) return { q: str(x[0]), a: str(x[1]), img: str(x[2]) };
+      if (typeof x === "string") { const m = splitClue(x); return m ? { q: m[0], a: m[1], img: "" } : { q: str(x), a: "", img: "" }; }
+      x = x || {};
+      return { q: str(x.q ?? x.question ?? x.clue ?? x.prompt), a: str(x.a ?? x.answer ?? x.response), img: str(x.img ?? x.image ?? x.picture), pts: parseInt(x.value ?? x.points, 10) };
+    };
+    const g = {
+      title: str(o.title || o.name) || "Pasted game",
+      categories: cats.map(c => Array.isArray(c) ? { name: "", clues: c } : (c || {})).map(c => ({ name: str(c.name ?? c.category ?? c.title), icon: c.icon, clues: (c.clues || c.questions || c.items || []).map(clue) })),
+      values: Array.isArray(o.values || o.points) ? (o.values || o.points).map(v => parseInt(v, 10)) : null
+    };
+    if (!g.values) { const p = (g.categories[0] || { clues: [] }).clues.map(x => x.pts); if (p.length && p.every(v => v > 0)) g.values = p; }
+    return g;
+  }
+  // "clue = answer", "clue | answer", "clue<TAB>answer", optional "200 | clue | answer"
+  function splitClue(line) {
+    let parts = null;
+    if (line.includes("\t")) parts = line.split("\t");
+    else if (line.includes("|")) parts = line.split("|");
+    else for (const sep of [" => ", " -> ", " = ", "="]) { const i = line.indexOf(sep); if (i > 0) { parts = [line.slice(0, i), line.slice(i + sep.length)]; break; } }
+    if (!parts) return null;
+    parts = parts.map(x => x.trim());
+    if (parts.length >= 3 && /^\d+$/.test(parts[0])) return [parts[1], parts.slice(2).join(" | "), +parts[0]];
+    return [parts[0], parts.slice(1).join(" | ")];
+  }
+  function gameFromText(text) {
+    const g = { title: "", categories: [], values: null }; let cat = null, pendingQ = null;
+    const addClue = (q, a, pts) => { if (!cat) { cat = { name: "", clues: [] }; g.categories.push(cat); } cat.clues.push({ q: str(q), a: str(a), img: "", pts }); };
+    for (let raw of text.split(/\r?\n/)) {
+      let line = raw.trim(); if (!line) continue;
+      let m;
+      if ((m = line.match(/^(?:title|game|name)\s*:\s*(.+)$/i))) { g.title = m[1].trim(); continue; }
+      if ((m = line.match(/^(?:points|values)\s*:\s*(.+)$/i))) { g.values = m[1].split(/[\s,;]+/).map(v => parseInt(v, 10)).filter(v => v > 0); continue; }
+      if ((m = line.match(/^(?:category|cat|topic)\s*\d*\s*[:.\-]\s*(.+)$/i)) || (m = line.match(/^#+\s*(.+)$/)) || (m = line.match(/^\[(.+)\]$/))) {
+        if (pendingQ != null) { addClue(pendingQ, ""); pendingQ = null; }
+        cat = { name: m[1].replace(/:$/, "").trim(), clues: [] }; g.categories.push(cat); continue;
+      }
+      if ((m = line.match(/^(?:q|question|clue)\s*\d*\s*[:.)]\s*(.+)$/i))) { if (pendingQ != null) addClue(pendingQ, ""); pendingQ = m[1]; continue; }
+      if ((m = line.match(/^(?:a|answer)\s*\d*\s*[:.)]\s*(.*)$/i))) { addClue(pendingQ ?? "", m[1]); pendingQ = null; continue; }
+      line = line.replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, "");
+      const parts = splitClue(line);
+      if (parts) { if (pendingQ != null) { addClue(pendingQ, ""); pendingQ = null; } addClue(parts[0], parts[1], parts[2]); continue; }
+      if (/\?$/.test(line)) { if (pendingQ != null) addClue(pendingQ, ""); pendingQ = line; continue; }
+      // a line with no answer: a category name (e.g. "Jobs" or "Jobs:")
+      if (pendingQ != null) { addClue(pendingQ, ""); pendingQ = null; }
+      cat = { name: line.replace(/:$/, "").trim(), clues: [] }; g.categories.push(cat);
+    }
+    if (pendingQ != null) addClue(pendingQ, "");
+    g.title = g.title || "Pasted game";
+    if (!g.values) { const p = (g.categories[0] || { clues: [] }).clues.map(x => x.pts); if (p.length && p.every(v => v > 0)) g.values = p; }
+    return g;
+  }
+  // returns { game, warnings } or throws a message for the teacher
+  function parseGame(text) {
+    text = text.trim().replace(/^```[a-z]*\s*\n?/i, "").replace(/\n?```\s*$/, "").trim();
+    if (!text) throw "";
+    let g;
+    if (/^[\[{]/.test(text)) {
+      let o;
+      try { o = JSON.parse(text); }
+      catch (e) {
+        try { o = JSON.parse(text.replace(/[“”]/g, '"').replace(/,\s*([\]}])/g, "$1")); }
+        catch (e2) { throw "This looks like JSON but it has a mistake in it (" + e.message.replace(/^JSON\.parse: |^Unexpected /, "") + "). Check the commas and quotes."; }
+      }
+      g = gameFromJson(o);
+    } else g = gameFromText(text);
+    const warnings = [];
+    g.categories = g.categories.filter(c => c.clues.some(x => x.q));
+    if (!g.categories.length) throw "I couldn't find any clues. Write each clue as \"clue = answer\" under a \"Category:\" line.";
+    if (g.categories.length > 6) { warnings.push(`Only the first 6 of ${g.categories.length} categories were kept.`); g.categories.length = 6; }
+    g.categories.forEach((c, i) => {
+      c.clues = c.clues.filter(x => x.q);
+      if (c.clues.length > 6) { warnings.push(`"${c.name || "Category " + (i + 1)}" has ${c.clues.length} clues; only the first 6 were kept.`); c.clues.length = 6; }
+      c.name = (c.name || `Category ${i + 1}`).slice(0, 40);
+      c.icon = ICONS.includes(c.icon) ? c.icon : ICONS[i % 6];
+      c.clues = c.clues.map(x => ({ q: x.q, a: x.a, img: x.img || "" }));
+    });
+    const rows = Math.max(...g.categories.map(c => c.clues.length));
+    const vals = (g.values || []).filter(v => v > 0);
+    g.values = Array.from({ length: rows }, (_, i) => vals[i] || (vals.length ? vals[vals.length - 1] + (i - vals.length + 1) * 100 : (i + 1) * 100));
+    const noAns = g.categories.reduce((s, c) => s + c.clues.filter(x => !x.a).length, 0);
+    if (noAns) warnings.push(`${noAns} clue${noAns === 1 ? " has" : "s have"} no answer yet.`);
+    if (g.categories.some(c => c.clues.length !== rows)) warnings.push("Some categories have fewer clues. Their extra squares will be empty.");
+    g.title = g.title.slice(0, 80);
+    return { game: g, warnings };
+  }
+  let pasted = null;
+  function checkPaste() {
+    const box = $("#importStatus"); box.className = "imp-status"; box.replaceChildren(); pasted = null;
     try {
-      const g = JSON.parse($("#importText").value);
-      if (!g || !Array.isArray(g.categories) || !g.categories.length) throw 0;
-      g.categories = g.categories.slice(0, 6).map((c, i) => ({ name: String(c.name || ""), icon: ICONS.includes(c.icon) ? c.icon : ICONS[i % 6], clues: (c.clues || []).slice(0, 6).map(x => ({ q: String(x.q || ""), a: String(x.a || ""), img: String(x.img || "") })) }));
-      g.title = String(g.title || "Imported game"); g.id = uid(); delete g.sample;
-      games.push(g); store.set(K_GAMES, games); $("#importText").value = ""; $("#importer").hidden = true; renderHome(); toast("Game imported");
-    } catch (e) { toast("That text isn't a game. Copy it again from the editor."); }
+      const { game: g, warnings } = parseGame($("#importText").value);
+      pasted = g;
+      const n = g.categories.reduce((s, c) => s + c.clues.length, 0);
+      box.classList.add("is-ok");
+      box.append(el("div", {}, `Ready: "${g.title}" with ${g.categories.length} categor${g.categories.length === 1 ? "y" : "ies"} and ${n} clue${n === 1 ? "" : "s"}.`),
+        el("div", { class: "chips" }, g.categories.map((c, i) => el("span", { class: "chip", style: `--cc:${CAT_COLORS[i % 6]}` }, `${c.name} (${c.clues.length})`))),
+        ...warnings.map(w => el("div", { class: "warn" }, w)));
+    } catch (e) {
+      if (typeof e !== "string") e = "That text isn't a game yet.";
+      if (e) { box.classList.add("is-bad"); box.textContent = e; }
+    }
+    for (const id of ["#importBtn", "#importPlay", "#importEdit"]) $(id).disabled = !pasted;
+  }
+  function closeImporter() { $("#importer").hidden = true; $("#importText").value = ""; checkPaste(); }
+  function doImport(then) {
+    checkPaste(); if (!pasted) { toast("Fix the text first"); return; }
+    const g = { ...pasted, id: uid() };
+    if (then === "edit") { closeImporter(); openEditor(g); $("#edEyebrow").textContent = "Pasted game: check it, then save"; return; }
+    games.push(g); const ok = store.set(K_GAMES, games); closeImporter(); renderHome();
+    toast(ok ? "Game created" : "Created for now, but this browser can't keep it after closing");
+    if (then === "play") openSetup(g.id);
+  }
+  async function copyPrompt() {
+    try { await navigator.clipboard.writeText(AI_PROMPT); toast("Prompt copied. Add your topic, then paste it into ChatGPT."); }
+    catch (e) { $("#importText").value = AI_PROMPT; checkPaste(); $("#importText").select(); toast("Copy this prompt, then clear the box"); }
   }
 
   /* ================= word bomb ================= */
@@ -911,9 +1112,14 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
   $("#edSave").onclick = () => saveEditor(false);
   $("#edPlay").onclick = () => saveEditor(true);
   $("#edCopy").onclick = copyEditor;
-  $("#importToggle").onclick = () => { $("#importer").hidden = !$("#importer").hidden; if (!$("#importer").hidden) $("#importText").focus(); };
-  $("#importCancel").onclick = () => { $("#importer").hidden = true; };
-  $("#importBtn").onclick = doImport;
+  $("#importToggle").onclick = () => { $("#importer").hidden = !$("#importer").hidden; if (!$("#importer").hidden) { $("#importer").scrollIntoView({ behavior: "smooth", block: "start" }); $("#importText").focus({ preventScroll: true }); } };
+  $("#importCancel").onclick = closeImporter;
+  $("#importText").addEventListener("input", () => { clearTimeout(checkPaste.t); checkPaste.t = setTimeout(checkPaste, 200); });
+  $("#importBtn").onclick = () => doImport();
+  $("#importPlay").onclick = () => doImport("play");
+  $("#importEdit").onclick = () => doImport("edit");
+  $("#importExample").onclick = () => { $("#importText").value = EXAMPLE_TEXT; checkPaste(); };
+  $("#importPrompt").onclick = copyPrompt;
   $("#bStart").onclick = startBomb;
   $("#bReset").onclick = () => { $("#bTopics").value = DEFAULT_TOPICS.join("\n"); toast("Topics reset"); };
   $("#bBack").onclick = () => { renderHome(); show("home"); };
