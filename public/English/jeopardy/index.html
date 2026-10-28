@@ -182,6 +182,9 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
 .timer i { display: block; height: 100%; width: 100%; background: var(--cc); transform-origin: left; }
 .timer.low i { background: var(--red); }
 .timer-row output { font: 400 26px/1 var(--serif); min-width: 3ch; text-align: right; font-variant-numeric: tabular-nums; }
+.timer-row .btn { padding: 6px 14px; font-size: 14px; flex: none; }
+.timer-row.paused .timer i { opacity: .4; }
+.timer-row.paused output { color: var(--muted); }
 .answer { text-align: center; padding: 14px; border-radius: 18px; background: color-mix(in srgb, var(--cc) 10%, var(--card)); border: 2px dashed var(--cc); }
 .answer small { display: block; color: var(--muted); font-weight: 800; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; }
 .answer b { font: 400 clamp(26px, 3.4vw, 46px)/1.15 var(--serif); color: var(--cc); overflow-wrap: anywhere; }
@@ -711,16 +714,18 @@ She teaches children. = a teacher</pre>
     const secs = match.timer, bar = el("i"), out = el("output", {}, secs ? String(secs) : "");
     const tbar = el("div", { class: "timer" }, bar);
     const ansSlot = el("div"), awardSlot = el("div");
+    const pauseBtn = el("button", { class: "btn", onclick: () => togglePause() }, "Pause");
+    const trow = el("div", { class: "timer-row" }, tbar, out, pauseBtn, el("button", { class: "btn", onclick: () => restart() }, "Restart"));
     const revealBtn = el("button", { class: "btn gold big", onclick: reveal }, "Show answer");
     const img = cur.clue.img ? el("img", { class: "clue-img", src: cur.clue.img, alt: "", onerror: e => e.currentTarget.remove() }) : null;
     $("#clue").replaceChildren(el("div", { class: "clue-card", style: `--cc:${cur.color}` },
       band(cur.dd ? `${match.teams[cur.wagerTeam].name} bets ${cur.wager}` : String(cur.value)),
-      el("div", { class: "clue-body" }, img, el("p", { class: "clue-q" }, cur.clue.q), secs ? el("div", { class: "timer-row" }, tbar, out) : null, ansSlot,
+      el("div", { class: "clue-body" }, img, el("p", { class: "clue-q" }, cur.clue.q), secs ? trow : null, ansSlot,
         el("div", { class: "actions" }, revealBtn, el("button", { class: "btn", onclick: closeClue }, "Back to board (keep square)")),
-        awardSlot, el("div", { class: "hint" }, "Space shows the answer. Esc goes back."))));
+        awardSlot, el("div", { class: "hint" }, secs ? "Space shows the answer. P pauses the timer. Esc goes back." : "Space shows the answer. Esc goes back."))));
     revealBtn.focus();
     function reveal() {
-      if (cur.revealed) return; cur.revealed = true; stopTimer(); revealBtn.remove();
+      if (cur.revealed) return; cur.revealed = true; stopTimer(); revealBtn.remove(); trow.querySelectorAll(".btn").forEach(x => x.remove());
       ansSlot.replaceWith(el("div", { class: "answer" }, el("small", {}, "Answer"), el("b", {}, cur.clue.a || "(no answer written)")));
       const teams = cur.dd ? [cur.wagerTeam] : match.teams.map((_, i) => i), pts = cur.dd ? cur.wager : cur.value;
       awardSlot.replaceWith(el("div", { style: "display:grid;gap:10px" },
@@ -731,15 +736,28 @@ She teaches children. = a teacher</pre>
         el("div", { class: "actions" }, el("button", { class: "btn", onclick: () => finishClue() }, "Nobody got it"))));
     }
     cur.reveal = reveal;
-    if (secs) {
-      const t0 = Date.now(); stopTimer();
+    // the timer counts down `left` seconds and can be paused (e.g. to translate the clue)
+    let left = secs, last = 0, paused = false;
+    function run() {
+      stopTimer(); last = Date.now();
       timerId = setInterval(() => {
-        const left = Math.max(0, secs - (Date.now() - t0) / 1000);
+        const now = Date.now(); left = Math.max(0, left - (now - last) / 1000); last = now;
         bar.style.transform = `scaleX(${left / secs})`; out.textContent = Math.ceil(left); tbar.classList.toggle("low", left <= 5);
         if (left <= 5 && left > 0 && Math.ceil(left) !== cur.lastTick) { cur.lastTick = Math.ceil(left); beep("tick"); }
-        if (left <= 0) { stopTimer(); beep("end"); out.textContent = "Time!"; }
+        if (left <= 0) { stopTimer(); beep("end"); out.textContent = "Time!"; pauseBtn.disabled = true; }
       }, 100);
     }
+    function paint() { pauseBtn.textContent = paused ? "Resume" : "Pause"; trow.classList.toggle("paused", paused); }
+    function togglePause() {
+      if (!secs || cur.revealed || left <= 0) return;
+      paused = !paused; if (paused) stopTimer(); else run(); paint();
+    }
+    function restart() {
+      left = secs; paused = false; cur.lastTick = null; pauseBtn.disabled = false;
+      bar.style.transform = ""; out.textContent = String(secs); tbar.classList.remove("low"); paint(); run();
+    }
+    cur.togglePause = togglePause;
+    if (secs) run();
   }
   function award(i, pts, wrongOnly) {
     match.teams[i].score += pts; store.set(K_MATCH, match); beep(pts > 0 ? "ok" : "no");
@@ -1084,6 +1102,7 @@ Category: (next category name)
     if (!$("#clue").hidden) {
       if (e.key === "Escape") { e.preventDefault(); closeClue(); }
       else if ((e.key === " " || e.key === "Enter") && cur && cur.reveal && !cur.revealed && !typing) { e.preventDefault(); cur.reveal(); }
+      else if ((e.key === "p" || e.key === "P") && cur && cur.togglePause && !typing) { e.preventDefault(); cur.togglePause(); }
       return;
     }
     if (!$("#bombPlay").hidden && $("#winner").hidden && !typing) {
