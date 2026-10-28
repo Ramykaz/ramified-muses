@@ -3,6 +3,8 @@
     { "source": "/api/(.*)",  "destination": "/api/$1" },
     { "source": "/English",   "destination": "/English.html" },
     { "source": "/English/",  "destination": "/English.html" },
+    { "source": "/English/jeopardy",  "destination": "/English/jeopardy/index.html" },
+    { "source": "/English/jeopardy/", "destination": "/English/jeopardy/index.html" },
     { "source": "/(.*)",      "destination": "/index.html" }
   ]
 }

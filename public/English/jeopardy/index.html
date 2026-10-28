@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Team games for English class: Quiz Board and Word Bomb.">
+<link rel="icon" href="/favicon.svg">
+<title>Class Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Serif+Display&display=swap">
+<style>
+/* Layout: light classroom stage matching ramyfied.me/English (cream paper, gold, teal), with one bright colour per category so the board reads at a glance from the back of the room. Light look by choice. */
+:root {
+  --bg: #FAFAF8;
+  --cream: #F4F1EB;
+  --ink: #1a1a2e;
+  --muted: #5c5c6e;
+  --gold: #C9A84C;
+  --teal: #1a6b72;
+  --card: #FFFFFF;
+  --line: #E7E2D8;
+  --c1: #E2725B; /* coral */
+  --c2: #1A8A8F; /* lagoon */
+  --c3: #7C5CBF; /* plum */
+  --c4: #E39B2B; /* saffron */
+  --c5: #5E8C4F; /* olive */
+  --c6: #D6457A; /* rose */
+  --red: #D64545;
+  --serif: "DM Serif Display", Georgia, serif;
+  --sans: "DM Sans", -apple-system, "Segoe UI", sans-serif;
+  --shadow: 0 10px 30px rgba(26,26,46,.08);
+  --shadow-lg: 0 24px 60px rgba(26,26,46,.16);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans);
+  background-image: radial-gradient(rgba(201,168,76,.18) 1px, transparent 1.4px), radial-gradient(900px 500px at 85% -10%, rgba(26,138,143,.10), transparent 70%), radial-gradient(800px 500px at 0% 0%, rgba(226,114,91,.10), transparent 70%);
+  background-size: 26px 26px, auto, auto;
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1380px; margin: 0 auto; }
+
+/* top bar */
+.topbar { padding-block: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; text-align: left; }
+.brand svg { width: 40px; height: 40px; flex: none; }
+.brand b { display: block; font: 400 26px/1 var(--serif); }
+.brand small { color: var(--muted); font-size: 13px; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.link { color: var(--teal); font-weight: 600; text-decoration: none; padding: 8px 6px; }
+.link:hover { text-decoration: underline; }
+
+.btn { border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 0 rgba(26,26,46,.05); transition: transform .1s, background .15s, border-color .15s, box-shadow .15s; }
+.btn:hover { border-color: var(--gold); box-shadow: 0 6px 16px rgba(26,26,46,.08); }
+.btn:active { transform: translateY(1px); }
+.btn.gold { background: var(--gold); border-color: var(--gold); color: #fff; }
+.btn.gold:hover { background: #b8963d; }
+.btn.teal { background: var(--teal); border-color: var(--teal); color: #fff; }
+.btn.teal:hover { background: #155a60; }
+.btn.danger { color: var(--red); border-color: rgba(214,69,69,.4); }
+.btn.big { padding: 14px 26px; font-size: 18px; }
+.btn.huge { padding: 20px 36px; font-size: 24px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* home */
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; align-items: center; padding-block: 18px 8px; }
+.eyebrow { color: var(--teal); font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; }
+h1 { font: 400 clamp(38px, 5.4vw, 66px)/1.02 var(--serif); margin: 8px 0 12px; letter-spacing: -.01em; text-wrap: balance; }
+h1 em { font-style: italic; color: var(--c1); }
+.lede { color: var(--muted); font-size: 18px; margin: 0; max-width: 56ch; }
+.hero-art { width: 100%; max-width: 520px; justify-self: end; filter: drop-shadow(0 18px 30px rgba(26,26,46,.12)); }
+.hero-art .balloon { animation: float 6s ease-in-out infinite; transform-box: fill-box; }
+.hero-art .balloon.b2 { animation-delay: -2s; animation-duration: 7s; }
+.hero-art .balloon.b3 { animation-delay: -4s; animation-duration: 8s; }
+@keyframes float { 50% { transform: translateY(-10px); } }
+
+h2 { font: 400 30px/1.15 var(--serif); margin: 0; }
+.pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; padding-block: 18px 8px; }
+.gamecard { position: relative; overflow: hidden; border-radius: 24px; padding: 24px; min-height: 230px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: end; color: #fff; border: 0; text-align: left; box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s; }
+.gamecard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.gamecard.quiz { background: linear-gradient(135deg, #1a6b72, #1A8A8F 60%, #3DB2A6); }
+.gamecard.bomb { background: linear-gradient(135deg, #E2725B, #E39B2B 70%, #F2C14E); }
+.gamecard h3 { font: 400 34px/1 var(--serif); margin: 6px 0 8px; }
+.gamecard p { margin: 0; opacity: .92; max-width: 34ch; }
+.gamecard .tagline { font-weight: 700; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .9; }
+.gamecard svg { width: 130px; height: 130px; }
+.gamecard .go { display: inline-block; margin-top: 14px; background: rgba(255,255,255,.95); color: var(--ink); font-weight: 800; padding: 9px 18px; border-radius: 999px; }
+
+.section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 26px 12px; }
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding-bottom: 50px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; display: grid; gap: 12px; align-content: start; box-shadow: var(--shadow); min-width: 0; }
+.card h3 { font: 400 23px/1.15 var(--serif); margin: 0; overflow-wrap: anywhere; }
+.card .meta { color: var(--muted); font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #fff; background: var(--cc, var(--teal)); }
+.tag { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 800; color: var(--gold); }
+.card .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.card.new { border: 2px dashed var(--gold); background: rgba(201,168,76,.06); place-items: center; text-align: center; min-height: 200px; box-shadow: none; }
+.card.new .plus { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #fff; font: 800 32px/1 var(--sans); }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--red); font-weight: 600; }
+.importer { display: grid; gap: 10px; padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin-bottom: 18px; }
+
+/* forms */
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 26px; display: grid; gap: 20px; max-width: 780px; margin: 18px auto 50px; box-shadow: var(--shadow); }
+label.f { display: grid; gap: 6px; font-weight: 700; font-size: 14px; color: var(--muted); }
+input[type=text], input[type=number], input[type=url], textarea, select { background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; width: 100%; min-width: 0; color: var(--ink); }
+input:focus, textarea:focus, select:focus { border-color: var(--gold); outline: none; }
+textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
+.teams-edit { display: grid; gap: 10px; }
+.team-line { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center; }
+.dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
+.stepper { display: inline-flex; align-items: center; gap: 12px; }
+.stepper button { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--bg); font-weight: 800; font-size: 20px; }
+.stepper output { font: 400 30px/1 var(--serif); min-width: 2ch; text-align: center; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; align-items: end; }
+.opts > * { flex: 1 1 200px; }
+.switch { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.switch input { width: 22px; height: 22px; accent-color: var(--teal); }
+.setup-head { display: flex; gap: 16px; align-items: center; }
+.setup-head svg { width: 64px; height: 64px; flex: none; }
+
+/* quiz board */
+.board-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 4px 14px; }
+.board-head h2 { font-size: clamp(22px, 2.6vw, 34px); }
+.left { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.board-scroll { overflow-x: auto; padding: 4px 2px 10px; }
+.grid { display: grid; gap: 10px; min-width: 660px; }
+.cat { --cc: var(--teal); background: var(--cc); color: #fff; border-radius: 18px; min-height: 92px; padding: 10px 8px; display: grid; justify-items: center; align-content: center; gap: 4px; text-align: center; box-shadow: 0 6px 0 color-mix(in srgb, var(--cc) 70%, #000); }
+.cat svg { width: 34px; height: 34px; }
+.cat span { font: 800 clamp(13px, 1.4vw, 18px)/1.1 var(--sans); text-transform: uppercase; letter-spacing: .06em; text-wrap: balance; }
+.tile { --cc: var(--teal); position: relative; border: 2px solid color-mix(in srgb, var(--cc) 30%, transparent); background: var(--card); border-radius: 18px; min-height: clamp(70px, 10.5vh, 118px);
+  font: 400 clamp(30px, 3.8vw, 54px)/1 var(--serif); color: var(--cc); font-variant-numeric: tabular-nums; box-shadow: 0 4px 0 color-mix(in srgb, var(--cc) 25%, transparent); transition: transform .12s, background .12s, color .12s; }
+.tile:hover { background: var(--cc); color: #fff; transform: translateY(-3px); }
+.tile.used { background: var(--cream); border-color: transparent; box-shadow: none; color: transparent; transform: none; cursor: default; }
+.tile.used::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; color: color-mix(in srgb, var(--cc) 45%, transparent); font: 700 24px/1 var(--sans); }
+.tile.empty { opacity: .35; cursor: not-allowed; }
+
+.scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding-block: 16px 34px; }
+.score { --c: var(--teal); background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 12px 14px 12px 20px; display: grid; gap: 4px; position: relative; overflow: hidden; box-shadow: var(--shadow); min-width: 0; }
+.score::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 7px; background: var(--c); }
+.score .name { font-weight: 800; font-size: 15px; color: var(--muted); overflow-wrap: anywhere; }
+.score .pts { font: 400 clamp(32px, 3.4vw, 46px)/1 var(--serif); font-variant-numeric: tabular-nums; color: var(--c); }
+.score .pts.neg { color: var(--red); }
+.score.leader { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.35), var(--shadow); }
+.score.leader .name::after { content: "  ★ leading"; color: var(--gold); font-size: 12px; }
+.score .adj { display: flex; gap: 6px; }
+.score .adj button { flex: 1; border: 1.5px solid var(--line); background: var(--bg); border-radius: 10px; padding: 4px 0; font-weight: 800; font-size: 14px; }
+.bump { animation: bump .45s ease; }
+@keyframes bump { 40% { transform: scale(1.2); } }
+
+/* overlays */
+.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(250,250,248,.82); backdrop-filter: blur(8px); display: grid; place-items: center; overflow-y: auto;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.clue-card { --cc: var(--teal); width: min(1100px, 100%); background: var(--card); border-radius: 30px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--line); animation: pop .35s cubic-bezier(.2,1.4,.4,1); }
+@keyframes pop { from { transform: scale(.86); opacity: 0; } }
+.clue-band { background: var(--cc); color: #fff; padding: 16px clamp(18px, 3vw, 36px); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.clue-band .cname { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: clamp(15px, 1.8vw, 20px); }
+.clue-band svg { width: 36px; height: 36px; }
+.clue-band .val { font: 400 clamp(26px, 3vw, 40px)/1 var(--serif); font-variant-numeric: tabular-nums; }
+.clue-body { padding: clamp(18px, 3vw, 40px); display: grid; gap: clamp(14px, 2.2vh, 24px); }
+.clue-q { font: 400 clamp(28px, 4.2vw, 60px)/1.15 var(--serif); text-align: center; text-wrap: balance; margin: 0; overflow-wrap: anywhere; }
+.clue-img { justify-self: center; max-height: 34vh; max-width: 100%; border-radius: 18px; box-shadow: var(--shadow); }
+.timer-row { display: flex; align-items: center; gap: 12px; }
+.timer { flex: 1; height: 12px; border-radius: 99px; background: var(--cream); overflow: hidden; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--cc); transform-origin: left; }
+.timer.low i { background: var(--red); }
+.timer-row output { font: 400 26px/1 var(--serif); min-width: 3ch; text-align: right; font-variant-numeric: tabular-nums; }
+.answer { text-align: center; padding: 14px; border-radius: 18px; background: color-mix(in srgb, var(--cc) 10%, var(--card)); border: 2px dashed var(--cc); }
+.answer small { display: block; color: var(--muted); font-weight: 800; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; }
+.answer b { font: 400 clamp(26px, 3.4vw, 46px)/1.15 var(--serif); color: var(--cc); overflow-wrap: anywhere; }
+.actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.award { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.award .team { --c: var(--teal); background: var(--bg); border: 1.5px solid var(--line); border-radius: 16px; padding: 10px; display: grid; gap: 8px; }
+.award .team .tn { font-weight: 800; display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.award .team .tn::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--c); flex: none; }
+.award .team div { display: flex; gap: 8px; }
+.award .team button { flex: 1; border-radius: 12px; padding: 10px 0; font-weight: 800; font-size: 17px; border: 0; }
+.ok { background: #2E9E6B; color: #fff; }
+.no { background: #fff; color: var(--red); border: 1.5px solid rgba(214,69,69,.5) !important; }
+.hint { color: var(--muted); font-size: 13px; text-align: center; }
+.dd { text-align: center; display: grid; gap: 16px; justify-items: center; padding: clamp(20px, 4vw, 44px); }
+.dd h3 { margin: 0; font: 400 clamp(48px, 8vw, 110px)/.95 var(--serif); color: var(--cc); animation: wobble 1s ease; }
+@keyframes wobble { 0% { transform: scale(.3) rotate(-8deg); } 60% { transform: scale(1.08) rotate(2deg); } }
+.dd .wager { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: end; }
+
+.win { text-align: center; display: grid; gap: 18px; justify-items: center; position: relative; z-index: 2; width: min(720px, 100%); background: var(--card); padding: 30px; border-radius: 30px; box-shadow: var(--shadow-lg); }
+.win svg { width: 110px; height: 110px; }
+.win h3 { margin: 0; font: 400 clamp(40px, 6.5vw, 82px)/1 var(--serif); color: var(--ink); text-wrap: balance; }
+.rank { width: 100%; display: grid; gap: 8px; }
+.rank div { display: flex; justify-content: space-between; gap: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 16px; font-weight: 800; }
+.rank div span:last-child { font: 400 22px/1 var(--serif); font-variant-numeric: tabular-nums; }
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+
+/* editor */
+.ed-head { padding-block: 10px 8px; }
+.ed-settings { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; box-shadow: var(--shadow); }
+.ed-cats { display: grid; gap: 16px; padding-block: 16px 20px; }
+.ed-cat { --cc: var(--teal); background: var(--card); border: 1px solid var(--line); border-top: 6px solid var(--cc); border-radius: 20px; padding: 16px; display: grid; gap: 12px; box-shadow: var(--shadow); }
+.ed-cat > header { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.ed-num { font-weight: 800; font-size: 14px; color: #fff; background: var(--cc); border-radius: 10px; padding: 8px 10px; }
+.ed-labels, .ed-clue { display: grid; grid-template-columns: 84px 1.3fr 1fr 1fr; gap: 10px; align-items: start; }
+.ed-labels { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.ed-clue input.val { text-align: center; color: var(--cc); font: 400 20px/1 var(--serif); }
+.ed-foot { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, var(--bg) 35%); padding-block: 24px 16px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+.ed-note { color: var(--muted); font-size: 14px; margin-right: auto; }
+
+/* word bomb */
+.bomb-stage { display: grid; grid-template-columns: 1fr minmax(260px, 340px); gap: 22px; padding-block: 8px 36px; align-items: start; }
+.bomb-main { background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: clamp(18px, 3vw, 34px); display: grid; gap: 16px; justify-items: center; text-align: center; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.topic small { display: block; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-size: 13px; }
+.topic b { display: block; font: 400 clamp(32px, 4.6vw, 64px)/1.08 var(--serif); text-wrap: balance; }
+.holder { --c: var(--teal); display: inline-flex; align-items: center; gap: 10px; background: var(--c); color: #fff; padding: 10px 22px; border-radius: 999px; font-weight: 800; font-size: clamp(18px, 2vw, 26px); box-shadow: 0 6px 0 color-mix(in srgb, var(--c) 70%, #000); }
+.bombwrap { position: relative; width: min(300px, 70vw); aspect-ratio: 1; max-width: 100%; }
+.bombwrap svg { width: 100%; height: 100%; }
+.bombwrap.live svg { animation: shake var(--shk, 1s) ease-in-out infinite; }
+@keyframes shake { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-3deg) scale(1.02); } 75% { transform: rotate(3deg) scale(1.02); } }
+.spark { transform-box: fill-box; transform-origin: center; animation: spark .25s linear infinite alternate; }
+@keyframes spark { to { transform: scale(1.5) rotate(40deg); } }
+.boom { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.boom b { font: 400 clamp(60px, 10vw, 140px)/1 var(--serif); color: var(--red); text-shadow: 0 6px 0 #fff, 0 10px 30px rgba(214,69,69,.4); animation: wobble .6s ease; }
+.flash { position: fixed; inset: 0; background: #fff3d6; z-index: 40; pointer-events: none; animation: flash .6s ease forwards; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+.counter { color: var(--muted); font-weight: 700; }
+.lives { display: grid; gap: 10px; }
+.life { --c: var(--teal); background: var(--card); border: 1px solid var(--line); border-left: 8px solid var(--c); border-radius: 18px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-shadow: var(--shadow); }
+.life.turn { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent), var(--shadow); }
+.life.out { opacity: .4; }
+.life b { font-weight: 800; overflow-wrap: anywhere; }
+.hearts { display: flex; gap: 3px; }
+.hearts svg { width: 22px; height: 22px; }
+.how { background: var(--cream); border-radius: 18px; padding: 14px 16px; font-size: 14px; color: var(--muted); }
+.how ol { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+
+#toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--ink); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 999px; z-index: 80; transition: .25s; pointer-events: none; max-width: calc(100% - 32px); text-align: center; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-art { justify-self: center; }
+  .bomb-stage { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .ed-settings { grid-template-columns: 1fr; }
+  .ed-clue { grid-template-columns: 1fr; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .ed-labels { display: none; }
+  .ed-clue input.val { width: 110px; }
+  .gamecard { grid-template-columns: 1fr; }
+  .gamecard svg { width: 90px; height: 90px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<!-- reusable drawings -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-scroll" viewBox="0 0 48 48"><path fill="#fff" d="M12 8h22a6 6 0 0 1 6 6v2h-6v20a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6v-2h6V8z" opacity=".95"/><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" d="M17 17h12M17 23h12M17 29h8"/></symbol>
+    <symbol id="i-map" viewBox="0 0 48 48"><circle cx="35" cy="13" r="5" fill="#FFE08A"/><path fill="#fff" d="M4 40l12-18 7 9 6-7 15 16z"/><path fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" d="M6 44c8-3 14 2 22-1s10-2 16 0" opacity=".8"/></symbol>
+    <symbol id="i-star" viewBox="0 0 48 48"><path fill="#fff" d="M24 4l5.9 12.6 13.6 1.7-10 9.4 2.6 13.5L24 34.5l-12.1 6.7 2.6-13.5-10-9.4 13.6-1.7z"/></symbol>
+    <symbol id="i-tea" viewBox="0 0 48 48"><path fill="#fff" d="M15 8h18c0 6-4 8-4 13s4 7 4 13H15c0-6 4-8 4-13s-4-7-4-13z"/><path fill="#C0392B" d="M17.5 22h13c-.6 1.4-1.5 2.8-1.5 5s1.8 4.1 2.6 5H16.4c.8-.9 2.6-2.8 2.6-5s-.9-3.6-1.5-5z" opacity=".85"/><ellipse cx="24" cy="38" rx="14" ry="3.5" fill="#fff"/></symbol>
+    <symbol id="i-column" viewBox="0 0 48 48"><path fill="#fff" d="M8 8h32l-3 5H11zM10 36h28v4H10zM6 41h36v4H6z"/><path fill="#fff" d="M13 14h4v21h-4zM22 14h4v21h-4zM31 14h4v21h-4z"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 48 48"><path fill="#fff" d="M24 5a14 14 0 0 0-8 25.5V35h16v-4.5A14 14 0 0 0 24 5z"/><rect x="17" y="37" width="14" height="4" rx="2" fill="#fff"/><rect x="19" y="42" width="10" height="3" rx="1.5" fill="#fff"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.6.8-1.4 2.3-2.6 4.4-2.6 3.6 0 5.7 3.9 4.2 7.2C19.5 16.4 12 21 12 21z"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 64 64"><path fill="#C9A84C" d="M18 8h28v14a14 14 0 0 1-28 0z"/><path fill="none" stroke="#C9A84C" stroke-width="4" d="M18 14H9c0 9 4 13 10 13M46 14h9c0 9-4 13-10 13"/><rect x="28" y="35" width="8" height="10" fill="#C9A84C"/><rect x="20" y="45" width="24" height="8" rx="3" fill="#1a6b72"/></symbol>
+    <symbol id="i-bomb" viewBox="0 0 200 200">
+      <ellipse cx="100" cy="186" rx="56" ry="8" fill="rgba(26,26,46,.12)"/>
+      <circle cx="95" cy="115" r="66" fill="#26283B"/>
+      <circle cx="95" cy="115" r="66" fill="url(#bombShine)"/>
+      <rect x="112" y="40" width="30" height="24" rx="5" transform="rotate(35 127 52)" fill="#3A3D55"/>
+      <path d="M138 38c10-14 24-18 34-10" fill="none" stroke="#8B6B3E" stroke-width="5" stroke-linecap="round"/>
+      <g class="spark"><circle cx="173" cy="27" r="9" fill="#F2C14E"/><circle cx="173" cy="27" r="4.5" fill="#fff"/><path d="M173 10v8M173 36v8M156 27h8M182 27h8M161 15l5 5M180 34l5 5M185 15l-5 5M166 34l-5 5" stroke="#E2725B" stroke-width="3" stroke-linecap="round"/></g>
+      <ellipse cx="72" cy="88" rx="16" ry="10" fill="#fff" opacity=".25" transform="rotate(-35 72 88)"/>
+    </symbol>
+    <radialGradient id="bombShine" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#4A4E6E"/><stop offset="1" stop-color="#1a1a2e"/></radialGradient>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="topbar">
+    <button class="brand" id="goHome" aria-label="Class Games home">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="#1a6b72"/><rect x="10" y="11" width="12" height="11" rx="3" fill="#E2725B"/><rect x="26" y="11" width="12" height="11" rx="3" fill="#E39B2B"/><rect x="10" y="26" width="12" height="11" rx="3" fill="#7C5CBF"/><rect x="26" y="26" width="12" height="11" rx="3" fill="#C9A84C"/></svg>
+      <span><b>Class Games</b><small>English lessons with Ramadan</small></span>
+    </button>
+    <div class="tools">
+      <a class="link" href="https://ramyfied.me/English" target="_blank" rel="noopener">← English lessons</a>
+      <button class="btn" id="soundBtn" aria-pressed="true">Sound: on</button>
+      <button class="btn" id="fsBtn">Full screen</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="home">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">For the smart board</div>
+          <h1>Play, laugh and <em>speak English.</em></h1>
+          <p class="lede">Two team games for class. Answer clues on the Quiz Board, or pass the Word Bomb before it explodes.</p>
+        </div>
+        <svg class="hero-art" viewBox="0 0 520 320" role="img" aria-label="Hot air balloons over Cappadocia">
+          <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE7D2"/><stop offset="1" stop-color="#FFF7EC"/></linearGradient></defs>
+          <rect x="0" y="0" width="520" height="320" rx="34" fill="url(#sky)"/>
+          <circle cx="410" cy="92" r="40" fill="#F2C14E" opacity=".9"/>
+          <path d="M0 250c60-30 120-36 180-20s120 10 180-8 110-20 160 0v98H0z" fill="#E8C9A8"/>
+          <path d="M60 300v-80c0-22 10-38 22-38s22 16 22 38v80zM120 300v-62c0-18 9-30 19-30s19 12 19 30v62zM330 300v-90c0-25 12-44 26-44s26 19 26 44v90zM400 300v-60c0-16 8-28 17-28s17 12 17 28v60z" fill="#D9A97E"/>
+          <path d="M0 290c80-20 160-24 260-10s180 12 260-4v54H0z" fill="#C98E63"/>
+          <g class="balloon"><path d="M168 64c-26 0-44 20-44 44 0 26 26 44 38 58h12c12-14 38-32 38-58 0-24-18-44-44-44z" fill="#E2725B"/><path d="M168 64c-10 0-16 20-16 44 0 26 8 44 12 58h8c4-14 12-32 12-58 0-24-6-44-16-44z" fill="#F2C14E"/><rect x="160" y="172" width="16" height="12" rx="3" fill="#8B6B3E"/></g>
+          <g class="balloon b2"><path d="M290 110c-18 0-30 14-30 30 0 18 18 30 26 40h8c8-10 26-22 26-40 0-16-12-30-30-30z" fill="#1A8A8F"/><path d="M290 110c-7 0-11 14-11 30 0 18 6 30 8 40h6c2-10 8-22 8-40 0-16-4-30-11-30z" fill="#fff" opacity=".8"/><rect x="284" y="184" width="12" height="9" rx="2" fill="#8B6B3E"/></g>
+          <g class="balloon b3"><path d="M440 150c-13 0-22 10-22 22 0 13 13 22 19 29h6c6-7 19-16 19-29 0-12-9-22-22-22z" fill="#7C5CBF"/><path d="M440 150c-5 0-8 10-8 22 0 13 4 22 6 29h4c2-7 6-16 6-29 0-12-3-22-8-22z" fill="#F4F1EB"/><rect x="435" y="204" width="10" height="7" rx="2" fill="#8B6B3E"/></g>
+        </svg>
+      </div>
+
+      <div class="pick">
+        <button class="gamecard quiz" id="pickQuiz">
+          <span><span class="tagline">Game 1 · Clues and points</span><h3>Quiz Board</h3><p>Teams pick a square, read the clue and win points. Use the Türkiye game or build your own.</p><span class="go">See the games ↓</span></span>
+          <svg viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="14" width="108" height="92" rx="16" fill="rgba(255,255,255,.18)"/><g fill="#fff"><rect x="16" y="24" width="28" height="20" rx="5"/><rect x="48" y="24" width="28" height="20" rx="5" fill="#F2C14E"/><rect x="80" y="24" width="24" height="20" rx="5"/><rect x="16" y="50" width="28" height="20" rx="5" fill="#F2C14E"/><rect x="48" y="50" width="28" height="20" rx="5"/><rect x="80" y="50" width="24" height="20" rx="5"/><rect x="16" y="76" width="28" height="20" rx="5"/><rect x="48" y="76" width="28" height="20" rx="5"/><rect x="80" y="76" width="24" height="20" rx="5" fill="#F2C14E"/></g></svg>
+        </button>
+        <button class="gamecard bomb" id="pickBomb">
+          <span><span class="tagline">Game 2 · Fast and loud</span><h3>Word Bomb</h3><p>Say a word for the topic, then pass the bomb. Don't hold it when it explodes!</p><span class="go">Play Word Bomb →</span></span>
+          <svg viewBox="0 0 200 200" aria-hidden="true"><use href="#i-bomb"/></svg>
+        </button>
+      </div>
+
+      <div class="section-head" id="quizList">
+        <h2>Quiz Board games</h2>
+        <button class="btn" id="importToggle">Import a game</button>
+      </div>
+      <div class="importer" id="importer" hidden>
+        <label class="f" for="importText">Paste the game text you copied from the editor</label>
+        <textarea id="importText" rows="5" placeholder='{"title": "...", "categories": [...]}'></textarea>
+        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn teal" id="importBtn">Import</button><button class="btn" id="importCancel">Cancel</button></div>
+      </div>
+      <div class="games" id="gameList"></div>
+    </section>
+
+    <!-- QUIZ SETUP -->
+    <section id="setup" hidden>
+      <div class="panel">
+        <div class="setup-head">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="28" fill="#1a6b72"/><g><rect x="18" y="22" width="24" height="18" rx="5" fill="#E2725B"/><rect x="48" y="22" width="24" height="18" rx="5" fill="#F2C14E"/><rect x="78" y="22" width="24" height="18" rx="5" fill="#7C5CBF"/><rect x="18" y="48" width="24" height="18" rx="5" fill="#fff"/><rect x="48" y="48" width="24" height="18" rx="5" fill="#fff"/><rect x="78" y="48" width="24" height="18" rx="5" fill="#fff"/><rect x="18" y="74" width="24" height="18" rx="5" fill="#fff"/><rect x="48" y="74" width="24" height="18" rx="5" fill="#fff"/><rect x="78" y="74" width="24" height="18" rx="5" fill="#fff"/></g></svg>
+          <div><div class="eyebrow">Quiz Board</div><h2 id="setupTitle" style="margin-top:4px"></h2></div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px">Number of teams</div>
+          <div class="stepper"><button id="teamMinus" aria-label="Fewer teams">−</button><output id="teamCount">2</output><button id="teamPlus" aria-label="More teams">+</button></div>
+        </div>
+        <div class="teams-edit" id="teamInputs"></div>
+        <div class="opts">
+          <label class="f" for="timerSel">Timer for each clue
+            <select id="timerSel"><option value="0">No timer</option><option value="15">15 seconds</option><option value="30" selected>30 seconds</option><option value="45">45 seconds</option><option value="60">60 seconds</option></select>
+          </label>
+          <label class="switch" for="ddToggle"><input type="checkbox" id="ddToggle" checked> Hide 2 Daily Doubles</label>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn gold big" id="startBtn">Start game</button>
+          <button class="btn big" id="resumeBtn" hidden>Continue last game</button>
+          <button class="btn big" id="setupBack">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ BOARD -->
+    <section id="board" hidden>
+      <div class="board-head">
+        <h2 id="boardTitle"></h2>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="left" id="cluesLeft"></span><button class="btn" id="endBtn">End game</button></div>
+      </div>
+      <div class="board-scroll"><div class="grid" id="grid"></div></div>
+      <div class="scores" id="scores"></div>
+    </section>
+
+    <!-- QUIZ EDITOR -->
+    <section id="editor" hidden>
+      <div class="ed-head"><div class="eyebrow" id="edEyebrow">New game</div><h2 style="margin-top:4px">Build your Quiz Board</h2></div>
+      <div class="ed-settings">
+        <label class="f" for="edTitle">Game title<input type="text" id="edTitle" placeholder="e.g. Unit 1: Jobs and Routines"></label>
+        <label class="f" for="edCats">Categories<select id="edCats"><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
+        <label class="f" for="edRows">Clues per category<select id="edRows"><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
+      </div>
+      <div class="ed-cats" id="edCatsBox"></div>
+      <div class="ed-foot">
+        <span class="ed-note" id="edNote"></span>
+        <button class="btn" id="edCancel">Cancel</button>
+        <button class="btn" id="edCopy">Copy game text</button>
+        <button class="btn teal" id="edSave">Save</button>
+        <button class="btn gold" id="edPlay">Save and play</button>
+      </div>
+    </section>
+
+    <!-- WORD BOMB SETUP -->
+    <section id="bombSetup" hidden>
+      <div class="panel">
+        <div class="setup-head">
+          <svg viewBox="0 0 200 200" aria-hidden="true"><use href="#i-bomb"/></svg>
+          <div><div class="eyebrow">Word Bomb</div><h2 style="margin-top:4px">Pass it before it explodes</h2></div>
+        </div>
+        <div class="how"><b style="color:var(--ink)">How to play</b>
+          <ol><li>You see a topic, for example <i>Things in a kitchen</i>.</li><li>The team with the bomb says one English word for the topic.</li><li>The teacher presses <b>Good word, pass!</b> and the bomb goes to the next team.</li><li>Nobody knows when it explodes. The team holding it loses a heart.</li><li>The last team with hearts wins.</li></ol></div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px">Number of teams</div>
+          <div class="stepper"><button id="bTeamMinus" aria-label="Fewer teams">−</button><output id="bTeamCount">2</output><button id="bTeamPlus" aria-label="More teams">+</button></div>
+        </div>
+        <div class="teams-edit" id="bTeamInputs"></div>
+        <div class="opts">
+          <label class="f" for="bLives">Hearts for each team<select id="bLives"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+          <label class="f" for="bSpeed">Bomb time<select id="bSpeed"><option value="slow">Slow (25 to 50 seconds)</option><option value="normal" selected>Normal (15 to 35 seconds)</option><option value="fast">Fast (8 to 20 seconds)</option></select></label>
+        </div>
+        <label class="f" for="bTopics">Topics (one per line, change them as you like)<textarea id="bTopics" rows="8"></textarea></label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn gold big" id="bStart">Start Word Bomb</button>
+          <button class="btn big" id="bReset">Reset topics</button>
+          <button class="btn big" id="bBack">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORD BOMB PLAY -->
+    <section id="bombPlay" hidden>
+      <div class="bomb-stage">
+        <div class="bomb-main" id="bombMain">
+          <div class="topic"><small>Topic</small><b id="bTopic"></b></div>
+          <div class="holder" id="bHolder"></div>
+          <div class="bombwrap" id="bombWrap"><svg viewBox="0 0 200 200" aria-hidden="true"><use href="#i-bomb"/></svg></div>
+          <div class="counter" id="bCounter"></div>
+          <div class="actions" id="bActions"></div>
+          <div class="hint">Space = good word, pass. N = new topic.</div>
+        </div>
+        <aside class="lives" id="bLivesBox"></aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="clue" hidden role="dialog" aria-modal="true" aria-label="Clue"></div>
+<div class="overlay" id="winner" hidden role="dialog" aria-modal="true" aria-label="Results"><canvas id="confetti"></canvas><div class="win" id="winBox"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  /* ================= data ================= */
+  const SAMPLE = {
+    id: "sample-turkiye", sample: true, title: "Türkiye: How Well Do You Know It?",
+    categories: [
+      { name: "History", icon: "scroll", clues: [
+        { q: "The Republic of Türkiye was founded in this year.", a: "1923" },
+        { q: "In 1453, this young sultan took Constantinople.", a: "Mehmed II (Fatih Sultan Mehmet)" },
+        { q: "Before Istanbul, this city in Thrace was the Ottoman capital. Today it has the Selimiye Mosque.", a: "Edirne" },
+        { q: "This old trade road went from China to Anatolia. Merchants carried cloth on it.", a: "The Silk Road (İpek Yolu)" },
+        { q: "On 18 March 1915, the Ottoman army won a famous sea battle at this narrow sea passage.", a: "Çanakkale (the Dardanelles)" } ] },
+      { name: "Geography", icon: "map", clues: [
+        { q: "This is the longest river that starts and ends inside Türkiye.", a: "Kızılırmak" },
+        { q: "This very salty lake in Central Anatolia gives Türkiye most of its salt.", a: "Lake Tuz (Tuz Gölü)" },
+        { q: "These two famous rivers start in eastern Türkiye and flow into Iraq.", a: "The Tigris and the Euphrates (Dicle and Fırat)" },
+        { q: "Türkiye has land borders with this many countries.", a: "8" },
+        { q: "This narrow sea passage connects the Black Sea and the Sea of Marmara.", a: "The Bosphorus (İstanbul Boğazı)" } ] },
+      { name: "Famous People", icon: "star", clues: [
+        { q: "This architect built the Süleymaniye Mosque and the Selimiye Mosque.", a: "Mimar Sinan" },
+        { q: "This singer is called the \"Megastar\". His song \"Şımarık\" was a big hit in Europe.", a: "Tarkan" },
+        { q: "This chef became famous online in 2017 for dropping salt on meat in a special way.", a: "Nusret Gökçe (Salt Bae)" },
+        { q: "This poet wrote the words of the Turkish national anthem.", a: "Mehmet Akif Ersoy" },
+        { q: "This scientist from Mardin won the Nobel Prize in Chemistry in 2015 for his work on DNA repair.", a: "Aziz Sancar" } ] },
+      { name: "Food Culture", icon: "tea", clues: [
+        { q: "This city is famous for baklava and pistachios. UNESCO calls it a City of Gastronomy.", a: "Gaziantep" },
+        { q: "This kebab from Bursa has thin meat on bread with tomato sauce, hot butter and yogurt.", a: "İskender kebab" },
+        { q: "This white milk pudding has a surprising ingredient: chicken.", a: "Tavuk göğsü" },
+        { q: "This hot winter drink is made with milk and powder from the root of an orchid flower.", a: "Salep" },
+        { q: "In 2013, UNESCO added this drink and its culture to its list of Intangible Cultural Heritage.", a: "Turkish coffee" } ] },
+      { name: "Ancient Places", icon: "column", clues: [
+        { q: "This ancient city near İzmir has the famous Library of Celsus.", a: "Ephesus (Efes)" },
+        { q: "This ancient city in Çanakkale is famous for the story of a wooden horse.", a: "Troy (Truva)" },
+        { q: "On top of this mountain in Adıyaman, there are giant stone heads of kings and gods.", a: "Mount Nemrut (Nemrut Dağı)" },
+        { q: "Under Istanbul, this old water palace has 336 columns and two stone Medusa heads.", a: "The Basilica Cistern (Yerebatan Sarnıcı)" },
+        { q: "This place in Şanlıurfa has stone temples that are about 11,000 years old, much older than Stonehenge.", a: "Göbekli Tepe" } ] }
+    ]
+  };
+  const ICONS = ["scroll", "map", "star", "tea", "column", "bulb"];
+  const CAT_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)"];
+  const TEAM_COLORS = ["#E2725B", "#1A8A8F", "#7C5CBF", "#E39B2B", "#5E8C4F", "#D6457A"];
+  const TEAM_NAMES = ["Tulips", "Seagulls", "Simits", "Lions", "Comets", "Rockets"];
+  const DEFAULT_TOPICS = ["Things in a kitchen", "Jobs", "Animals", "Things in a classroom", "Food for breakfast", "Countries", "Sports", "Clothes", "Things in a bathroom", "Places in a city",
+    "Things you take on holiday", "Fruits", "Vegetables", "Drinks", "Parts of the body", "Things in your bag", "Weather words", "Family members", "Transport", "Things that are red",
+    "Things with wheels", "Things you do every morning", "Words to describe people", "Turkish food (say it in English)", "Cities in Türkiye", "Things at the beach", "Things in a supermarket",
+    "Things that fly", "Hobbies", "School subjects", "Furniture", "Things in the sky", "Shops", "Musical instruments", "Things that are cold", "Things you can open", "Words that start with B", "Words that start with S"];
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+  const K_GAMES = "qb.games.v1", K_MATCH = "qb.match.v1", K_SOUND = "qb.sound.v1", K_TOPICS = "wb.topics.v1";
+  let games = store.get(K_GAMES, []);
+  let match = store.get(K_MATCH, null);
+  let soundOn = store.get(K_SOUND, true);
+  let setupGameId = null, teamCount = 2, bTeamCount = 2, editing = null;
+
+  const $ = s => document.querySelector(s);
+  const el = (tag, props = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === "class") n.className = v;
+      else if (k === "style") n.setAttribute("style", v);
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()) if (c != null) n.append(c.nodeType ? c : document.createTextNode(c));
+    return n;
+  };
+  const NS = "http://www.w3.org/2000/svg";
+  const icon = (name, cls) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 48 48"); s.setAttribute("aria-hidden", "true"); if (cls) s.setAttribute("class", cls); const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-" + name); s.append(u); return s; };
+  const symbolSvg = (name, vb) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", vb); s.setAttribute("aria-hidden", "true"); const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-" + name); s.append(u); return s; };
+  const heart = on => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); s.style.color = on ? "#E2725B" : "#E7E2D8"; const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-heart"); s.append(u); return s; };
+  const catIcon = (c, i) => c.icon && ICONS.includes(c.icon) ? c.icon : ICONS[i % ICONS.length];
+  const allGames = () => [SAMPLE, ...games];
+  const findGame = id => allGames().find(g => g.id === id);
+  const uid = () => "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const valueOf = (g, r) => (g.values && g.values[r]) || (r + 1) * 100;
+  function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2400); }
+
+  /* ================= sound ================= */
+  let actx = null;
+  function ctx() { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+  function beep(type) {
+    if (!soundOn) return;
+    try {
+      const a = ctx();
+      if (type === "boom") {
+        const len = a.sampleRate * .9, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+        const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+        src.buffer = buf; f.type = "lowpass"; f.frequency.value = 900; g.gain.value = .9;
+        src.connect(f).connect(g).connect(a.destination); src.start(); return;
+      }
+      const seq = { open: [[660, .08], [880, .12]], ok: [[523, .1], [659, .1], [784, .18]], no: [[180, .35]], tick: [[1400, .025]], end: [[300, .2], [200, .4]], pass: [[700, .06], [1050, .1]], win: [[523, .12], [659, .12], [784, .12], [1046, .4]] }[type] || [];
+      let t = a.currentTime;
+      for (const [fr, du] of seq) {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = type === "no" || type === "end" ? "sawtooth" : "triangle";
+        o.frequency.value = fr; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.2, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + du);
+        o.connect(g).connect(a.destination); o.start(t); o.stop(t + du + .02); t += du * .9;
+      }
+    } catch (e) {}
+  }
+  function paintSound() { const b = $("#soundBtn"); b.textContent = "Sound: " + (soundOn ? "on" : "off"); b.setAttribute("aria-pressed", soundOn); }
+
+  /* ================= screens ================= */
+  const SCREENS = ["home", "setup", "board", "editor", "bombSetup", "bombPlay"];
+  function show(id) { for (const s of SCREENS) $("#" + s).hidden = s !== id; if (id !== "bombPlay") stopBomb(); window.scrollTo(0, 0); }
+
+  /* ================= home ================= */
+  function renderHome() {
+    const list = $("#gameList"); list.replaceChildren();
+    list.append(el("button", { class: "card new", onclick: () => openEditor(null) },
+      el("div", { class: "plus" }, "+"), el("h3", {}, "Create a new Quiz Board"), el("div", { class: "meta" }, "Your categories, clues and answers")));
+    for (const g of allGames()) {
+      const n = g.categories.reduce((s, c) => s + c.clues.filter(x => x.q.trim()).length, 0);
+      list.append(el("article", { class: "card" },
+        g.sample ? el("div", { class: "tag" }, "Example game") : null,
+        el("h3", {}, g.title || "Untitled game"),
+        el("div", { class: "meta" }, `${g.categories.length} categories · ${n} clues`),
+        el("div", { class: "chips" }, g.categories.map((c, i) => el("span", { class: "chip", style: `--cc:${CAT_COLORS[i % 6]}` }, c.name || "Category"))),
+        el("div", { class: "row" },
+          el("button", { class: "btn gold", onclick: () => openSetup(g.id) }, "Play"),
+          el("button", { class: "btn", onclick: () => openEditor(g) }, g.sample ? "Edit a copy" : "Edit"),
+          g.sample ? null : el("button", { class: "btn", onclick: () => { const c = JSON.parse(JSON.stringify(g)); c.id = uid(); c.title = "Copy of " + g.title; games.push(c); store.set(K_GAMES, games); renderHome(); toast("Copy made"); } }, "Duplicate"),
+          g.sample ? null : el("button", { class: "btn danger", onclick: e => askDelete(e.currentTarget, g) }, "Delete"))));
+    }
+  }
+  function askDelete(btn, g) {
+    btn.parentElement.replaceWith(el("div", { class: "confirm" }, "Delete this game?",
+      el("button", { class: "btn danger", onclick: () => { games = games.filter(x => x.id !== g.id); store.set(K_GAMES, games); if (match && match.gameId === g.id) { match = null; store.set(K_MATCH, null); } renderHome(); toast("Game deleted"); } }, "Yes, delete"),
+      el("button", { class: "btn", onclick: () => renderHome() }, "Keep it")));
+  }
+
+  /* ================= team inputs (shared) ================= */
+  function renderTeams(boxId, countId, count, names) {
+    const box = $(boxId); const old = [...box.querySelectorAll("input")].map(i => i.value);
+    box.replaceChildren();
+    for (let i = 0; i < count; i++) {
+      box.append(el("div", { class: "team-line" }, el("span", { class: "dot", style: `background:${TEAM_COLORS[i]}` }),
+        el("input", { type: "text", id: boxId.slice(1) + i, value: (names && names[i]) || old[i] || TEAM_NAMES[i], "aria-label": `Team ${i + 1} name`, maxlength: 24 })));
+    }
+    $(countId).textContent = count;
+  }
+  const readTeams = boxId => [...$(boxId).querySelectorAll("input")].map((inp, i) => ({ name: inp.value.trim() || `Team ${i + 1}`, color: TEAM_COLORS[i] }));
+
+  /* ================= quiz: setup ================= */
+  function openSetup(id) {
+    setupGameId = id; const g = findGame(id);
+    $("#setupTitle").textContent = g.title;
+    const same = match && match.gameId === id;
+    teamCount = same ? match.teams.length : 2;
+    renderTeams("#teamInputs", "#teamCount", teamCount, same ? match.teams.map(t => t.name) : null);
+    $("#resumeBtn").hidden = !(same && !match.over);
+    show("setup");
+  }
+  function startMatch() {
+    const g = findGame(setupGameId);
+    const teams = readTeams("#teamInputs").map(t => ({ ...t, score: 0 }));
+    const cells = []; g.categories.forEach((c, ci) => c.clues.forEach((x, ri) => { if (x.q.trim() && ri >= 1) cells.push(ci + "-" + ri); }));
+    const dd = [];
+    if ($("#ddToggle").checked) while (dd.length < Math.min(2, cells.length)) { const k = cells[Math.floor(Math.random() * cells.length)]; if (!dd.includes(k)) dd.push(k); }
+    match = { gameId: g.id, teams, used: [], dd, timer: +$("#timerSel").value, over: false };
+    store.set(K_MATCH, match); beep("open"); renderBoard(); show("board");
+  }
+
+  /* ================= quiz: board ================= */
+  function renderBoard() {
+    const g = findGame(match.gameId); if (!g) { show("home"); return; }
+    $("#boardTitle").textContent = g.title;
+    const rows = Math.max(...g.categories.map(c => c.clues.length));
+    const grid = $("#grid"); grid.replaceChildren();
+    grid.style.gridTemplateColumns = `repeat(${g.categories.length}, minmax(110px, 1fr))`;
+    g.categories.forEach((c, i) => grid.append(el("div", { class: "cat", style: `--cc:${CAT_COLORS[i % 6]}` }, icon(catIcon(c, i)), el("span", {}, c.name || "Category"))));
+    let left = 0;
+    for (let r = 0; r < rows; r++) g.categories.forEach((c, ci) => {
+      const clue = c.clues[r], key = ci + "-" + r, used = match.used.includes(key), empty = !clue || !clue.q.trim();
+      if (!used && !empty) left++;
+      grid.append(el("button", { class: "tile" + (used ? " used" : "") + (empty ? " empty" : ""), style: `--cc:${CAT_COLORS[ci % 6]}`, disabled: used || empty,
+        "aria-label": used ? "Used" : `${c.name}, ${valueOf(g, r)} points`, onclick: () => openClue(ci, r) }, String(valueOf(g, r))));
+    });
+    $("#cluesLeft").textContent = `${left} clue${left === 1 ? "" : "s"} left`;
+    renderScores();
+    if (left === 0 && !match.over) setTimeout(() => showWinner(match.teams, "points"), 500);
+  }
+  function renderScores(bumpIdx) {
+    const box = $("#scores"); box.replaceChildren();
+    const top = Math.max(...match.teams.map(t => t.score));
+    match.teams.forEach((t, i) => box.append(el("div", { class: "score" + (top > 0 && t.score === top ? " leader" : ""), style: `--c:${t.color}` },
+      el("div", { class: "name" }, t.name),
+      el("div", { class: "pts" + (t.score < 0 ? " neg" : "") + (i === bumpIdx ? " bump" : "") }, String(t.score)),
+      el("div", { class: "adj" },
+        el("button", { "aria-label": `Take 100 from ${t.name}`, onclick: () => adjust(i, -100) }, "−100"),
+        el("button", { "aria-label": `Give 100 to ${t.name}`, onclick: () => adjust(i, 100) }, "+100")))));
+  }
+  function adjust(i, d) { match.teams[i].score += d; store.set(K_MATCH, match); renderScores(i); }
+
+  /* ================= quiz: clue ================= */
+  let timerId = null, cur = null;
+  function stopTimer() { clearInterval(timerId); timerId = null; }
+  function openClue(ci, r) {
+    const g = findGame(match.gameId); const c = g.categories[ci];
+    cur = { ci, r, key: ci + "-" + r, cat: c.name, icon: catIcon(c, ci), color: CAT_COLORS[ci % 6], value: valueOf(g, r), clue: c.clues[r], revealed: false, dd: match.dd.includes(ci + "-" + r), wagerTeam: null, wager: 0 };
+    beep("open"); $("#clue").hidden = false;
+    cur.dd ? renderDD() : renderClue();
+  }
+  function band(right) { return el("div", { class: "clue-band" }, el("div", { class: "cname" }, icon(cur.icon), cur.cat), el("div", { class: "val" }, right)); }
+  function renderDD() {
+    const sel = el("select", { id: "ddTeam", "aria-label": "Team" }, match.teams.map((t, i) => el("option", { value: i }, t.name)));
+    const maxW = () => Math.max(match.teams[+sel.value].score, 500);
+    const amt = el("input", { type: "number", id: "ddAmt", min: 5, step: 50, value: Math.min(cur.value * 2, 1000), "aria-label": "Bet" });
+    const hint = el("div", { class: "hint" }); const upd = () => hint.textContent = `Bet between 5 and ${maxW()} points.`; sel.onchange = upd; upd();
+    $("#clue").replaceChildren(el("div", { class: "clue-card", style: `--cc:${cur.color}` }, band(String(cur.value)), el("div", { class: "dd" },
+      el("h3", {}, "Daily Double!"),
+      el("p", { class: "lede", style: "margin:0" }, "Only one team answers. They choose how many points to bet."),
+      el("div", { class: "wager" }, el("label", { class: "f", for: "ddTeam" }, "Team", sel), el("label", { class: "f", for: "ddAmt" }, "Bet", amt),
+        el("button", { class: "btn gold big", onclick: () => { const w = Math.round(+amt.value || 0); if (w < 5 || w > maxW()) { hint.textContent = `The bet must be between 5 and ${maxW()}.`; amt.focus(); return; } cur.wagerTeam = +sel.value; cur.wager = w; renderClue(); } }, "Show the clue")),
+      hint)));
+    beep("win");
+  }
+  function renderClue() {
+    const secs = match.timer, bar = el("i"), out = el("output", {}, secs ? String(secs) : "");
+    const tbar = el("div", { class: "timer" }, bar);
+    const ansSlot = el("div"), awardSlot = el("div");
+    const revealBtn = el("button", { class: "btn gold big", onclick: reveal }, "Show answer");
+    const img = cur.clue.img ? el("img", { class: "clue-img", src: cur.clue.img, alt: "", onerror: e => e.currentTarget.remove() }) : null;
+    $("#clue").replaceChildren(el("div", { class: "clue-card", style: `--cc:${cur.color}` },
+      band(cur.dd ? `${match.teams[cur.wagerTeam].name} bets ${cur.wager}` : String(cur.value)),
+      el("div", { class: "clue-body" }, img, el("p", { class: "clue-q" }, cur.clue.q), secs ? el("div", { class: "timer-row" }, tbar, out) : null, ansSlot,
+        el("div", { class: "actions" }, revealBtn, el("button", { class: "btn", onclick: closeClue }, "Back to board (keep square)")),
+        awardSlot, el("div", { class: "hint" }, "Space shows the answer. Esc goes back."))));
+    revealBtn.focus();
+    function reveal() {
+      if (cur.revealed) return; cur.revealed = true; stopTimer(); revealBtn.remove();
+      ansSlot.replaceWith(el("div", { class: "answer" }, el("small", {}, "Answer"), el("b", {}, cur.clue.a || "(no answer written)")));
+      const teams = cur.dd ? [cur.wagerTeam] : match.teams.map((_, i) => i), pts = cur.dd ? cur.wager : cur.value;
+      awardSlot.replaceWith(el("div", { style: "display:grid;gap:10px" },
+        el("div", { class: "hint", style: "font-size:15px;color:var(--ink);font-weight:700" }, "Who got it right?"),
+        el("div", { class: "award" }, teams.map(i => el("div", { class: "team", style: `--c:${match.teams[i].color}` }, el("div", { class: "tn" }, match.teams[i].name),
+          el("div", {}, el("button", { class: "ok", onclick: () => award(i, pts) }, `✓ +${pts}`),
+            el("button", { class: "no", onclick: e => { e.currentTarget.disabled = true; award(i, -pts, true); } }, `✗ −${pts}`))))),
+        el("div", { class: "actions" }, el("button", { class: "btn", onclick: () => finishClue() }, "Nobody got it"))));
+    }
+    cur.reveal = reveal;
+    if (secs) {
+      const t0 = Date.now(); stopTimer();
+      timerId = setInterval(() => {
+        const left = Math.max(0, secs - (Date.now() - t0) / 1000);
+        bar.style.transform = `scaleX(${left / secs})`; out.textContent = Math.ceil(left); tbar.classList.toggle("low", left <= 5);
+        if (left <= 5 && left > 0 && Math.ceil(left) !== cur.lastTick) { cur.lastTick = Math.ceil(left); beep("tick"); }
+        if (left <= 0) { stopTimer(); beep("end"); out.textContent = "Time!"; }
+      }, 100);
+    }
+  }
+  function award(i, pts, wrongOnly) {
+    match.teams[i].score += pts; store.set(K_MATCH, match); beep(pts > 0 ? "ok" : "no");
+    if (!wrongOnly || cur.dd) finishClue(i); else renderScores(i);
+  }
+  function finishClue(bumpIdx) { if (!match.used.includes(cur.key)) match.used.push(cur.key); store.set(K_MATCH, match); closeClue(); renderBoard(); if (bumpIdx != null) renderScores(bumpIdx); }
+  function closeClue() { stopTimer(); $("#clue").hidden = true; $("#clue").replaceChildren(); }
+
+  /* ================= winner (shared) ================= */
+  function showWinner(teams, unit) {
+    if (unit === "points") { match.over = true; store.set(K_MATCH, match); }
+    const ranked = [...teams].sort((a, b) => (b.score ?? b.lives) - (a.score ?? a.lives));
+    const val = t => unit === "points" ? t.score : t.lives;
+    const best = val(ranked[0]); const winners = ranked.filter(t => val(t) === best).map(t => t.name);
+    $("#winBox").replaceChildren(symbolSvg("trophy", "0 0 64 64"),
+      el("div", { class: "eyebrow" }, unit === "points" ? "Final scores" : "Word Bomb"),
+      el("h3", {}, winners.length > 1 ? `It's a tie: ${winners.join(" & ")}!` : `${ranked[0].name} win!`),
+      el("div", { class: "rank" }, ranked.map((t, i) => el("div", { style: `border-left:7px solid ${t.color}` }, el("span", {}, `${i + 1}. ${t.name}`), el("span", {}, unit === "points" ? String(t.score) : `${t.lives} ♥`)))),
+      el("div", { class: "actions" },
+        el("button", { class: "btn gold big", onclick: () => { hideWinner(); unit === "points" ? openSetup(match.gameId) : openBombSetup(); } }, "Play again"),
+        unit === "points" ? el("button", { class: "btn big", onclick: () => { hideWinner(); show("board"); } }, "See the board") : null,
+        el("button", { class: "btn big", onclick: () => { hideWinner(); renderHome(); show("home"); } }, "Home")));
+    $("#winner").hidden = false; beep("win"); confetti();
+  }
+  function hideWinner() { $("#winner").hidden = true; cancelAnimationFrame(confetti.raf); }
+  function confetti() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const c = $("#confetti"), x = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
+    const cols = ["#E2725B", "#1A8A8F", "#7C5CBF", "#E39B2B", "#C9A84C", "#D6457A"];
+    const ps = Array.from({ length: 200 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height, w: 6 + Math.random() * 8, h: 8 + Math.random() * 10, vy: 2 + Math.random() * 3, vx: -1 + Math.random() * 2, r: Math.random() * 6, vr: -.1 + Math.random() * .2, col: cols[Math.floor(Math.random() * cols.length)] }));
+    const t0 = performance.now();
+    (function frame(t) {
+      x.clearRect(0, 0, c.width, c.height);
+      for (const p of ps) { p.y += p.vy; p.x += p.vx; p.r += p.vr; if (p.y > c.height + 20 && t - t0 < 4000) p.y = -20; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.col; x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); x.restore(); }
+      if (t - t0 < 7000) confetti.raf = requestAnimationFrame(frame); else x.clearRect(0, 0, c.width, c.height);
+    })(t0);
+  }
+
+  /* ================= quiz: editor ================= */
+  function blankGame(nc = 5, nr = 5) { return { id: uid(), title: "", categories: Array.from({ length: nc }, (_, i) => ({ name: "", icon: ICONS[i % 6], clues: Array.from({ length: nr }, () => ({ q: "", a: "", img: "" })) })), values: Array.from({ length: nr }, (_, i) => (i + 1) * 100) }; }
+  function openEditor(g) {
+    if (!g) { editing = blankGame(); $("#edEyebrow").textContent = "New game"; }
+    else if (g.sample) { editing = JSON.parse(JSON.stringify(g)); editing.id = uid(); delete editing.sample; editing.title = g.title + " (my copy)"; $("#edEyebrow").textContent = "Copy of the example"; }
+    else { editing = JSON.parse(JSON.stringify(g)); $("#edEyebrow").textContent = "Edit game"; }
+    const rows = Math.max(...editing.categories.map(c => c.clues.length));
+    editing.values = editing.values || Array.from({ length: rows }, (_, i) => (i + 1) * 100);
+    $("#edTitle").value = editing.title; $("#edCats").value = String(editing.categories.length); $("#edRows").value = String(rows);
+    renderEditor(); show("editor");
+  }
+  function readEditor() {
+    editing.title = $("#edTitle").value.trim();
+    document.querySelectorAll(".ed-cat").forEach((box, ci) => {
+      const cat = editing.categories[ci]; if (!cat) return;
+      cat.name = box.querySelector(".cat-name").value.trim();
+      box.querySelectorAll(".ed-clue").forEach((row, ri) => {
+        cat.clues[ri] = { q: row.querySelector("textarea").value, a: row.querySelector("input.ans").value, img: row.querySelector("input.img").value.trim() };
+        const v = parseInt(row.querySelector("input.val").value, 10); if (ci === 0 && v > 0) editing.values[ri] = v;
+      });
+    });
+  }
+  function resizeEditor() {
+    readEditor();
+    const nc = +$("#edCats").value, nr = +$("#edRows").value;
+    while (editing.categories.length < nc) editing.categories.push({ name: "", icon: ICONS[editing.categories.length % 6], clues: [] });
+    editing.categories.length = nc;
+    editing.categories.forEach(c => { while (c.clues.length < nr) c.clues.push({ q: "", a: "", img: "" }); c.clues.length = nr; });
+    while (editing.values.length < nr) editing.values.push((editing.values.length + 1) * 100);
+    editing.values.length = nr; renderEditor();
+  }
+  function renderEditor() {
+    const box = $("#edCatsBox"); box.replaceChildren();
+    editing.categories.forEach((c, ci) => box.append(el("section", { class: "ed-cat", style: `--cc:${CAT_COLORS[ci % 6]}` },
+      el("header", {}, el("span", { class: "ed-num" }, `Category ${ci + 1}`),
+        el("input", { type: "text", class: "cat-name", id: `c${ci}`, value: c.name, placeholder: "Category name, e.g. Jobs", "aria-label": `Category ${ci + 1} name`, maxlength: 40 })),
+      el("div", { class: "ed-labels" }, el("span", {}, "Points"), el("span", {}, "Clue"), el("span", {}, "Answer"), el("span", {}, "Picture link (optional)")),
+      c.clues.map((x, ri) => el("div", { class: "ed-clue" },
+        el("input", { type: "number", class: "val", id: `v${ci}-${ri}`, value: valueOf(editing, ri), min: 1, "aria-label": "Points", disabled: ci !== 0 }),
+        el("textarea", { id: `q${ci}-${ri}`, rows: 2, placeholder: "Clue (what students read)", "aria-label": `Category ${ci + 1}, clue ${ri + 1}` }, x.q),
+        el("input", { type: "text", class: "ans", id: `a${ci}-${ri}`, value: x.a, placeholder: "Answer", "aria-label": `Category ${ci + 1}, answer ${ri + 1}` }),
+        el("input", { type: "url", class: "img", id: `p${ci}-${ri}`, value: x.img || "", placeholder: "https://… .jpg", "aria-label": `Category ${ci + 1}, picture link ${ri + 1}` }))))));
+    box.querySelectorAll(".ed-cat:first-child input.val").forEach((inp, ri) => inp.addEventListener("input", () => box.querySelectorAll(".ed-cat").forEach(cat => { const o = cat.querySelectorAll("input.val")[ri]; if (o && o !== inp) o.value = inp.value; })));
+    updateNote();
+  }
+  function updateNote() { readEditor(); const empty = editing.categories.reduce((s, c) => s + c.clues.filter(x => !x.q.trim()).length, 0); $("#edNote").textContent = empty ? `${empty} empty clue${empty === 1 ? "" : "s"}. Empty squares can't be picked.` : "All clues are filled in."; }
+  function saveEditor(play) {
+    readEditor();
+    if (!editing.title) { $("#edTitle").focus(); toast("Give your game a title first"); return; }
+    if (!editing.categories.some(c => c.clues.some(x => x.q.trim()))) { toast("Write at least one clue"); return; }
+    editing.categories.forEach((c, i) => { if (!c.name) c.name = `Category ${i + 1}`; });
+    const i = games.findIndex(g => g.id === editing.id); if (i >= 0) games[i] = editing; else games.push(editing);
+    const ok = store.set(K_GAMES, games);
+    if (match && match.gameId === editing.id) { match = null; store.set(K_MATCH, null); }
+    toast(ok ? "Game saved" : "Saved for now, but this browser can't keep it after closing");
+    if (play) openSetup(editing.id); else { renderHome(); show("home"); }
+  }
+  async function copyEditor() {
+    readEditor(); const { id, ...rest } = editing; const text = JSON.stringify(rest, null, 1);
+    try { await navigator.clipboard.writeText(text); toast("Game text copied. Paste it into Import on another device."); }
+    catch (e) { const ta = el("textarea", { rows: 6, "aria-label": "Game text", style: "margin-top:8px" }, text); $("#edNote").replaceChildren("Select this text and copy it:", ta); ta.focus(); ta.select(); }
+  }
+  function doImport() {
+    try {
+      const g = JSON.parse($("#importText").value);
+      if (!g || !Array.isArray(g.categories) || !g.categories.length) throw 0;
+      g.categories = g.categories.slice(0, 6).map((c, i) => ({ name: String(c.name || ""), icon: ICONS.includes(c.icon) ? c.icon : ICONS[i % 6], clues: (c.clues || []).slice(0, 6).map(x => ({ q: String(x.q || ""), a: String(x.a || ""), img: String(x.img || "") })) }));
+      g.title = String(g.title || "Imported game"); g.id = uid(); delete g.sample;
+      games.push(g); store.set(K_GAMES, games); $("#importText").value = ""; $("#importer").hidden = true; renderHome(); toast("Game imported");
+    } catch (e) { toast("That text isn't a game. Copy it again from the editor."); }
+  }
+
+  /* ================= word bomb ================= */
+  let bomb = null, bombTimer = null, tickTimer = null;
+  function openBombSetup() {
+    renderTeams("#bTeamInputs", "#bTeamCount", bTeamCount);
+    $("#bTopics").value = store.get(K_TOPICS, DEFAULT_TOPICS).join("\n");
+    show("bombSetup");
+  }
+  function startBomb() {
+    const topics = $("#bTopics").value.split("\n").map(s => s.trim()).filter(Boolean);
+    if (!topics.length) { toast("Write at least one topic"); return; }
+    store.set(K_TOPICS, topics);
+    const lives = +$("#bLives").value;
+    bomb = { teams: readTeams("#bTeamInputs").map(t => ({ ...t, lives })), deck: shuffle(topics.slice()), topics, holder: 0, words: 0, live: false, speed: $("#bSpeed").value, topic: "" };
+    nextTopic(); show("bombPlay"); renderBomb();
+  }
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function nextTopic() { if (!bomb.deck.length) bomb.deck = shuffle(bomb.topics.slice()); bomb.topic = bomb.deck.pop(); bomb.words = 0; }
+  const alive = () => bomb.teams.map((t, i) => i).filter(i => bomb.teams[i].lives > 0);
+  function nextAlive(i) { const n = bomb.teams.length; for (let k = 1; k <= n; k++) { const j = (i + k) % n; if (bomb.teams[j].lives > 0) return j; } return i; }
+  function renderBomb(boomed) {
+    $("#bTopic").textContent = bomb.topic;
+    const h = bomb.teams[bomb.holder];
+    const holder = $("#bHolder"); holder.style.setProperty("--c", h.color); holder.textContent = (bomb.live ? "Bomb is with: " : "Starts with: ") + h.name;
+    $("#bCounter").textContent = bomb.live ? `${bomb.words} word${bomb.words === 1 ? "" : "s"} so far` : (boomed ? "" : "Press Start. The bomb starts ticking.");
+    $("#bombWrap").classList.toggle("live", bomb.live);
+    const act = $("#bActions"); act.replaceChildren();
+    if (bomb.live) act.append(el("button", { class: "btn gold huge", id: "passBtn", onclick: pass }, "Good word, pass!"));
+    else act.append(el("button", { class: "btn teal huge", id: "goBtn", onclick: lightFuse }, boomed ? "Next round" : "Start"),
+      el("button", { class: "btn big", onclick: () => { nextTopic(); renderBomb(); } }, "New topic"));
+    if (!bomb.live) act.append(el("button", { class: "btn big", onclick: () => { stopBomb(); openBombSetup(); } }, "Stop game"));
+    const lb = $("#bLivesBox"); lb.replaceChildren(el("h2", { style: "font-size:24px" }, "Teams"));
+    bomb.teams.forEach((t, i) => {
+      const hs = el("div", { class: "hearts", "aria-label": `${t.lives} hearts` });
+      for (let k = 0; k < +$("#bLives").value; k++) hs.append(heart(k < t.lives));
+      lb.append(el("div", { class: "life" + (i === bomb.holder ? " turn" : "") + (t.lives <= 0 ? " out" : ""), style: `--c:${t.color}` }, el("b", {}, t.name + (t.lives <= 0 ? " (out)" : "")), hs));
+    });
+    const fb = $("#passBtn") || $("#goBtn"); if (fb) fb.focus();
+  }
+  function lightFuse() {
+    if (bomb.boomedWaiting) { bomb.boomedWaiting = false; nextTopic(); }
+    const [lo, hi] = { slow: [25, 50], normal: [15, 35], fast: [8, 20] }[bomb.speed];
+    const total = (lo + Math.random() * (hi - lo)) * 1000;
+    bomb.live = true; bomb.start = Date.now(); bomb.total = total; beep("open"); renderBomb();
+    clearTimeout(bombTimer); bombTimer = setTimeout(explode, total);
+    (function tick() {
+      if (!bomb || !bomb.live) return;
+      const p = Math.min(1, (Date.now() - bomb.start) / bomb.total);
+      $("#bombWrap").style.setProperty("--shk", (1 - p * .8).toFixed(2) + "s");
+      beep("tick");
+      tickTimer = setTimeout(tick, 900 - p * 750);
+    })();
+  }
+  function pass() { if (!bomb.live) return; bomb.words++; bomb.holder = nextAlive(bomb.holder); beep("pass"); renderBomb(); }
+  function explode() {
+    if (!bomb || !bomb.live) return;
+    bomb.live = false; clearTimeout(tickTimer); beep("boom");
+    const t = bomb.teams[bomb.holder]; t.lives = Math.max(0, t.lives - 1);
+    document.body.append(Object.assign(el("div", { class: "flash" }), {}));
+    setTimeout(() => document.querySelectorAll(".flash").forEach(f => f.remove()), 700);
+    const left = alive();
+    bomb.holder = left.length ? (t.lives > 0 ? bomb.holder : nextAlive(bomb.holder)) : bomb.holder;
+    bomb.boomedWaiting = true;
+    renderBomb(true);
+    const main = $("#bombMain"); const b = el("div", { class: "boom" }, el("b", {}, "BOOM!")); main.append(b);
+    $("#bCounter").textContent = `${t.name} lose${t.name.endsWith("s") ? "" : "s"} a heart!`;
+    setTimeout(() => b.remove(), 1600);
+    if (left.length <= 1) setTimeout(() => showWinner(bomb.teams, "lives"), 1400);
+  }
+  function stopBomb() { clearTimeout(bombTimer); clearTimeout(tickTimer); if (bomb) bomb.live = false; }
+
+  /* ================= keys ================= */
+  document.addEventListener("keydown", e => {
+    const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    if (!$("#clue").hidden) {
+      if (e.key === "Escape") { e.preventDefault(); closeClue(); }
+      else if ((e.key === " " || e.key === "Enter") && cur && cur.reveal && !cur.revealed && !typing) { e.preventDefault(); cur.reveal(); }
+      return;
+    }
+    if (!$("#bombPlay").hidden && $("#winner").hidden && !typing) {
+      if (e.key === " ") { e.preventDefault(); bomb.live ? pass() : lightFuse(); }
+      else if ((e.key === "n" || e.key === "N") && !bomb.live) { nextTopic(); renderBomb(); }
+    }
+  });
+
+  /* ================= wiring ================= */
+  $("#goHome").onclick = () => { closeClue(); hideWinner(); renderHome(); show("home"); };
+  $("#soundBtn").onclick = () => { soundOn = !soundOn; store.set(K_SOUND, soundOn); paintSound(); beep("ok"); };
+  $("#fsBtn").onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (e) { toast("Full screen isn't available here"); } };
+  $("#pickQuiz").onclick = () => $("#quizList").scrollIntoView({ behavior: "smooth" });
+  $("#pickBomb").onclick = openBombSetup;
+  $("#teamMinus").onclick = () => { if (teamCount > 1) renderTeams("#teamInputs", "#teamCount", --teamCount); };
+  $("#teamPlus").onclick = () => { if (teamCount < 6) renderTeams("#teamInputs", "#teamCount", ++teamCount); };
+  $("#bTeamMinus").onclick = () => { if (bTeamCount > 2) renderTeams("#bTeamInputs", "#bTeamCount", --bTeamCount); };
+  $("#bTeamPlus").onclick = () => { if (bTeamCount < 6) renderTeams("#bTeamInputs", "#bTeamCount", ++bTeamCount); };
+  $("#startBtn").onclick = startMatch;
+  $("#resumeBtn").onclick = () => { renderBoard(); show("board"); };
+  $("#setupBack").onclick = () => { renderHome(); show("home"); };
+  $("#endBtn").onclick = () => showWinner(match.teams, "points");
+  $("#edCats").onchange = resizeEditor; $("#edRows").onchange = resizeEditor;
+  $("#edCatsBox").addEventListener("input", () => { clearTimeout(updateNote.t); updateNote.t = setTimeout(updateNote, 300); });
+  $("#edCancel").onclick = () => { renderHome(); show("home"); };
+  $("#edSave").onclick = () => saveEditor(false);
+  $("#edPlay").onclick = () => saveEditor(true);
+  $("#edCopy").onclick = copyEditor;
+  $("#importToggle").onclick = () => { $("#importer").hidden = !$("#importer").hidden; if (!$("#importer").hidden) $("#importText").focus(); };
+  $("#importCancel").onclick = () => { $("#importer").hidden = true; };
+  $("#importBtn").onclick = doImport;
+  $("#bStart").onclick = startBomb;
+  $("#bReset").onclick = () => { $("#bTopics").value = DEFAULT_TOPICS.join("\n"); toast("Topics reset"); };
+  $("#bBack").onclick = () => { renderHome(); show("home"); };
+  addEventListener("resize", () => { const c = $("#confetti"); if (!$("#winner").hidden) { c.width = innerWidth; c.height = innerHeight; } });
+
+  paintSound(); renderHome(); show("home");
+})();
+</script>
+
+</body>
+</html>
