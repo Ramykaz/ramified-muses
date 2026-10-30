@@ -1,6 +1,12 @@
 {
+  "redirects": [
+    { "source": "/", "has": [{ "type": "host", "value": "forms.ramyfied.me" }], "destination": "/admin", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/api/(.*)",  "destination": "/api/$1" },
+    { "source": "/(.*)", "has": [{ "type": "host", "value": "forms.ramyfied.me" }], "destination": "/forms/index.html" },
+    { "source": "/forms",     "destination": "/forms/index.html" },
+    { "source": "/forms/(.*)", "destination": "/forms/index.html" },
     { "source": "/English",   "destination": "/English.html" },
     { "source": "/English/",  "destination": "/English.html" },
     { "source": "/English/jeopardy",  "destination": "/English/jeopardy/index.html" },
