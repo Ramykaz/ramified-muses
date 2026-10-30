@@ -86,6 +86,7 @@ h2 { font: 400 30px/1.15 var(--serif); margin: 0; }
 .gamecard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
 .gamecard.quiz { background: linear-gradient(135deg, #1a6b72, #1A8A8F 60%, #3DB2A6); }
 .gamecard.bomb { background: linear-gradient(135deg, #E2725B, #E39B2B 70%, #F2C14E); }
+.gamecard.scr { background: linear-gradient(135deg, #7C5CBF, #9C5FC4 55%, #D6457A); }
 .gamecard h3 { font: 400 34px/1 var(--serif); margin: 6px 0 8px; }
 .gamecard p { margin: 0; opacity: .92; max-width: 34ch; }
 .gamecard .tagline { font-weight: 700; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .9; }
@@ -250,6 +251,30 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
 .life b { font-weight: 800; overflow-wrap: anywhere; }
 .hearts { display: flex; gap: 3px; }
 .hearts svg { width: 22px; height: 22px; }
+/* word scramble */
+.packs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pack { --cc: var(--teal); position: relative; }
+.pack input { position: absolute; opacity: 0; pointer-events: none; }
+.pack span { display: inline-block; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg); font-weight: 700; font-size: 15px; cursor: pointer; user-select: none; }
+.pack input:checked + span { background: var(--cc); border-color: var(--cc); color: #fff; }
+.pack input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+.scr-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; font-weight: 800; color: var(--muted); }
+.scr-cat { background: var(--cc); color: #fff; padding: 5px 14px; border-radius: 999px; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+.worth { color: var(--gold); }
+.scr-clue { font: 400 clamp(22px, 2.8vw, 36px)/1.25 var(--serif); color: var(--ink); text-wrap: balance; margin: 0; }
+.scr-clue small { display: block; font: 800 12px/1.4 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.slots, .ltiles { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: clamp(4px, .9vw, 12px); }
+.slot { flex: none; width: clamp(28px, 6vw, 76px); height: clamp(40px, 7vw, 86px); border-bottom: 5px solid var(--line); display: grid; place-items: center; font: 800 clamp(24px, 4.4vw, 58px)/1 var(--sans); color: var(--cc); }
+.slot.on { border-color: var(--cc); animation: pop .3s; }
+.slot.gap, .ltile.gap { width: clamp(12px, 2vw, 28px); border: 0; background: none; box-shadow: none; }
+.ltile { --cc: var(--teal); flex: none; width: clamp(28px, 6.6vw, 84px); height: clamp(28px, 6.6vw, 84px); border-radius: clamp(8px, 1.4vw, 18px); display: grid; place-items: center; background: var(--cc); color: #fff; font: 800 clamp(22px, 4.4vw, 58px)/1 var(--sans); box-shadow: 0 5px 0 color-mix(in srgb, var(--cc) 70%, #000); transform: rotate(var(--r, 0deg)); animation: drop .45s cubic-bezier(.2,1.4,.4,1) both; animation-delay: calc(var(--i, 0) * 45ms); transition: opacity .25s, transform .25s; }
+.ltile.used { opacity: .12; transform: scale(.8); }
+.ltile.still { animation: none; }
+@keyframes drop { from { transform: translateY(-34px) scale(.5) rotate(0); opacity: 0; } }
+.scr-main { --cc: var(--c3); min-height: 420px; align-content: center; }
+.scr-main .timer-row { width: min(720px, 100%); }
+.team-win { --c: var(--teal); background: var(--c); border-color: var(--c); color: #fff; }
+.team-win:hover { background: color-mix(in srgb, var(--c) 85%, #000); border-color: var(--c); }
 .how { background: var(--cream); border-radius: 18px; padding: 14px 16px; font-size: 14px; color: var(--muted); }
 .how ol { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
 
@@ -319,7 +344,7 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
         <div>
           <div class="eyebrow">For the smart board</div>
           <h1>Play, laugh and <em>speak English.</em></h1>
-          <p class="lede">Two team games for class. Answer clues on the Quiz Board, or pass the Word Bomb before it explodes.</p>
+          <p class="lede">Three team games for class. Answer clues on the Quiz Board, pass the Word Bomb before it explodes, or race to fix the mixed-up letters in Word Scramble.</p>
         </div>
         <svg class="hero-art" viewBox="0 0 520 320" role="img" aria-label="Hot air balloons over Cappadocia">
           <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE7D2"/><stop offset="1" stop-color="#FFF7EC"/></linearGradient></defs>
@@ -342,6 +367,10 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
         <button class="gamecard bomb" id="pickBomb">
           <span><span class="tagline">Game 2 · Fast and loud</span><h3>Word Bomb</h3><p>Say a word for the topic, then pass the bomb. Don't hold it when it explodes!</p><span class="go">Play Word Bomb →</span></span>
           <svg viewBox="0 0 200 200" aria-hidden="true"><use href="#i-bomb"/></svg>
+        </button>
+        <button class="gamecard scr" id="pickScr">
+          <span><span class="tagline">Game 3 · Easy and fun</span><h3>Word Scramble</h3><p>The letters are all mixed up. Which team can find the word first?</p><span class="go">Play Word Scramble →</span></span>
+          <svg viewBox="0 0 120 120" aria-hidden="true"><g font-family="DM Sans, Arial, sans-serif" font-weight="800" font-size="30" text-anchor="middle"><g transform="rotate(-8 34 40)"><rect x="12" y="18" width="44" height="44" rx="10" fill="#fff"/><text x="34" y="51" fill="#7C5CBF">W</text></g><g transform="rotate(7 86 36)"><rect x="64" y="14" width="44" height="44" rx="10" fill="#F2C14E"/><text x="86" y="47" fill="#fff">D</text></g><g transform="rotate(5 36 88)"><rect x="14" y="66" width="44" height="44" rx="10" fill="#F2C14E"/><text x="36" y="99" fill="#fff">O</text></g><g transform="rotate(-6 86 86)"><rect x="64" y="64" width="44" height="44" rx="10" fill="#fff"/><text x="86" y="97" fill="#D6457A">R</text></g></g></svg>
         </button>
       </div>
 
@@ -482,6 +511,45 @@ She teaches children. = a teacher</pre>
         <aside class="lives" id="bLivesBox"></aside>
       </div>
     </section>
+
+    <!-- WORD SCRAMBLE SETUP -->
+    <section id="scrSetup" hidden>
+      <div class="panel">
+        <div class="setup-head">
+          <svg style="background:linear-gradient(135deg,#7C5CBF,#D6457A);border-radius:16px;padding:4px" viewBox="0 0 120 120" aria-hidden="true"><g font-family="DM Sans, Arial, sans-serif" font-weight="800" font-size="30" text-anchor="middle"><g transform="rotate(-8 34 40)"><rect x="12" y="18" width="44" height="44" rx="10" fill="#fff"/><text x="34" y="51" fill="#7C5CBF">W</text></g><g transform="rotate(7 86 36)"><rect x="64" y="14" width="44" height="44" rx="10" fill="#F2C14E"/><text x="86" y="47" fill="#fff">D</text></g><g transform="rotate(5 36 88)"><rect x="14" y="66" width="44" height="44" rx="10" fill="#F2C14E"/><text x="36" y="99" fill="#fff">O</text></g><g transform="rotate(-6 86 86)"><rect x="64" y="64" width="44" height="44" rx="10" fill="#fff"/><text x="86" y="97" fill="#D6457A">R</text></g></g></svg>
+          <div><div class="eyebrow">Word Scramble</div><h2 style="margin-top:4px">Fix the mixed-up word</h2></div>
+        </div>
+        <div class="how"><b style="color:var(--ink)">How to play</b>
+          <ol><li>The letters of an English word are mixed up, for example <b>T A C</b>.</li><li>Teams read the clue and try to find the word: <b>CAT</b>!</li><li>The first team to say it <i>and spell it</i> gets the points.</li><li>Too hard? Press <b>Hint</b> and one letter goes in its place, but the word is worth 1 point less.</li><li>The team with the most points wins.</li></ol></div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px">Number of teams</div>
+          <div class="stepper"><button id="sTeamMinus" aria-label="Fewer teams">−</button><output id="sTeamCount">2</output><button id="sTeamPlus" aria-label="More teams">+</button></div>
+        </div>
+        <div class="teams-edit" id="sTeamInputs"></div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:8px">Word topics (pick one or more)</div>
+          <div class="packs" id="sPacks"></div>
+        </div>
+        <div class="opts">
+          <label class="f" for="sRounds">Words in the game<select id="sRounds"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select></label>
+          <label class="f" for="sTimer">Timer for each word<select id="sTimer"><option value="0">No timer</option><option value="20">20 seconds</option><option value="30" selected>30 seconds</option><option value="45">45 seconds</option><option value="60">60 seconds</option></select></label>
+          <label class="switch" for="sClue"><input type="checkbox" id="sClue" checked> Show a clue for each word</label>
+        </div>
+        <label class="f" for="sMine">Your own words (optional). One per line, with a clue after = if you like. They are added to the topics above; to play only your words, turn the topics off.<textarea id="sMine" rows="5" spellcheck="false" placeholder="elephant = a very big grey animal&#10;library = you borrow books here&#10;breakfast"></textarea></label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn gold big" id="sStart">Start Word Scramble</button>
+          <button class="btn big" id="sBack">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORD SCRAMBLE PLAY -->
+    <section id="scrPlay" hidden>
+      <div class="bomb-stage">
+        <div class="bomb-main scr-main" id="scrMain"></div>
+        <aside class="lives" id="sScores"></aside>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -600,8 +668,8 @@ She teaches children. = a teacher</pre>
   function paintSound() { const b = $("#soundBtn"); b.textContent = "Sound: " + (soundOn ? "on" : "off"); b.setAttribute("aria-pressed", soundOn); }
 
   /* ================= screens ================= */
-  const SCREENS = ["home", "setup", "board", "editor", "bombSetup", "bombPlay"];
-  function show(id) { for (const s of SCREENS) $("#" + s).hidden = s !== id; if (id !== "bombPlay") stopBomb(); window.scrollTo(0, 0); }
+  const SCREENS = ["home", "setup", "board", "editor", "bombSetup", "bombPlay", "scrSetup", "scrPlay"];
+  function show(id) { for (const s of SCREENS) $("#" + s).hidden = s !== id; if (id !== "bombPlay") stopBomb(); if (id !== "scrPlay") stopScrTimer(); window.scrollTo(0, 0); }
 
   /* ================= home ================= */
   function renderHome() {
@@ -776,14 +844,14 @@ She teaches children. = a teacher</pre>
   function showWinner(teams, unit) {
     if (unit === "points") { match.over = true; store.set(K_MATCH, match); }
     const ranked = [...teams].sort((a, b) => (b.score ?? b.lives) - (a.score ?? a.lives));
-    const val = t => unit === "points" ? t.score : t.lives;
+    const val = t => unit === "lives" ? t.lives : t.score;
     const best = val(ranked[0]); const winners = ranked.filter(t => val(t) === best).map(t => t.name);
     $("#winBox").replaceChildren(symbolSvg("trophy", "0 0 64 64"),
-      el("div", { class: "eyebrow" }, unit === "points" ? "Final scores" : "Word Bomb"),
+      el("div", { class: "eyebrow" }, unit === "points" ? "Final scores" : unit === "scramble" ? "Word Scramble" : "Word Bomb"),
       el("h3", {}, winners.length > 1 ? `It's a tie: ${winners.join(" & ")}!` : `${ranked[0].name} win!`),
-      el("div", { class: "rank" }, ranked.map((t, i) => el("div", { style: `border-left:7px solid ${t.color}` }, el("span", {}, `${i + 1}. ${t.name}`), el("span", {}, unit === "points" ? String(t.score) : `${t.lives} ♥`)))),
+      el("div", { class: "rank" }, ranked.map((t, i) => el("div", { style: `border-left:7px solid ${t.color}` }, el("span", {}, `${i + 1}. ${t.name}`), el("span", {}, unit === "lives" ? `${t.lives} ♥` : String(t.score))))),
       el("div", { class: "actions" },
-        el("button", { class: "btn gold big", onclick: () => { hideWinner(); unit === "points" ? openSetup(match.gameId) : openBombSetup(); } }, "Play again"),
+        el("button", { class: "btn gold big", onclick: () => { hideWinner(); unit === "points" ? openSetup(match.gameId) : unit === "scramble" ? openScrSetup() : openBombSetup(); } }, "Play again"),
         unit === "points" ? el("button", { class: "btn big", onclick: () => { hideWinner(); show("board"); } }, "See the board") : null,
         el("button", { class: "btn big", onclick: () => { hideWinner(); renderHome(); show("home"); } }, "Home")));
     $("#winner").hidden = false; beep("win"); confetti();
@@ -1144,6 +1212,128 @@ Category: (next category name)
   }
   function stopBomb() { clearTimeout(bombTimer); clearTimeout(tickTimer); if (bomb) bomb.live = false; }
 
+  /* ================= word scramble ================= */
+  // word = clue, in easy English (A1-A2)
+  const PACKS = {
+    "Animals": ["cat = It says \"meow\".", "dog = It says \"woof\".", "horse = You can ride it.", "rabbit = It has long ears and eats carrots.", "elephant = A very big grey animal with a long nose.", "monkey = It loves bananas and climbs trees.", "tiger = A big orange cat with black stripes.", "giraffe = It has a very long neck.", "snake = It is long and has no legs.", "sheep = It gives us wool.", "turtle = It is slow and has a hard shell.", "penguin = A black and white bird. It can't fly.", "zebra = A horse with black and white stripes.", "chicken = It gives us eggs."],
+    "Food": ["bread = We make sandwiches with it.", "cheese = It's made from milk. Mice love it.", "apple = A red or green fruit.", "banana = A long yellow fruit.", "orange = A fruit and a colour.", "tomato = A red vegetable in salad.", "potato = We make chips from it.", "carrot = An orange vegetable. Rabbits love it.", "water = We drink it every day.", "coffee = A hot brown drink.", "sugar = It makes your tea sweet.", "soup = You eat it hot with a spoon.", "honey = Bees make it.", "lemon = A sour yellow fruit."],
+    "Jobs": ["doctor = Works in a hospital.", "teacher = Works in a school.", "chef = Cooks in a restaurant.", "pilot = Flies a plane.", "farmer = Works on a farm with animals.", "driver = Drives a bus or a taxi.", "nurse = Helps the doctor.", "dentist = Looks at your teeth.", "waiter = Brings your food in a restaurant.", "singer = Sings songs.", "artist = Paints pictures.", "baker = Makes bread.", "firefighter = Stops fires.", "student = Learns at school."],
+    "School": ["pencil = You write and draw with it.", "eraser = It removes pencil mistakes.", "ruler = You draw straight lines with it.", "book = You read it.", "desk = A table in the classroom.", "chair = You sit on it.", "board = The teacher writes on it.", "lesson = An English ___ or a maths ___.", "homework = School work you do at home.", "scissors = You cut paper with them.", "notebook = You write notes in it.", "exam = A big test.", "break = Free time between lessons.", "school bag = You carry your books in it."],
+    "Home": ["kitchen = You cook here.", "bedroom = You sleep here.", "bathroom = You have a shower here.", "sofa = You sit on it in the living room.", "window = You look outside through it.", "door = Open it to go in.", "table = We eat at it.", "fridge = It keeps food cold.", "lamp = It gives you light.", "mirror = You see yourself in it.", "garden = Flowers and grass outside the house.", "stairs = You walk up them.", "pillow = Your head is on it in bed.", "carpet = It's on the floor."],
+    "Clothes": ["shirt = A top with buttons.", "dress = A girl or woman wears it. It's one piece.", "jacket = Wear it when it's cold.", "shoes = You wear them on your feet.", "socks = You wear them under your shoes.", "hat = You wear it on your head.", "scarf = It goes around your neck in winter.", "gloves = You wear them on your hands in winter.", "jeans = Blue trousers.", "skirt = Girls wear it. It isn't trousers.", "sweater = A warm top.", "boots = Tall shoes for rain or snow.", "pyjamas = You wear them in bed.", "belt = It holds your trousers up."],
+    "Body": ["head = Your hair is on it.", "hand = It has five fingers.", "foot = You walk on it.", "nose = You smell with it.", "mouth = You eat and speak with it.", "ear = You hear with it.", "eye = You see with it.", "tooth = It's white. You brush it.", "hair = It's on your head. You comb it.", "knee = It's in the middle of your leg.", "finger = You have ten of them.", "shoulder = Between your neck and your arm.", "stomach = Your food goes here.", "elbow = It's in the middle of your arm."],
+    "Weather and Nature": ["sunny = The sun is out.", "rainy = Take an umbrella!", "snow = It's white and cold. It falls in winter.", "cloud = It's white or grey in the sky.", "wind = It moves the trees.", "rainbow = Seven colours in the sky.", "storm = Very bad weather with thunder.", "tree = It's tall and has leaves.", "flower = A rose is one.", "river = Water that goes to the sea.", "mountain = Very, very high land.", "beach = Sand next to the sea.", "forest = A lot of trees.", "island = Land with water all around it."],
+    "Action Verbs": ["run = Move very fast on your legs.", "swim = Move in water.", "read = You do this with a book.", "write = You do this with a pen.", "sleep = You do this at night in bed.", "cook = Make food.", "dance = Move to music.", "sing = Use your voice to make music.", "jump = Go up into the air.", "listen = Use your ears.", "drink = You do this with water.", "climb = Go up a tree or a mountain.", "laugh = You do this when something is funny.", "buy = Get something in a shop with money."],
+    "Feelings": ["happy = Feeling good!", "sad = Feeling bad. You may cry.", "angry = Very, very cross.", "tired = You need to sleep.", "hungry = You want food.", "thirsty = You want water.", "scared = A ghost! You feel ___.", "bored = There's nothing to do.", "excited = It's my birthday party tomorrow!", "nervous = Before an exam you feel ___.", "surprised = Wow! I didn't know that!", "proud = You did something great.", "lonely = You are alone and sad.", "sleepy = You want to go to bed."],
+    "Places in Town": ["bank = You keep your money here.", "hospital = Doctors and nurses work here.", "park = A green place with trees. You walk here.", "library = You borrow books here.", "cinema = You watch films here.", "bakery = You buy bread here.", "pharmacy = You buy medicine here.", "museum = You see old things here.", "airport = Planes leave from here.", "station = You take a train here.", "market = You buy fruit and vegetables here.", "mosque = People pray here. It has minarets.", "zoo = You see animals here.", "hotel = You sleep here on holiday."],
+    "Sports and Hobbies": ["football = Kick the ball into the goal!", "tennis = Hit a small ball over a net with a racket.", "chess = A board game with a king and a queen.", "swimming = A sport in the pool.", "cycling = Riding a bike.", "basketball = Throw the ball into a high basket.", "volleyball = Hit the ball over a high net with your hands.", "painting = Making pictures with colours.", "skiing = A sport on the snow.", "fishing = Catching fish.", "camping = Sleeping in a tent.", "guitar = You play music on its six strings.", "drawing = Making pictures with a pencil.", "boxing = A sport with big gloves."]
+  };
+  const DEFAULT_PACKS = ["Animals", "Food", "Jobs", "School"];
+  const K_SCR = "ws.setup.v1";
+  let scr = null, sTeamCount = 2, scrTimerId = null;
+  const parseWord = (line, cat) => { const i = line.search(/\s*[=|]\s*/); const w = (i < 0 ? line : line.slice(0, i)).trim(); const h = i < 0 ? "" : line.slice(i).replace(/^\s*[=|]\s*/, "").trim(); return { w, h, cat }; };
+
+  function openScrSetup() {
+    const cfg = store.get(K_SCR, {});
+    renderTeams("#sTeamInputs", "#sTeamCount", sTeamCount);
+    const on = cfg.packs || DEFAULT_PACKS;
+    $("#sPacks").replaceChildren(...Object.keys(PACKS).map((name, i) => el("label", { class: "pack", style: `--cc:${CAT_COLORS[i % 6]}` },
+      el("input", { type: "checkbox", value: name, checked: on.includes(name) }), el("span", {}, name))));
+    if (cfg.rounds) $("#sRounds").value = String(cfg.rounds);
+    if (cfg.timer != null) $("#sTimer").value = String(cfg.timer);
+    if (cfg.clue != null) $("#sClue").checked = cfg.clue;
+    $("#sMine").value = cfg.mine || "";
+    show("scrSetup");
+  }
+  // mix the letters of each word; never show the word already solved
+  function scramble(word) {
+    const parts = word.toUpperCase().split(/\s+/);
+    for (let n = 0; n < 20; n++) {
+      const mixed = parts.map(p => shuffle([...p]));
+      if (parts.join("").length < 2 || mixed.some((m, i) => m.join("") !== parts[i])) return mixed;
+    }
+    return parts.map(p => [...p].reverse());
+  }
+  function startScr() {
+    const packs = [...$("#sPacks").querySelectorAll("input:checked")].map(i => i.value);
+    const mine = $("#sMine").value;
+    const words = packs.flatMap(n => PACKS[n].map(l => parseWord(l, n)))
+      .concat(mine.split("\n").map(l => l.trim()).filter(Boolean).map(l => parseWord(l, "My words")))
+      .filter(x => /[A-Za-z]/.test(x.w) && x.w.length <= 24);
+    if (!words.length) { toast("Pick a topic or write some words"); return; }
+    const rounds = +$("#sRounds").value, timer = +$("#sTimer").value, clue = $("#sClue").checked;
+    store.set(K_SCR, { packs, mine, rounds, timer, clue });
+    scr = { teams: readTeams("#sTeamInputs").map(t => ({ ...t, score: 0 })), deck: shuffle(words).slice(0, rounds), i: -1, timer, clue };
+    show("scrPlay"); nextScr();
+  }
+  function nextScr() {
+    stopScrTimer();
+    scr.i++;
+    if (scr.i >= scr.deck.length) { renderScrScores(); showWinner(scr.teams, "scramble"); return; }
+    const x = scr.deck[scr.i], letters = x.w.toUpperCase().split(/\s+/);
+    scr.cur = { ...x, letters, mixed: scramble(x.w), hints: 0, revealed: false, fresh: true, left: scr.timer, paused: false, colorIdx: Object.keys(PACKS).indexOf(x.cat) };
+    beep("open"); renderScr(); if (scr.timer) runScrTimer();
+  }
+  const scrWorth = () => Math.max(1, 3 - scr.cur.hints);
+  function renderScr() {
+    const c = scr.cur, main = $("#scrMain"), color = CAT_COLORS[(c.colorIdx < 0 ? 5 : c.colorIdx) % 6];
+    main.style.setProperty("--cc", color);
+    // the first `hints` letters (across the words) are placed for the class
+    const flat = c.letters.join(""), shown = c.revealed ? flat.length : c.hints;
+    let k = 0;
+    const slots = el("div", { class: "slots", "aria-label": "Answer" }, c.letters.flatMap((word, wi) => [wi ? el("div", { class: "slot gap" }) : null,
+      ...[...word].map(ch => { const on = k++ < shown; return el("div", { class: "slot" + (on ? " on" : "") }, on ? ch : ""); })]));
+    // grey out one mixed tile for each placed letter
+    const used = {}; for (const ch of flat.slice(0, shown)) used[ch] = (used[ch] || 0) + 1;
+    let ti = 0;
+    const tiles = el("div", { class: "ltiles", "aria-label": "Mixed-up letters" }, c.mixed.flatMap((word, wi) => [wi ? el("div", { class: "ltile gap" }) : null,
+      ...word.map(ch => { const u = used[ch] > 0; if (u) used[ch]--; const r = ((ti * 37) % 13) - 6; return el("div", { class: "ltile" + (u ? " used" : "") + (c.fresh ? "" : " still"), style: `--i:${ti++};--r:${r}deg;--cc:${color}` }, ch); })]));
+    const out = el("output", {}, c.left > 0 ? String(Math.ceil(c.left)) : scr.timer ? "Time!" : "");
+    const trow = scr.timer ? el("div", { class: "timer-row" + (c.paused ? " paused" : "") }, el("div", { class: "timer" + (c.left <= 5 ? " low" : "") }, el("i", { style: `transform:scaleX(${c.left / scr.timer})` })), out,
+      c.revealed ? null : el("button", { class: "btn", disabled: c.left <= 0, onclick: toggleScrPause }, c.paused ? "Resume" : "Pause")) : null;
+    const actions = c.revealed
+      ? [el("div", { class: "hint", style: "font-size:15px;color:var(--ink);font-weight:700" }, `Who got it? (+${scrWorth()})`),
+         el("div", { class: "actions" }, scr.teams.map((t, i) => el("button", { class: "btn big team-win", style: `--c:${t.color}`, onclick: () => scrAward(i) }, `${t.name} +${scrWorth()}`)),
+           el("button", { class: "btn big", onclick: () => scrAward(-1) }, "Nobody, next word"))]
+      : [el("div", { class: "actions" }, el("button", { class: "btn gold big", id: "sReveal", onclick: scrReveal }, "Show the word"),
+           el("button", { class: "btn big", disabled: c.hints >= flat.length - 1, onclick: scrHint }, "Hint (−1)"),
+           el("button", { class: "btn big", onclick: scrShuffle }, "Mix again"))];
+    main.replaceChildren(...[
+      el("div", { class: "scr-top" }, el("span", { class: "scr-cat" }, c.cat), el("span", {}, `Word ${scr.i + 1} of ${scr.deck.length}`), el("span", { class: "worth" }, `Worth ${scrWorth()} point${scrWorth() === 1 ? "" : "s"}`)),
+      scr.clue && c.h ? el("p", { class: "scr-clue" }, el("small", {}, "Clue"), c.h) : null,
+      slots, c.revealed ? null : tiles, trow, ...actions,
+      el("div", { style: "display:flex;gap:10px;flex-wrap:wrap;justify-content:center" }, el("button", { class: "btn", onclick: () => { stopScrTimer(); showWinner(scr.teams, "scramble"); } }, "End game")),
+      el("div", { class: "hint" }, c.revealed ? "Click the team that got it, or press N for the next word." : "Space shows the word. H = hint, M = mix again" + (scr.timer ? ", P = pause." : "."))].filter(Boolean));
+    renderScrScores(); c.fresh = false;
+    const f = $("#sReveal"); if (f) f.focus({ preventScroll: true });
+  }
+  function renderScrScores(bump) {
+    const top = Math.max(...scr.teams.map(t => t.score));
+    $("#sScores").replaceChildren(el("h2", { style: "font-size:24px" }, "Teams"), ...scr.teams.map((t, i) => el("div", { class: "score" + (top > 0 && t.score === top ? " leader" : ""), style: `--c:${t.color}` },
+      el("div", { class: "name" }, t.name),
+      el("div", { class: "pts" + (i === bump ? " bump" : "") }, String(t.score)),
+      el("div", { class: "adj" },
+        el("button", { "aria-label": `Take 1 point from ${t.name}`, onclick: () => { t.score--; renderScrScores(i); } }, "−1"),
+        el("button", { "aria-label": `Give 1 point to ${t.name}`, onclick: () => { t.score++; renderScrScores(i); } }, "+1")))));
+  }
+  function scrHint() { const c = scr.cur; if (c.revealed || c.hints >= c.letters.join("").length - 1) return; c.hints++; beep("pass"); renderScr(); }
+  function scrShuffle() { const c = scr.cur; if (c.revealed) return; c.mixed = scramble(c.letters.join(" ")); c.fresh = true; beep("tick"); renderScr(); }
+  function scrReveal() { const c = scr.cur; if (c.revealed) return; c.revealed = true; stopScrTimer(); beep("ok"); renderScr(); }
+  function scrAward(i) { if (scr.cur.done) return; scr.cur.done = true; if (i >= 0) { scr.teams[i].score += scrWorth(); beep("win"); renderScrScores(i); } setTimeout(nextScr, i >= 0 ? 450 : 0); }
+  function runScrTimer() {
+    stopScrTimer(); let last = Date.now();
+    scrTimerId = setInterval(() => {
+      const c = scr.cur, now = Date.now(); c.left = Math.max(0, c.left - (now - last) / 1000); last = now;
+      const bar = $("#scrMain .timer i"), out = $("#scrMain .timer-row output");
+      if (bar) { bar.style.transform = `scaleX(${c.left / scr.timer})`; bar.parentElement.classList.toggle("low", c.left <= 5); }
+      if (out) out.textContent = c.left > 0 ? String(Math.ceil(c.left)) : "Time!";
+      if (c.left <= 5 && c.left > 0 && Math.ceil(c.left) !== c.lastTick) { c.lastTick = Math.ceil(c.left); beep("tick"); }
+      if (c.left <= 0) { stopScrTimer(); beep("end"); renderScr(); }
+    }, 100);
+  }
+  function stopScrTimer() { clearInterval(scrTimerId); scrTimerId = null; }
+  function toggleScrPause() { const c = scr.cur; if (!scr.timer || c.revealed || c.left <= 0) return; c.paused = !c.paused; if (c.paused) stopScrTimer(); else runScrTimer(); renderScr(); }
+
   /* ================= keys ================= */
   document.addEventListener("keydown", e => {
     const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
@@ -1151,6 +1341,13 @@ Category: (next category name)
       if (e.key === "Escape") { e.preventDefault(); closeClue(); }
       else if ((e.key === " " || e.key === "Enter") && cur && cur.reveal && !cur.revealed && !typing) { e.preventDefault(); cur.reveal(); }
       else if ((e.key === "p" || e.key === "P") && cur && cur.togglePause && !typing) { e.preventDefault(); cur.togglePause(); }
+      return;
+    }
+    if (!$("#scrPlay").hidden && $("#winner").hidden && !typing && scr && scr.cur) {
+      const k = e.key.toLowerCase();
+      if (scr.cur.revealed && (k === "n" || k === "enter")) { e.preventDefault(); scrAward(-1); }
+      else if (!scr.cur.revealed && (k === " " || k === "enter")) { e.preventDefault(); scrReveal(); }
+      else if (k === "h") scrHint(); else if (k === "m") scrShuffle(); else if (k === "p") toggleScrPause();
       return;
     }
     if (!$("#bombPlay").hidden && $("#winner").hidden && !typing) {
@@ -1165,6 +1362,11 @@ Category: (next category name)
   $("#fsBtn").onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (e) { toast("Full screen isn't available here"); } };
   $("#pickQuiz").onclick = () => $("#quizList").scrollIntoView({ behavior: "smooth" });
   $("#pickBomb").onclick = openBombSetup;
+  $("#pickScr").onclick = openScrSetup;
+  $("#sTeamMinus").onclick = () => { if (sTeamCount > 1) renderTeams("#sTeamInputs", "#sTeamCount", --sTeamCount); };
+  $("#sTeamPlus").onclick = () => { if (sTeamCount < 6) renderTeams("#sTeamInputs", "#sTeamCount", ++sTeamCount); };
+  $("#sStart").onclick = startScr;
+  $("#sBack").onclick = () => { renderHome(); show("home"); };
   $("#teamMinus").onclick = () => { if (teamCount > 1) renderTeams("#teamInputs", "#teamCount", --teamCount); };
   $("#teamPlus").onclick = () => { if (teamCount < 6) renderTeams("#teamInputs", "#teamCount", ++teamCount); };
   $("#bTeamMinus").onclick = () => { if (bTeamCount > 2) renderTeams("#bTeamInputs", "#bTeamCount", --bTeamCount); };
