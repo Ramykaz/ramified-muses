@@ -69,7 +69,7 @@ export const DEFAULT_CONTENT: SiteContent = {
     currentWork: "Undergraduate researcher at Hacettepe BAP — testing 14 object detectors across 278 configurations for real-time search-and-rescue on an NVIDIA Jetson Orin Nano. Most recently: generative AI research intern at UNDP.",
     interests: "AI systems · edge computing · computer vision · NLP · robotics · literature · academic research",
     languages: "Amharic (native) · English (fluent) · Turkish (proficient) · Arabic (beginner)",
-    studying: "B.Sc. Computer Engineering, Hacettepe University (2022–2027, expected)",
+    studying: "B.Sc. Computer Engineering, Hacettepe University",
     links: [
       { label: "github ↗", href: "https://github.com/Ramykaz" },
       { label: "linkedin ↗", href: "https://linkedin.com/in/ramadan-shemsu-hussen-0b995a191" },
@@ -78,7 +78,7 @@ export const DEFAULT_CONTENT: SiteContent = {
       { label: "IEEE paper ↗", href: "https://ieeexplore.ieee.org/document/11537125" },
     ],
     experienceFooter: [
-      "B.Sc. Computer Engineering · Hacettepe University · 2022–2027 (expected)",
+      "B.Sc. Computer Engineering · Hacettepe University",
       "MENA ML Winter School · Google DeepMind & QCRI · Doha, Qatar · Feb 2025",
       "Frontier Tech Leaders ML Bootcamp · UNDP ICPSD · Mar–Jun 2024 [Hackathon Winner]",
     ].join("\n"),

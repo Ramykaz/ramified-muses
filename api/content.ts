@@ -20,6 +20,12 @@ let schemaReady: Promise<unknown> | null = null
 function ensureSchema() {
   schemaReady ??= db
     .execute(sql`ALTER TABLE profile ADD COLUMN IF NOT EXISTS experience_footer text`)
+    // the graduation year (2022–2027, expected) was taken off the site
+    .then(() => db.execute(sql`
+      UPDATE profile SET
+        studying = regexp_replace(studying, '\\s*·?\\s*\\(?\\s*2022\\s*[–-]\\s*2027[^)\\n]*\\)?', '', 'g'),
+        experience_footer = regexp_replace(experience_footer, '\\s*·?\\s*\\(?\\s*2022\\s*[–-]\\s*2027(,?\\s*\\(?expected\\)?)?\\)?', '', 'g')
+      WHERE studying ~ '2027' OR experience_footer ~ '2027'`))
     .catch(err => { schemaReady = null; throw err })
   return schemaReady
 }

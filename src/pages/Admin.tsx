@@ -196,7 +196,7 @@ const Admin: React.FC = () => {
               <Txt
                 rows={4}
                 value={pf.experienceFooter ?? DEFAULT_CONTENT.profile.experienceFooter ?? ''}
-                placeholder="B.Sc. Computer Engineering · Hacettepe University · 2022–2027"
+                placeholder="B.Sc. Computer Engineering · Hacettepe University"
                 onChange={e => setPf(f => ({ ...f, experienceFooter: e.target.value }))}
               />
             </F>
