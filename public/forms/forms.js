@@ -32,7 +32,7 @@
     trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>', refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
     star: '<path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor" stroke="none"/>', file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
     form: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/>', sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
-    chevron: '<path d="M9 6l6 6-6 6"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'
+    chevron: '<path d="M9 6l6 6-6 6"/>', image: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'
   };
   const icon = name => el("span", { style: "display:contents", html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>` });
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2600); }
@@ -111,6 +111,8 @@
       sections: []
     };
     if (!str(o.title || o.name)) warnings.push("No title, so it's called \"Untitled form\".");
+    // set inside the loop so per-question warnings can name the question
+    let where = "";
     sections.forEach((s, si) => {
       if (Array.isArray(s)) s = { questions: s };
       s = s || {};
@@ -118,7 +120,7 @@
       (Array.isArray(s.questions) ? s.questions : []).forEach((q, qi) => {
         if (typeof q === "string") q = { title: q, type: "short" };
         q = q || {};
-        const where = `Question ${n + 1}`;
+        where = `Question ${n + 1}`;
         const rawType = str(q.type || (q.options || q.choices ? "single" : "short")).toLowerCase();
         const type = TYPES[rawType];
         const title = str(q.title || q.question || q.label || q.text);
@@ -126,7 +128,8 @@
         if (!title) { errors.push(`${where}: add a "title".`); n++; return; }
         const qq = { id: "", type, title };
         const help = str(q.help || q.description || q.hint); if (help) qq.help = help;
-        if (type !== "info") { qq.required = !!q.required; n++; }
+        if (type !== "info") { qq.required = type === "multiple" ? q.optional !== true : !!q.required && q.optional !== true; if (q.optional === true) qq.optional = true; n++; }
+        const qimg = str(q.image); if (/^https:\/\/\S+$/i.test(qimg)) qq.image = qimg; else if (qimg) warnings.push(`${where}: "image" should be a link starting with https://`);
         const ph = str(q.placeholder); if (ph && TEXTISH.has(type)) qq.placeholder = ph;
         const list = v => (Array.isArray(v) ? v : []).map(x => str(typeof x === "object" && x ? (x.label ?? x.value ?? x.text) : x)).filter(Boolean);
         if (["single", "multiple", "dropdown", "ranking"].includes(type)) {
@@ -163,6 +166,7 @@
     });
     if (!n && !errors.length) errors.push("Add at least one question.");
     if (errors.length) throw errors;
+    const img = str(o.image || o.headerImage || o.cover); if (/^https:\/\/\S+$/i.test(img)) out.image = img; else if (img) warnings.push('"image" should be a link starting with https://');
     const theme = str(o.theme || o.color); if (/^#[0-9a-f]{6}$/i.test(theme)) out.theme = theme; else if (theme) warnings.push('"theme" should be a colour like "#4C5FD5".');
     for (const k of ["thankYou", "closedMessage", "buttonText"]) { const v = str(o[k]); if (v) out[k] = v; }
     if (o.anonymous) out.anonymous = true;
@@ -243,7 +247,7 @@ Format:
 
 Question types:
 - "short" (one line), "long" (paragraph), "email", "phone", "number", "date"
-- "single" (pick one) and "multiple" (pick any; "max": 3 to limit) with "options": [...]. Add "other": "Other" for a write-in option.
+- "single" (pick one) and "multiple" (pick any; at least one is needed unless "optional": true; "max": 3 to limit) with "options": [...]. Add "other": "Other" for a write-in option.
 - "dropdown" (pick one from a long list) with "options"
 - "yesno"
 - "scale" with "min": 1, "max": 5, "minLabel": "Not at all", "maxLabel": "Very much"
@@ -251,7 +255,8 @@ Question types:
 - "ranking" (put options in order) with "options"
 - "matrix" (grid) with "rows": [...] and "columns": [...]
 - "info" (just text, no answer)
-Optional on any question: "help" (small text under it), "required": true, "placeholder".
+Optional on any question: "help" (small text under it), "required": true, "placeholder", "image" (a picture link).
+Optional on the form: "image" (a header picture link).
 
 My questionnaire:
 [PASTE IT HERE]`;
@@ -284,7 +289,7 @@ My questionnaire:
       if (!preview && form.oneResponsePerDevice && store.get(doneKey, false)) return finished(true);
       const resume = draft && draft.step > 0 && Object.keys(answers).length;
       shell(el("div", { class: "cover r-step" },
-        el("div", { class: "logo" }, (form.title.trim()[0] || "F").toUpperCase()),
+        form.image ? el("img", { class: "cover-img", src: form.image, alt: "", onerror: e => e.currentTarget.remove() }) : el("div", { class: "logo" }, (form.title.trim()[0] || "F").toUpperCase()),
         el("h1", {}, form.title),
         form.description ? el("p", {}, form.description) : null,
         el("div", { class: "facts" },
@@ -425,6 +430,7 @@ My questionnaire:
         el("div", { class: "r-eyebrow" }, num ? el("span", { class: "r-num" }, String(num)) : null, multiSection && sec.title ? sec.title : num ? `Question ${num} of ${total}` : ""),
         el("h2", { class: "r-q", id: "qtitle" }, q.title, q.required ? el("span", { class: "req", "aria-label": "required" }, " *") : null),
         q.help ? el("p", { class: "r-help" }, q.help) : null,
+        q.image ? el("img", { class: "q-img", src: q.image, alt: "", onerror: e => e.currentTarget.remove() }) : null,
         body(q),
         el("div", { class: "r-err", role: "alert" }));
       const answered = steps.filter(s => s.q.type !== "info" && !isEmpty(s.q, answers)).length;
@@ -643,6 +649,7 @@ My questionnaire:
   function formCard(f) {
     const open = () => { location.hash = `#/f/${f.id}/summary`; };
     return el("article", { class: "f-card", tabindex: 0, role: "link", "aria-label": f.data.title, onclick: open, onkeydown: e => { if (e.key === "Enter") open(); } },
+      f.data.image ? el("img", { class: "f-thumb", src: f.data.image, alt: "", loading: "lazy", onerror: e => e.currentTarget.remove() }) : null,
       el("div", { class: "row" }, el("span", { class: "status" + (f.status === "open" ? "" : " closed") }, f.status === "open" ? "Open" : "Closed"), el("span", { class: "spacer" }),
         el("button", { class: "btn icon ghost", "aria-label": "Copy link", onclick: e => { e.stopPropagation(); copy(formUrl(f.id), "Link copied"); } }, icon("link"))),
       el("div", { class: "t" }, f.data.title),
@@ -717,11 +724,18 @@ My questionnaire:
     ta.addEventListener("keydown", e => { if (e.key === "Tab") { e.preventDefault(); const s = ta.selectionStart; ta.setRangeText("  ", s, ta.selectionEnd, "end"); } });
     const tools = el("div", { class: "row" },
       el("button", { class: "btn", onclick: () => copy(AI_PROMPT, "Prompt copied. Paste it into ChatGPT with your questionnaire.") }, icon("sparkle"), "Copy AI prompt"),
+      el("button", { class: "btn", onclick: () => pickImage(url => {
+        let o; try { o = parseLoose(ta.value); } catch (e) { toast("Fix the JSON first, then add the image"); return; }
+        if (!o || typeof o !== "object" || Array.isArray(o)) { toast("Fix the JSON first, then add the image"); return; }
+        const { title, description, ...rest } = o;
+        ta.value = JSON.stringify({ title, description, image: url, ...rest, image: url }, null, 2); check(); toast("Header image added");
+      }) }, icon("image"), "Add header image"),
       el("button", { class: "btn", onclick: () => { ta.value = JSON.stringify(EXAMPLE, null, 2); check(); } }, "Fill example"),
       el("button", { class: "btn", onclick: () => { try { ta.value = JSON.stringify(parseLoose(ta.value), null, 2); check(); } catch (e) { toast("Fix the JSON first"); } } }, "Tidy"));
     const help = el("details", { class: "help-box card" }, el("summary", {}, "How do I write a form?"),
       el("p", {}, "Give a title and a list of questions. Each question has a type and a title. Everything else is optional."),
-      el("table", {}, el("tbody", {}, [["short / long", "Text answer, one line or a paragraph"], ["email / phone / number / date", "Checked answers"], ["single", 'Pick one. "options": [...], add "other": "Other" for a write-in'], ["multiple", 'Pick any. "max": 3 to limit'], ["dropdown", "Pick one from a long list (has search)"], ["yesno", "Yes or No"], ["scale", '"min": 1, "max": 5, "minLabel", "maxLabel"'], ["rating", 'Stars, "max": 5'], ["ranking", "Put options in order"], ["matrix", '"rows" and "columns" grid'], ["info", "Just text, no answer"]].map(([a, b]) => el("tr", {}, el("td", {}, el("code", {}, a)), el("td", {}, b))))),
+      el("table", {}, el("tbody", {}, [["short / long", "Text answer, one line or a paragraph"], ["email / phone / number / date", "Checked answers"], ["single", 'Pick one. "options": [...], add "other": "Other" for a write-in'], ["multiple", 'Pick any (at least one). "max": 3 to limit, "optional": true to allow skipping'], ["dropdown", "Pick one from a long list (has search)"], ["yesno", "Yes or No"], ["scale", '"min": 1, "max": 5, "minLabel", "maxLabel"'], ["rating", 'Stars, "max": 5'], ["ranking", "Put options in order"], ["matrix", '"rows" and "columns" grid'], ["info", "Just text, no answer"]].map(([a, b]) => el("tr", {}, el("td", {}, el("code", {}, a)), el("td", {}, b))))),
+      el("p", {}, 'Pictures: "image": "https://..." on the form shows a header picture (or press Add header image). "image" on a question shows a picture under it.'),
       el("p", {}, 'Form options: "description", "theme" (a colour like "#4C5FD5"), "thankYou", "anonymous": true, "oneResponsePerDevice": true, "closesAt": "2026-12-31", "slug" (the link name). Use "sections" to group questions.'),
       el("pre", {}, '{\n  "title": "Club survey",\n  "questions": [\n    { "type": "short", "title": "Your name", "required": true },\n    { "type": "single", "title": "Favourite day?",\n      "options": ["Saturday", "Sunday"], "other": "Other" },\n    { "type": "scale", "title": "How happy are you?",\n      "min": 1, "max": 5 }\n  ]\n}'));
     const top = topBar({ back: () => { if (existing) location.hash = `#/f/${existing.id}/summary`; else location.hash = "#/"; }, title: isNew ? "New form" : "Edit form", sub: isNew ? "Paste JSON to build your form" : existing.data.title });
@@ -734,6 +748,27 @@ My questionnaire:
     if (existing) return { content, check };
     root().replaceChildren(top, el("main", { class: "a-main wrap narrow" }, content));
     check();
+  }
+  // choose a photo, shrink it on the phone, upload it, hand back its link
+  function pickImage(done) {
+    const inp = el("input", { type: "file", accept: "image/*", style: "display:none" });
+    inp.onchange = async () => {
+      const file = inp.files && inp.files[0]; inp.remove(); if (!file) return;
+      toast("Uploading image…");
+      try {
+        const url = URL.createObjectURL(file);
+        const img = await new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => fail(new Error("That file isn't an image we can read.")); i.src = url; });
+        const scale = Math.min(1, 1600 / img.naturalWidth), c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+        const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        const data = c.toDataURL("image/jpeg", .85);
+        const r = await fetch("/api/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "form-" + Date.now() + ".jpg", contentType: "image/jpeg", data }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.url) throw new Error("The upload didn't work. Try a smaller image.");
+        done(j.url);
+      } catch (e) { toast(e.message); }
+    };
+    document.body.append(inp); inp.click();
   }
   function preview(form) {
     const holder = el("div");
