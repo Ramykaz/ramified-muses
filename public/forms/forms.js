@@ -32,7 +32,7 @@
     trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>', refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
     star: '<path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor" stroke="none"/>', file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
     form: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/>', sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
-    chevron: '<path d="M9 6l6 6-6 6"/>', image: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'
+    chevron: '<path d="M9 6l6 6-6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>', image: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'
   };
   const icon = name => el("span", { style: "display:contents", html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>` });
   function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2600); }
@@ -347,7 +347,7 @@ My questionnaire:
 
     function body(q) {
       const v = answers[q.id];
-      const rerender = () => { const b = root.querySelector(".r-body"); b.replaceWith(body(q)); };
+      const rerender = () => { const b = root.querySelector(".r-body"); b.replaceWith(body(q)); watchMore(); };
       switch (q.type) {
         case "info": return el("div", { class: "r-body" });
         case "short": case "email": case "phone": case "number": case "date": {
@@ -367,7 +367,7 @@ My questionnaire:
         case "single": case "dropdown": case "yesno": {
           const opts = q.type === "yesno" ? ["Yes", "No"] : q.options.concat(q.other ? [q.other] : []);
           let filter = "";
-          const listBox = el("div", { style: "display:grid;gap:10px" });
+          const listBox = el("div", { class: "opt-list" });
           const draw = () => listBox.replaceChildren(...opts.map((o, i) => [o, i]).filter(([o]) => !filter || fold(o).includes(fold(filter))).map(([o, i]) => optionButton(o, i, v === o, false, () => {
             const isOther = q.other && o === q.other;
             set(q, o, !isOther); rerender();
@@ -378,15 +378,15 @@ My questionnaire:
         }
         case "multiple": {
           const arr = [].concat(v || []), opts = q.options.concat(q.other ? [q.other] : []);
-          const note = q.max ? `Choose up to ${q.max}` : "Choose as many as you like";
-          return el("div", { class: "r-body" }, el("div", { class: "r-count" }, `${note}${arr.length ? ` · ${arr.length} selected` : ""}`),
-            opts.map((o, i) => optionButton(o, i, arr.includes(o), true, () => {
+          const note = [q.max ? `Choose up to ${q.max}` : q.help ? "" : "Choose as many as you like", arr.length ? `${arr.length} selected` : ""].filter(Boolean).join(" · ");
+          return el("div", { class: "r-body" }, note ? el("div", { class: "r-count" }, note) : null,
+            el("div", { class: "opt-list" }, opts.map((o, i) => optionButton(o, i, arr.includes(o), true, () => {
               let a = [].concat(answers[q.id] || []);
               if (a.includes(o)) a = a.filter(x => x !== o);
               else { if (q.max && a.length >= q.max) { toast(`You can choose up to ${q.max}.`); return; } a.push(o); }
               if (q.other && !a.includes(q.other)) delete answers[q.id + "__other"];
               set(q, a); rerender();
-            })), q.other && arr.includes(q.other) ? otherInput(q) : null);
+            }))), q.other && arr.includes(q.other) ? otherInput(q) : null);
         }
         case "scale": {
           const vals = []; for (let i = q.min; i <= q.max; i++) vals.push(i);
@@ -422,11 +422,31 @@ My questionnaire:
       const bar = root.querySelector(".r-top .bar i"); if (bar) bar.style.width = Math.round(((step + (isEmpty(q, answers) ? 0 : 1)) / steps.length) * 100) + "%";
       const m = root.querySelector(".r-top .meta span:last-child"); if (m) m.textContent = `${steps.filter(s => s.q.type !== "info" && !isEmpty(s.q, answers)).length} of ${total} answered`;
     }
+    // a floating "more options below" pill while the last option is off screen
+    let moreObs = null;
+    function watchMore() {
+      if (moreObs) { moreObs.disconnect(); moreObs = null; }
+      const old = root.querySelector(".more-hint"); if (old) old.remove();
+      const items = root.querySelectorAll(".r-body .opt, .r-body .rank-item, .r-body .mrow");
+      if (items.length < 4 || !("IntersectionObserver" in window)) return;
+      const last = items[items.length - 1];
+      const pill = el("button", { type: "button", class: "more-hint", hidden: true, onclick: () => last.scrollIntoView({ behavior: "smooth", block: "center" }) });
+      root.querySelector(".r-shell").append(pill);
+      const barH = () => (root.querySelector(".r-bottom") || { offsetHeight: 90 }).offsetHeight;
+      const hiddenCount = () => [...items].filter(x => x.getBoundingClientRect().bottom > innerHeight - barH() + 1).length;
+      moreObs = new IntersectionObserver(([e]) => {
+        const n = hiddenCount();
+        pill.hidden = e.isIntersecting || n === 0;
+        pill.replaceChildren(icon("down"), "More options below");
+      }, { rootMargin: "0px 0px -96px 0px", threshold: .9 });
+      moreObs.observe(last);
+    }
     function render() {
       const { q, si, num } = steps[step];
       const sec = form.sections[si];
       const last = step === steps.length - 1;
-      const card = el("div", { class: "r-step" + (dir < 0 ? " back" : "") },
+      const many = (q.options || q.rows || []).length + (q.other ? 1 : 0) > 5;
+      const card = el("div", { class: "r-step" + (dir < 0 ? " back" : "") + (many ? " compact" : "") },
         el("div", { class: "r-eyebrow" }, num ? el("span", { class: "r-num" }, String(num)) : null, multiSection && sec.title ? sec.title : num ? `Question ${num} of ${total}` : ""),
         el("h2", { class: "r-q", id: "qtitle" }, q.title, q.required ? el("span", { class: "req", "aria-label": "required" }, " *") : null),
         q.help ? el("p", { class: "r-help" }, q.help) : null,
@@ -441,6 +461,7 @@ My questionnaire:
           el("button", { class: "btn big back", "aria-label": "Back", onclick: () => step === 0 ? cover() : go(step - 1, -1) }, icon("back")),
           el("button", { class: "btn primary big", id: "nextBtn", onclick: next }, last ? (preview ? "Finish preview" : "Submit") : (q.type === "info" ? "Continue" : !q.required && isEmpty(q, answers) ? "Skip" : "Next"), last ? icon("check") : icon("next")))
       });
+      watchMore();
     }
 
     async function submit() {

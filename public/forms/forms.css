@@ -86,6 +86,7 @@ textarea.code { font: 13.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas,
 .r-top .meta b { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
 .r-top .meta span:last-child { white-space: nowrap; flex: none; }
 .r-main { display: grid; align-content: center; padding-block: 24px 28px; }
+@media (max-height: 760px) { .r-main { align-content: start; padding-top: 16px; } }
 .r-step { animation: stepIn .38s cubic-bezier(.2,.8,.2,1) both; }
 .r-step.back { animation-name: stepBack; }
 @keyframes stepIn { from { opacity: 0; transform: translateY(18px); } }
@@ -96,6 +97,24 @@ textarea.code { font: 13.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas,
 .r-q .req { color: var(--accent); }
 .r-help { color: var(--muted); margin: 10px 0 0; font-size: 16px; }
 .r-body { margin-top: 24px; display: grid; gap: 10px; }
+.opt-list { display: grid; gap: 10px; }
+/* long lists: slimmer cards so the whole list fits on a phone screen */
+.r-step.compact .r-q { font-size: clamp(21px, 5.6vw, 30px); }
+.r-step.compact .r-eyebrow { margin-bottom: 8px; }
+.r-step.compact .r-help { margin-top: 6px; font-size: 15px; }
+.r-step.compact .r-body { margin-top: 16px; gap: 6px; }
+/* many options: wrapping chips, so short answers sit side by side */
+.r-step.compact .opt-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.r-step.compact .opt { width: auto; max-width: 100%; min-height: 44px; padding: 9px 14px; gap: 8px; font-size: 15px; border-radius: 999px; box-shadow: none; }
+.r-step.compact .opt .key { display: none; }
+.r-step.compact .opt .tick { width: 0; height: 18px; transition: width .2s, opacity .2s, transform .2s; }
+.r-step.compact .opt.on .tick { width: 18px; }
+.r-step.compact .rank-item, .r-step.compact .mrow { min-height: 46px; padding: 8px 12px; box-shadow: none; }
+.r-step.compact .r-count { font-size: 13.5px; }
+.more-hint { position: fixed; left: 50%; bottom: calc(92px + var(--safe-b)); transform: translateX(-50%); z-index: 26; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 0; background: var(--ink); color: var(--bg); font-weight: 700; font-size: 13.5px; box-shadow: var(--shadow-lg); animation: hintIn .3s both, nudge 1.6s .6s ease-in-out 2; white-space: nowrap; }
+.more-hint svg { width: 16px; height: 16px; }
+@keyframes hintIn { from { opacity: 0; transform: translate(-50%, 8px); } }
+@keyframes nudge { 50% { transform: translate(-50%, 4px); } }
 .r-err { color: var(--bad); font-weight: 700; font-size: 14px; min-height: 20px; margin-top: 10px; }
 .shake { animation: shake .35s; }
 @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
