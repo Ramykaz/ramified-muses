@@ -208,32 +208,83 @@ Level: [e.g. B1]
 Number of questions: [e.g. 12]`;
 
   /* ================= sign in ================= */
-  async function formsApi(action, body) {
-    const r = await fetch("/api/forms?action=" + action, { method: body ? "POST" : "GET", headers: { "Content-Type": "application/json", ...(store.get("forms.token", null) ? { Authorization: "Bearer " + store.get("forms.token") } : {}) }, body: body ? JSON.stringify(body) : undefined });
-    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "Something went wrong."); return j;
-  }
+  // each host has a username and password; the first account is the owner and adds the others
+  let ME = null;
   async function boot() {
     put(app, el("main", { class: "studio center" }, el("div", { class: "spin" })));
-    let st; try { st = await formsApi("status"); } catch (e) { put(app, el("main", { class: "studio center" }, el("p", {}, e.message), el("button", { class: "btn-x", onclick: boot }, "Try again"))); return; }
-    if (!st.admin) return auth(st.setup);
-    addEventListener("hashchange", route); route();
+    let st; try { st = await api("auth-status", { auth: true }); } catch (e) { put(app, el("main", { class: "studio center" }, el("p", {}, e.message), el("button", { class: "btn-x", onclick: boot }, "Try again"))); return; }
+    if (!st.setup) return signIn(true);
+    if (!st.me) { store.del("kw.token"); return signIn(false); }
+    ME = st.me;
+    if (!boot.on) { boot.on = true; addEventListener("hashchange", route); }
+    route();
   }
-  function auth(isSet) {
-    const pw = el("input", { class: "name-input", type: "password", placeholder: "Password", autocomplete: isSet ? "current-password" : "new-password" });
-    const pw2 = isSet ? null : el("input", { class: "name-input", type: "password", placeholder: "Type it again", autocomplete: "new-password" });
+  function signIn(first) {
+    const user = el("input", { class: "name-input", placeholder: "Username", autocomplete: "username", autocapitalize: "none", spellcheck: "false", value: store.get("kw.user", "") });
+    const pw = el("input", { class: "name-input", type: "password", placeholder: "Password", autocomplete: first ? "new-password" : "current-password" });
+    const pw2 = first ? el("input", { class: "name-input", type: "password", placeholder: "Password again", autocomplete: "new-password" }) : null;
+    const old = el("input", { class: "name-input", type: "password", placeholder: "Old studio password", autocomplete: "off", hidden: !first || !!store.get("forms.token", null) });
     const msg = el("div", { class: "err" });
+    const btn = el("button", { class: "btn-x primary", type: "submit" }, first ? "Make my account" : "Sign in");
     const go = async e => {
       e.preventDefault(); msg.textContent = "";
-      if (!isSet && pw.value !== pw2.value) { msg.textContent = "The two passwords are different."; return; }
-      try { const r = await formsApi(isSet ? "login" : "setup", { password: pw.value }); store.set("forms.token", r.token); boot(); } catch (x) { msg.textContent = x.message; }
+      if (first && pw.value !== pw2.value) { msg.textContent = "The two passwords are different."; return; }
+      btn.disabled = true;
+      try {
+        const body = { username: user.value, password: pw.value };
+        if (first) Object.assign(body, { oldToken: store.get("forms.token", null), oldPassword: old.value });
+        const r = await api(first ? "setup" : "login", { method: "POST", body });
+        store.set("kw.token", r.token); store.set("kw.user", r.me.username); boot();
+      } catch (x) {
+        msg.textContent = x.message; btn.disabled = false;
+        if (first && x.status === 403) { old.hidden = false; old.focus(); }
+      }
     };
     put(app, el("main", { class: "studio center" }, logo("big"), el("form", { class: "join-card", onsubmit: go },
-      el("h2", { class: "s-h" }, isSet ? "Host sign in" : "Set your host password"),
-      el("p", { class: "fine left" }, isSet ? "Same password as your Forms app." : "You'll use it to make quizzes and host games. Players never need it."),
-      pw, pw2, el("button", { class: "btn-x primary", type: "submit" }, isSet ? "Sign in" : "Create password"), msg)));
-    setTimeout(() => pw.focus(), 50);
+      el("h2", { class: "s-h" }, first ? "Make your host account" : "Host sign in"),
+      el("p", { class: "fine left" }, first ? "Pick a username and password. Your quizzes move into this account, and you can add accounts for friends later. Players never need one." : "Players don't need an account. They join with the game PIN."),
+      user, pw, pw2, old, btn, msg)));
+    setTimeout(() => (user.value ? pw : user).focus(), 50);
   }
-  const authApi = (action, opts = {}) => api(action, { ...opts, auth: true }).catch(e => { if (e.status === 401) { store.del("forms.token"); auth(true); } throw e; });
+  const authApi = (action, opts = {}) => api(action, { ...opts, auth: true }).catch(e => { if (e.status === 401) { store.del("kw.token"); ME = null; signIn(false); } throw e; });
+
+  /* ================= account ================= */
+  async function account() {
+    document.title = "Account · Ka-Who?";
+    const main = el("main", { class: "studio narrow" });
+    put(app, topbar(), main);
+    const field = (ph, type = "text", ac = "off") => el("input", { class: "name-input", type, placeholder: ph, autocomplete: ac, autocapitalize: "none", spellcheck: "false" });
+    // my password
+    const np = field("New password", "password", "new-password"), np2 = field("New password again", "password", "new-password"), pmsg = el("div", { class: "err" });
+    const mine = el("form", { class: "join-card acct", onsubmit: async e => {
+      e.preventDefault(); pmsg.textContent = "";
+      if (np.value !== np2.value) { pmsg.textContent = "The two passwords are different."; return; }
+      try { await authApi("password", { method: "POST", body: { password: np.value } }); np.value = np2.value = ""; toast("Password changed"); } catch (x) { pmsg.textContent = x.message; }
+    } }, el("h2", { class: "s-h" }, "Your password"), np, np2, el("button", { class: "btn-x primary", type: "submit" }, "Change password"), pmsg);
+    const out = el("button", { class: "btn-x", onclick: async () => { try { await api("logout", { method: "POST", auth: true }); } catch (e) { /* signed out anyway */ } store.del("kw.token"); ME = null; location.hash = "#/"; signIn(false); } }, ic("logout", 16), "Sign out");
+    put(main, el("div", { class: "s-hero" }, el("div", {}, el("h1", { class: "s-title" }, ME.username), el("p", { class: "s-sub" }, ME.owner ? "Owner. You can add hosts for friends below." : "Host account.")), el("div", { class: "row" }, out)),
+      el("div", { class: "acct-grid" }, ME.owner ? el("div", { class: "join-card acct", id: "people" }, el("div", { class: "spin" })) : null, mine));
+    if (ME.owner) people();
+  }
+  async function people() {
+    const box = $("#people"); if (!box) return;
+    let users; try { users = (await authApi("users")).users; } catch (e) { put(box, el("p", { class: "err" }, e.message)); return; }
+    const u = el("input", { class: "name-input", placeholder: "Username", autocapitalize: "none", spellcheck: "false", autocomplete: "off" });
+    const p = el("input", { class: "name-input", type: "text", placeholder: "Password (6+ letters)", autocomplete: "off", autocapitalize: "none", spellcheck: "false" });
+    const msg = el("div", { class: "err" });
+    put(box, el("h2", { class: "s-h" }, ic("users", 22), " Hosts"),
+      el("p", { class: "fine left" }, "Make an account, then send your friend the username and password. They sign in at " + location.host + "/kawho/host and only see their own quizzes."),
+      el("div", { class: "hosts" }, users.map(x => el("div", { class: "host-row" },
+        el("span", { class: "host-n" }, ic("user", 18), el("b", {}, x.username), x.owner ? el("span", { class: "tag-x" }, "owner") : null),
+        el("span", { class: "fine" }, `${x.quizzes} quiz${x.quizzes === 1 ? "" : "zes"}`),
+        x.owner ? null : el("span", { class: "row" },
+          el("button", { class: "btn-x small ghost", onclick: async () => { const np = prompt(`New password for ${x.username} (6+ letters):`); if (!np) return; try { await authApi("user-password", { method: "POST", body: { username: x.username, password: np } }); toast(`New password set for ${x.username}`); } catch (e) { toast(e.message); } } }, "New password"),
+          el("button", { class: "btn-x small ghost danger", onclick: async () => { if (!confirm(`Remove ${x.username}? Their quizzes move to your account.`)) return; try { await authApi("user-delete", { method: "POST", body: { username: x.username } }); people(); } catch (e) { toast(e.message); } } }, "Remove"))))),
+      el("form", { class: "add-host", onsubmit: async e => {
+        e.preventDefault(); msg.textContent = "";
+        try { await authApi("user-add", { method: "POST", body: { username: u.value, password: p.value } }); toast(`Account made: ${u.value.trim().toLowerCase()}`); people(); } catch (x) { msg.textContent = x.message; }
+      } }, el("h3", {}, "Add a host"), u, p, el("button", { class: "btn-x primary", type: "submit" }, ic("plus", 16), "Make account"), msg));
+  }
 
   /* ================= routing ================= */
   let stopGame = null;
@@ -243,9 +294,10 @@ Number of questions: [e.g. 12]`;
     const h = location.hash.replace(/^#\/?/, "").split("/");
     if (h[0] === "edit" || h[0] === "new") return editor(h[1] || null);
     if (h[0] === "play" && h[1]) return game(h[1]);
+    if (h[0] === "account") return account();
     return dashboard();
   }
-  const topbar = (...right) => el("header", { class: "s-top" }, el("a", { href: "#/", class: "s-brand" }, logo(), el("span", { class: "studio-tag" }, "Studio")), el("span", { class: "spacer" }), window.KW.themeButton(), right);
+  const topbar = (...right) => el("header", { class: "s-top" }, el("a", { href: "#/", class: "s-brand" }, logo(), el("span", { class: "studio-tag" }, "Studio")), el("span", { class: "spacer" }), window.KW.themeButton(), right, ME ? el("a", { class: "btn-x small ghost", href: "#/account", title: "Account", "aria-label": "Account" }, ic("user", 16), el("span", { class: "lbl" }, ME.username)) : null);
 
   /* ================= dashboard ================= */
   let quizzes = [];

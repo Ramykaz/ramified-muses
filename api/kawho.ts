@@ -1,12 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { randomBytes, randomInt } from 'node:crypto'
+import { randomBytes, randomInt, scryptSync, timingSafeEqual } from 'node:crypto'
 import { sql } from 'drizzle-orm'
 import { db } from '../src/db/index.js'
 
 // Kawho: live quiz games (/kawho). Players join with a 6-digit PIN and poll
 // GET ?action=state, which the CDN caches for a second, so 50 phones cost about
 // one database read per second. Answers are scored here from the server clock.
-// Hosting uses the Forms admin password (forms_admin / forms_sessions).
+// Hosts sign in with their own username and password (kw_users / kw_sessions).
+// The first account is the owner: it can add or remove other hosts. Each host
+// only sees their own quizzes and games.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -27,7 +29,10 @@ function ensureSchema() {
     .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS kw_games (pin text PRIMARY KEY, quiz_id text, quiz jsonb NOT NULL, state jsonb NOT NULL, created_at bigint NOT NULL)`))
     .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS kw_players (pin text NOT NULL, id text NOT NULL, secret text NOT NULL, name text NOT NULL, avatar text NOT NULL, score int NOT NULL DEFAULT 0, streak int NOT NULL DEFAULT 0, react text, react_at bigint, joined_at bigint NOT NULL, PRIMARY KEY (pin, id))`))
     .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS kw_answers (pin text NOT NULL, player_id text NOT NULL, q int NOT NULL, answer jsonb, correct boolean, points int NOT NULL DEFAULT 0, ms int NOT NULL, at bigint NOT NULL, PRIMARY KEY (pin, player_id, q))`))
-    .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS forms_sessions (token text PRIMARY KEY, created_at bigint NOT NULL)`))
+    .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS kw_users (username text PRIMARY KEY, pw text NOT NULL, owner boolean NOT NULL DEFAULT false, created_at bigint NOT NULL)`))
+    .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS kw_sessions (token text PRIMARY KEY, username text NOT NULL, created_at bigint NOT NULL)`))
+    .then(() => db.execute(sql`ALTER TABLE kw_quizzes ADD COLUMN IF NOT EXISTS owner text`))
+    .then(() => db.execute(sql`ALTER TABLE kw_games ADD COLUMN IF NOT EXISTS owner text`))
     .catch(err => { schemaReady = null; throw err })
   return schemaReady
 }
@@ -42,15 +47,42 @@ const newId = (n = 10) => [...randomBytes(n)].map(b => 'abcdefghijkmnpqrstuvwxyz
 const fold = (s: unknown) => String(s ?? '').replace(/[İIı]/g, 'i').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim()
 const SCORED = new Set(['quiz', 'tf', 'multi', 'type', 'slider', 'order'])
 
-async function isAdmin(req: VercelRequest) {
-  const token = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
-  if (!/^[a-f0-9]{48}$/.test(token)) return false
-  const r = await db.execute(sql`SELECT 1 FROM forms_sessions WHERE token = ${token} AND created_at > ${Date.now() - 180 * 864e5}`)
-  return r.rows.length > 0
+const SESSION_MS = 180 * 864e5
+const hashPassword = (pw: string) => { const salt = randomBytes(16).toString('hex'); return salt + ':' + scryptSync(pw, salt, 32).toString('hex') }
+const checkPassword = (pw: string, stored: string) => {
+  const [salt, hash] = String(stored ?? '').split(':'); if (!salt || !hash) return false
+  const a = scryptSync(pw, salt, 32), b = Buffer.from(hash, 'hex')
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+const bearer = (req: VercelRequest) => String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
+const cleanUser = (u: unknown) => String(u ?? '').trim().toLowerCase()
+const USER_RE = /^[a-z0-9._-]{3,20}$/
+const userError = 'Username: 3 to 20 letters or numbers (no spaces).'
+async function newSession(username: string) {
+  const token = randomBytes(24).toString('hex')
+  await db.execute(sql`INSERT INTO kw_sessions (token, username, created_at) VALUES (${token}, ${username}, ${Date.now()})`)
+  return token
+}
+type Me = { username: string; owner: boolean }
+async function whoAmI(req: VercelRequest): Promise<Me | null> {
+  const token = bearer(req)
+  if (!/^[a-f0-9]{48}$/.test(token)) return null
+  const r = (await db.execute(sql`SELECT u.username, u.owner FROM kw_sessions s JOIN kw_users u ON u.username = s.username WHERE s.token = ${token} AND s.created_at > ${Date.now() - SESSION_MS}`)).rows[0] as Row | undefined
+  return r ? { username: String(r.username), owner: Boolean(r.owner) } : null
+}
+// the old studio sign-in (before accounts), so only the site owner can make the first account
+async function oldStudioOk(body: Row) {
+  try {
+    const pw = (await db.execute(sql`SELECT v FROM forms_admin WHERE k = 'password'`)).rows[0] as Row | undefined
+    if (!pw) return true
+    const t = String(body.oldToken ?? '')
+    if (/^[a-f0-9]{48}$/.test(t) && (await db.execute(sql`SELECT 1 FROM forms_sessions WHERE token = ${t} AND created_at > ${Date.now() - SESSION_MS}`)).rows.length) return true
+    return typeof body.oldPassword === 'string' && checkPassword(body.oldPassword, String(pw.v))
+  } catch { return true } // no old studio tables: a fresh site
 }
 async function loadGame(pin: string) {
-  const r = (await db.execute(sql`SELECT pin, quiz_id, quiz, state FROM kw_games WHERE pin = ${pin}`)).rows[0] as Row | undefined
-  return r ? { pin, quizId: String(r.quiz_id ?? ''), quiz: r.quiz as Quiz, state: r.state as State } : null
+  const r = (await db.execute(sql`SELECT pin, quiz_id, quiz, state, owner FROM kw_games WHERE pin = ${pin}`)).rows[0] as Row | undefined
+  return r ? { pin, quizId: String(r.quiz_id ?? ''), quiz: r.quiz as Quiz, state: r.state as State, owner: r.owner == null ? null : String(r.owner) } : null
 }
 const saveState = (pin: string, st: State) => db.execute(sql`UPDATE kw_games SET state = ${JSON.stringify(st)}::jsonb WHERE pin = ${pin}`)
 
@@ -205,11 +237,85 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true })
     }
 
-    // ---------------- host (admin) ----------------
-    if (!(await isAdmin(req))) return res.status(401).json({ error: 'Please sign in.' })
+    // ---------------- host accounts ----------------
+    if (action === 'auth-status' && req.method === 'GET') {
+      const any = (await db.execute(sql`SELECT 1 FROM kw_users LIMIT 1`)).rows.length > 0
+      return res.status(200).json({ setup: any, me: any ? await whoAmI(req) : null })
+    }
+    if (action === 'setup' && req.method === 'POST') {
+      if ((await db.execute(sql`SELECT 1 FROM kw_users LIMIT 1`)).rows.length) return res.status(409).json({ error: 'The first account is already made. Sign in instead.' })
+      const username = cleanUser(body.username), pw = String(body.password ?? '')
+      if (!USER_RE.test(username)) return res.status(400).json({ error: userError })
+      if (pw.length < 6) return res.status(400).json({ error: 'Use at least 6 characters for the password.' })
+      if (!(await oldStudioOk(body))) return res.status(403).json({ error: 'Type your old studio password once, so we know it is you.', needOld: true })
+      const ins = await db.execute(sql`INSERT INTO kw_users (username, pw, owner, created_at) SELECT ${username}, ${hashPassword(pw)}, true, ${now} WHERE NOT EXISTS (SELECT 1 FROM kw_users) RETURNING username`)
+      if (!ins.rows.length) return res.status(409).json({ error: 'The first account is already made. Sign in instead.' })
+      // everything made before accounts belongs to the owner
+      await db.execute(sql`UPDATE kw_quizzes SET owner = ${username} WHERE owner IS NULL`)
+      await db.execute(sql`UPDATE kw_games SET owner = ${username} WHERE owner IS NULL`)
+      return res.status(200).json({ token: await newSession(username), me: { username, owner: true } })
+    }
+    if (action === 'login' && req.method === 'POST') {
+      const username = cleanUser(body.username), pw = String(body.password ?? '')
+      const u = (await db.execute(sql`SELECT username, pw, owner FROM kw_users WHERE username = ${username}`)).rows[0] as Row | undefined
+      if (!u || !checkPassword(pw, String(u.pw))) return res.status(401).json({ error: 'Wrong username or password.' })
+      return res.status(200).json({ token: await newSession(username), me: { username, owner: Boolean(u.owner) } })
+    }
+    if (action === 'logout' && req.method === 'POST') {
+      await db.execute(sql`DELETE FROM kw_sessions WHERE token = ${bearer(req)}`)
+      return res.status(200).json({ ok: true })
+    }
+
+    // ---------------- host (signed in) ----------------
+    const me = await whoAmI(req)
+    if (!me) return res.status(401).json({ error: 'Please sign in.' })
+    const mine = (g: { owner: string | null } | null) => g && g.owner === me.username ? g : null
+
+    if (action === 'me' && req.method === 'GET') return res.status(200).json({ me })
+    if (action === 'password' && req.method === 'POST') {
+      const pw = String(body.password ?? '')
+      if (pw.length < 6) return res.status(400).json({ error: 'Use at least 6 characters for the password.' })
+      await db.execute(sql`UPDATE kw_users SET pw = ${hashPassword(pw)} WHERE username = ${me.username}`)
+      await db.execute(sql`DELETE FROM kw_sessions WHERE username = ${me.username} AND token <> ${bearer(req)}`)
+      return res.status(200).json({ ok: true })
+    }
+    if (action.startsWith('user') && !me.owner) return res.status(403).json({ error: 'Only the owner can manage hosts.' })
+    if (action === 'users' && req.method === 'GET') {
+      const r = (await db.execute(sql`SELECT u.username, u.owner, u.created_at, (SELECT count(*) FROM kw_quizzes q WHERE q.owner = u.username) AS quizzes FROM kw_users u ORDER BY u.owner DESC, u.created_at`)).rows as Row[]
+      return res.status(200).json({ users: r.map(u => ({ username: u.username, owner: Boolean(u.owner), quizzes: Number(u.quizzes), createdAt: Number(u.created_at) })) })
+    }
+    if (action === 'user-add' && req.method === 'POST') {
+      const username = cleanUser(body.username), pw = String(body.password ?? '')
+      if (!USER_RE.test(username)) return res.status(400).json({ error: userError })
+      if (pw.length < 6) return res.status(400).json({ error: 'Use at least 6 characters for the password.' })
+      const count = Number(((await db.execute(sql`SELECT count(*) AS n FROM kw_users`)).rows[0] as Row).n)
+      if (count >= 20) return res.status(409).json({ error: 'That is enough hosts (20).' })
+      const ins = await db.execute(sql`INSERT INTO kw_users (username, pw, owner, created_at) VALUES (${username}, ${hashPassword(pw)}, false, ${now}) ON CONFLICT DO NOTHING RETURNING username`)
+      if (!ins.rows.length) return res.status(409).json({ error: 'That username is taken.' })
+      return res.status(200).json({ ok: true })
+    }
+    if (action === 'user-password' && req.method === 'POST') {
+      const username = cleanUser(body.username), pw = String(body.password ?? '')
+      if (pw.length < 6) return res.status(400).json({ error: 'Use at least 6 characters for the password.' })
+      const up = await db.execute(sql`UPDATE kw_users SET pw = ${hashPassword(pw)} WHERE username = ${username} RETURNING username`)
+      if (!up.rows.length) return res.status(404).json({ error: 'No host with that username.' })
+      if (username !== me.username) await db.execute(sql`DELETE FROM kw_sessions WHERE username = ${username}`)
+      return res.status(200).json({ ok: true })
+    }
+    if (action === 'user-delete' && req.method === 'POST') {
+      const username = cleanUser(body.username)
+      if (username === me.username) return res.status(400).json({ error: "You can't remove yourself." })
+      const del = await db.execute(sql`DELETE FROM kw_users WHERE username = ${username} AND NOT owner RETURNING username`)
+      if (!del.rows.length) return res.status(404).json({ error: 'No host with that username.' })
+      await db.execute(sql`DELETE FROM kw_sessions WHERE username = ${username}`)
+      // their quizzes move to you, so nothing is lost
+      await db.execute(sql`UPDATE kw_quizzes SET owner = ${me.username} WHERE owner = ${username}`)
+      await db.execute(sql`UPDATE kw_games SET owner = ${me.username} WHERE owner = ${username}`)
+      return res.status(200).json({ ok: true })
+    }
 
     if (action === 'quizzes' && req.method === 'GET') {
-      const r = await db.execute(sql`SELECT id, data, created_at, updated_at FROM kw_quizzes ORDER BY updated_at DESC`)
+      const r = await db.execute(sql`SELECT id, data, created_at, updated_at FROM kw_quizzes WHERE owner = ${me.username} ORDER BY updated_at DESC`)
       return res.status(200).json({ quizzes: (r.rows as Row[]).map(x => ({ id: x.id, data: x.data, updatedAt: Number(x.updated_at) })) })
     }
     if (action === 'quiz-save' && req.method === 'POST') {
@@ -217,16 +323,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!data || !Array.isArray(data.questions) || !data.questions.length) return res.status(400).json({ error: 'Add at least one question.' })
       if (JSON.stringify(data).length > 400_000) return res.status(400).json({ error: 'This quiz is too big.' })
       let id = String(body.id ?? '')
-      if (id) await db.execute(sql`UPDATE kw_quizzes SET data = ${JSON.stringify(data)}::jsonb, updated_at = ${now} WHERE id = ${id}`)
-      else { id = newId(8); await db.execute(sql`INSERT INTO kw_quizzes (id, data, created_at, updated_at) VALUES (${id}, ${JSON.stringify(data)}::jsonb, ${now}, ${now})`) }
+      if (id) { const up = await db.execute(sql`UPDATE kw_quizzes SET data = ${JSON.stringify(data)}::jsonb, updated_at = ${now} WHERE id = ${id} AND owner = ${me.username} RETURNING id`); if (!up.rows.length) return res.status(404).json({ error: 'Quiz not found.' }) }
+      else { id = newId(8); await db.execute(sql`INSERT INTO kw_quizzes (id, data, created_at, updated_at, owner) VALUES (${id}, ${JSON.stringify(data)}::jsonb, ${now}, ${now}, ${me.username})`) }
       return res.status(200).json({ id })
     }
     if (action === 'quiz-delete' && req.method === 'POST') {
-      await db.execute(sql`DELETE FROM kw_quizzes WHERE id = ${String(body.id ?? '')}`)
+      await db.execute(sql`DELETE FROM kw_quizzes WHERE id = ${String(body.id ?? '')} AND owner = ${me.username}`)
       return res.status(200).json({ ok: true })
     }
     if (action === 'game-create' && req.method === 'POST') {
-      const qz = (await db.execute(sql`SELECT data FROM kw_quizzes WHERE id = ${String(body.quizId ?? '')}`)).rows[0] as Row | undefined
+      const qz = (await db.execute(sql`SELECT data FROM kw_quizzes WHERE id = ${String(body.quizId ?? '')} AND owner = ${me.username}`)).rows[0] as Row | undefined
       if (!qz) return res.status(404).json({ error: 'Quiz not found.' })
       // clear out games older than two days
       const old = now - 2 * 864e5
@@ -236,19 +342,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const st: State = { phase: 'lobby', q: -1, v: 1 }
       for (let k = 0; k < 20; k++) {
         const pin = String(randomInt(100000, 1000000))
-        const ins = await db.execute(sql`INSERT INTO kw_games (pin, quiz_id, quiz, state, created_at) VALUES (${pin}, ${String(body.quizId)}, ${JSON.stringify(qz.data)}::jsonb, ${JSON.stringify(st)}::jsonb, ${now}) ON CONFLICT DO NOTHING RETURNING pin`)
+        const ins = await db.execute(sql`INSERT INTO kw_games (pin, quiz_id, quiz, state, created_at, owner) VALUES (${pin}, ${String(body.quizId)}, ${JSON.stringify(qz.data)}::jsonb, ${JSON.stringify(st)}::jsonb, ${now}, ${me.username}) ON CONFLICT DO NOTHING RETURNING pin`)
         if (ins.rows.length) return res.status(200).json({ pin })
       }
       return res.status(503).json({ error: 'Could not make a PIN. Try again.' })
     }
     if (action === 'host-state' && req.method === 'GET') {
-      const pin = pinOf(req.query.pin), g = await loadGame(pin)
+      const pin = pinOf(req.query.pin), g = mine(await loadGame(pin))
       if (!g) return res.status(404).json({ error: 'Game not found.' })
       const players = (await db.execute(sql`SELECT p.id, p.name, p.avatar, p.score, p.streak, p.react, p.react_at, (a.player_id IS NOT NULL) AS answered FROM kw_players p LEFT JOIN kw_answers a ON a.pin = p.pin AND a.player_id = p.id AND a.q = ${g.state.q} WHERE p.pin = ${pin} ORDER BY p.joined_at`)).rows as Row[]
       return res.status(200).json({ pin, quizId: g.quizId, quiz: g.quiz, state: g.state, players: players.map(p => ({ ...p, score: Number(p.score), react_at: p.react_at == null ? null : Number(p.react_at) })), serverNow: now })
     }
     if (action === 'host' && req.method === 'POST') {
-      const pin = pinOf(body.pin), g = await loadGame(pin)
+      const pin = pinOf(body.pin), g = mine(await loadGame(pin))
       if (!g) return res.status(404).json({ error: 'Game not found.' })
       const st = g.state, qs = g.quiz.questions, what = String(body.do ?? '')
       if (what === 'next') {
@@ -291,7 +397,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ state: st, serverNow: now })
     }
     if (action === 'results' && req.method === 'GET') {
-      const pin = pinOf(req.query.pin), g = await loadGame(pin)
+      const pin = pinOf(req.query.pin), g = mine(await loadGame(pin))
       if (!g) return res.status(404).json({ error: 'Game not found.' })
       const players = (await db.execute(sql`SELECT id, name, avatar, score FROM kw_players WHERE pin = ${pin} ORDER BY score DESC, joined_at ASC`)).rows as Row[]
       const answers = (await db.execute(sql`SELECT player_id, q, answer, correct, points, ms FROM kw_answers WHERE pin = ${pin}`)).rows as Row[]

@@ -29,7 +29,7 @@
   async function api(action, { method = "GET", body, query = {}, auth = false } = {}) {
     const qs = new URLSearchParams({ action, ...query }).toString();
     const headers = { "Content-Type": "application/json" };
-    if (auth) { const t = store.get("forms.token", null); if (t) headers.Authorization = "Bearer " + t; }
+    if (auth) { const t = store.get("kw.token", null); if (t) headers.Authorization = "Bearer " + t; }
     let r;
     try { r = await fetch("/api/kawho?" + qs, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
     catch (e) { throw Object.assign(new Error("No connection. Check your internet."), { status: 0 }); }
@@ -110,6 +110,9 @@
 
   /* ---------- icons (line icons, no emoji anywhere) ---------- */
   const IC = {
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.8 3-6 6.5-6s6.5 2.2 6.5 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.3c2.2.7 3.5 2.6 3.5 5.7"/>',
+    logout: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
     vol: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
