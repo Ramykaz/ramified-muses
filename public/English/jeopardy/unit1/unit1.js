@@ -35,7 +35,8 @@
 
   /* ================= state shared by all games ================= */
   const KEY = "u1.state." + (U.key || U.title || "unit").replace(/\W+/g, "");
-  const S = Object.assign({ teams: NAMES.slice(0, 2).map((name, i) => ({ name, color: COLORS[i], score: 0 })), secs: U.sections.map((_, i) => i), clue: "both", timer: 0, sound: true }, store.get(KEY, {}));
+  const S = Object.assign({ teams: NAMES.slice(0, 2).map((name, i) => ({ name, color: COLORS[i], score: 0 })), secs: U.sections.map((_, i) => i), clue: "both", timer: 0, sound: true, level: U.level || "normal" }, store.get(KEY, {}));
+  const lvl = () => S.level || "normal", EN_ONLY = () => lvl() === "hard";
   const save = () => store.set(KEY, S);
   const pool = () => WORDS.filter(w => S.secs.includes(w.s));
 
@@ -89,9 +90,10 @@
         el("button", { class: "btn big", "data-nobody": "1", onclick: () => pick(-1) }, "Nobody, next")));
   }
   function clueBlock(w) {
+    const clue = EN_ONLY() ? "en" : S.clue;
     return el("div", { class: "clue" },
-      S.clue !== "en" ? el("div", { class: "tr" }, el("span", { class: "flag" }, "TR"), w.tr) : null,
-      S.clue !== "tr" ? el("div", { class: "en" }, el("span", { class: "flag flag-en" }, "EN"), w.m) : null);
+      clue !== "en" ? el("div", { class: "tr" }, el("span", { class: "flag" }, "TR"), w.tr) : null,
+      clue !== "tr" ? el("div", { class: "en" }, el("span", { class: "flag flag-en" }, "EN"), w.m) : null);
   }
   function exampleNode(w) {
     const s = w.ex, gaps = w.gap || [], parts = []; let last = 0;
@@ -101,7 +103,7 @@
   function answerCard(w, color) {
     return el("div", { class: "answer", style: `--cc:${color || "var(--teal)"}` },
       el("div", { class: "word" }, w.w), el("div", {}, el("span", { class: "pos" }, w.pos)),
-      el("div", { class: "tr" }, el("span", { class: "flag" }, "TR"), w.tr),
+      EN_ONLY() ? null : el("div", { class: "tr" }, el("span", { class: "flag" }, "TR"), w.tr),
       el("div", { class: "m" }, el("span", { class: "flag flag-en" }, "EN"), w.m),
       exampleNode(w));
   }
@@ -139,6 +141,8 @@
 
   /* ================= hub ================= */
   const GAMES = [
+    { id: "tf", name: "True or False", art: "T / F", g: "linear-gradient(135deg,#2E9E6B,#5E8C4F 60%,#C9A84C)", p: "A word and a meaning. Do they match? Teams take turns: one tap, +100." },
+    { id: "quick", name: "Quick Match", art: "A B C", g: "linear-gradient(135deg,#1A8A8F,#4C5FD5)", p: "See the word in Türkçe, pick the English. Big buttons, fast rounds." },
     { id: "scramble", name: "Word Scramble", art: "S·W·D", g: "linear-gradient(135deg,#7C5CBF,#9C5FC4 55%,#D6457A)", p: "Mixed-up letters and a clue. Which team finds the word first?" },
     { id: "memory", name: "Memory Match", art: "EN=TR", g: "linear-gradient(135deg,#1a6b72,#1A8A8F 60%,#3DB2A6)", p: "Flip two cards: find each English word and its Turkish meaning." },
     { id: "mime", name: "Act It Out", art: "MIME", g: "linear-gradient(135deg,#D6457A,#E2725B 60%,#E39B2B)", p: "One player acts a chore or a gesture. No talking! The team shouts the word.", need: () => U.sections.some(s => s.act) },
@@ -167,7 +171,10 @@
         el("div", {}, el("div", { class: "eyebrow" }, `${U.book} · ${U.title}`), el("h1", {}, (U.hero || ["Our Life and ", "Times"])[0], el("em", {}, (U.hero || ["", "Times"])[1])),
           el("p", { class: "lede" }, `All ${WORDS.length} words from ${U.title} in ${(n => NUM_WORDS[n] || n)(GAMES.filter(g => g.id !== "cards" && g.id !== "grammar").length)} team games${GAMES.some(g => g.id === "grammar") ? ", plus a grammar battle" : ""}. Points add up across the games, so play a few and crown the winner at the end.`)),
         el("div", { class: "panel", style: "align-content:center" }, el("div", { class: "eyebrow" }, "Words in play"), el("div", { style: "font:400 56px/1 var(--serif)" }, String(n)),
-          el("div", { class: "muted", style: "font-size:14px" }, n === WORDS.length ? "All the lessons are on. Change them below." : `From ${S.secs.length} of ${U.sections.length} lessons.`))),
+          el("div", { class: "muted", style: "font-size:14px" }, n === WORDS.length ? "All the lessons are on. Change them below." : `From ${S.secs.length} of ${U.sections.length} lessons.`),
+          el("div", { class: "eyebrow", style: "margin-top:10px" }, "Level"),
+          seg([["easy", "Easy"], ["normal", "Normal"], ["hard", "English only"]], lvl(), v => S.level = v),
+          el("div", { class: "muted", style: "font-size:13px" }, { easy: "Short words, 3 choices, Türkçe help and a free first letter.", normal: "4 choices and the full word list.", hard: "No Türkçe anywhere: English meanings only. For strong students." }[lvl()]))),
       el("div", { class: "games" }, GAMES.map((g, i) => el("a", { class: "gcard", href: "#/" + g.id, style: `--g:${g.g};text-decoration:none` },
         el("span", { class: "art", "aria-hidden": "true" }, g.art),
         el("div", {}, el("div", { class: "num" }, g.id === "cards" ? "Review" : `Game ${i + 1}`), el("h3", {}, g.name), el("p", {}, g.p)),
@@ -183,18 +190,86 @@
           el("div", {}, el("div", { class: "row", style: "margin-bottom:8px" }, el("b", {}, "Lessons"), el("span", { class: "spacer" }),
             el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.secs = U.sections.map((_, i) => i); save(); hub(); } }, "All"),
             el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.secs = []; save(); hub(); } }, "None")), secChips),
-          el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Clues in"), seg([["both", "Türkçe + English"], ["tr", "Türkçe"], ["en", "English"]], S.clue, v => S.clue = v)),
+          EN_ONLY() ? el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Clues in"), el("div", { class: "muted" }, "English only (level: English only)")) : el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Clues in"), seg([["both", "Türkçe + English"], ["tr", "Türkçe"], ["en", "English"]], S.clue, v => S.clue = v)),
           el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Timer for each question"), seg([[0, "Off"], [20, "20 s"], [30, "30 s"], [45, "45 s"], [60, "60 s"]], S.timer, v => S.timer = v)))));
+  }
+
+  /* ================= true or false ================= */
+  // teams take turns; a word and a meaning (Türkçe, or English at the hard level): do they match?
+  function tf() {
+    const d = deck("tf");
+    let w, shown, truth, res, t;
+    turn = turn % S.teams.length;
+    const mean = x => EN_ONLY() ? x.m : x.tr;
+    function next() {
+      if (t) t.stop(); [w] = d.take(1); truth = Math.random() < .5; shown = w;
+      if (!truth) { const others = shuffle(pool().filter(x => x !== w && mean(x) !== mean(w))); const near = others.find(x => lvl() === "easy" ? x.s !== w.s : x.s === w.s); shown = near || others[0] || w; if (shown === w) truth = true; }
+      res = null; draw(true); setCounter(`Word ${d.pos} of ${d.size}`); beep("open");
+    }
+    function draw(fresh) {
+      const tm = S.teams[turn], color = SEC_COLORS[w.s % SEC_COLORS.length];
+      if (fresh) t = timer(S.timer, () => { if (!res) answer(null); });
+      const stage = el("div", { class: "stage", style: `--cc:${color}` },
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${tm.color};font-size:20px` }, `${tm.name}'s turn`), el("b", { style: "color:var(--gold)" }, "Worth 100")),
+        el("div", { class: "tfq" }, el("div", { class: "hs-word" }, head(w)), el("div", { class: "eq" }, "="), el("div", { class: "tfm" }, el("span", { class: "flag" + (EN_ONLY() ? " flag-en" : "") }, EN_ONLY() ? "EN" : "TR"), mean(shown))),
+        res ? el("div", { class: "verdict " + (res.ok ? "yes" : "no") }, res.ok ? `Yes! +100 for ${tm.name}` : res.timeout ? "Time's up!" : "Not this time!", el("small", {}, truth ? "It's TRUE." : `It's FALSE. ${head(w)} = ${mean(w)}`)) : null,
+        res ? answerCard(w, color) : null,
+        res ? null : t.node,
+        res ? el("button", { class: "btn gold huge", onclick: pass }, `Next: ${S.teams[(turn + 1) % S.teams.length].name}`)
+          : el("div", { class: "tfbtns" }, el("button", { class: "tfb yes", onclick: () => answer(true) }, "True"), el("button", { class: "tfb no", onclick: () => answer(false) }, "False")),
+        el("div", { class: "hint" }, res ? "Enter = next team" : "T = true · F = false · P = pause"));
+      const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame("True or False", "", null, stage, turn);
+      const sb = $("#scorebar"); if (sb) sb.replaceWith(scorebar(turn));
+    }
+    function answer(v) {
+      if (res) return; if (t) t.stop();
+      res = { ok: v === truth, timeout: v === null };
+      if (res.ok) award(turn, 100); else beep("no");
+      draw(false);
+    }
+    function pass() { turn = (turn + 1) % S.teams.length; next(); }
+    keys = e => { const k = e.key.toLowerCase(); if (res) { if (k === "enter" || k === "n" || k === " ") pass(); return; } if (k === "t") answer(true); else if (k === "f") answer(false); else if (k === "p" && t) t.toggle(); };
+    frame("True or False", "", null, el("div", { class: "stage" }), turn);
+    next();
+  }
+
+  /* ================= quick match ================= */
+  // Türkçe (or an English meaning at the hard level) -> pick the English word
+  function quick() {
+    const d = deck("quick" + lvl(), lvl() === "easy" ? w => head(w).length <= 18 : null);
+    let w, opts, tried, done, t;
+    function next() { if (t) t.stop(); [w] = d.take(1); opts = choices(w); tried = []; done = false; draw(true); setCounter(`Word ${d.pos} of ${d.size}`); beep("open"); }
+    function draw(fresh) {
+      const color = SEC_COLORS[w.s % SEC_COLORS.length];
+      if (fresh) t = timer(S.timer);
+      const worth = tried.length ? 50 : 100;
+      const stage = el("div", { class: "stage", style: `--cc:${color}` },
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, U.sections[w.s].name), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        done ? null : EN_ONLY() ? el("div", { class: "clue" }, el("div", { class: "tr" }, el("span", { class: "flag flag-en" }, "EN"), w.m))
+          : el("div", { class: "clue" }, el("div", { class: "tr", style: "font-size:clamp(34px,5vw,64px)" }, el("span", { class: "flag" }, "TR"), w.tr)),
+        done ? null : el("div", { class: "muted", style: "font-weight:700" }, "Which English word is it?"),
+        done ? null : el("div", { class: "opts4" + (opts.length === 3 ? " g3" : "") }, opts.map((o, i) => el("button", { class: "opt4" + (tried.includes(o) ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABCD"[i]), head(o)))),
+        done ? null : t.node,
+        done ? answerCard(w, color) : null,
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); draw(false); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Click the team that got it, or press N." : "Tap the answer a team says (or press A–D). Wrong = red, another team can try for 50."));
+      const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame("Quick Match", "", null, stage);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === w) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(o); beep("no"); } draw(false); }
+    keys = e => { const k = e.key.toLowerCase(); if (done) { if (k === "n" || k === "enter") $("[data-nobody]").click(); return; } const i = "abcd".indexOf(k); if (i >= 0 && opts[i]) choose(opts[i]); else if (k === "p" && t) t.toggle(); };
+    frame("Quick Match", "", null, el("div", { class: "stage" }));
+    next();
   }
 
   /* ================= 1. word scramble ================= */
   function scramble() {
-    const d = deck("scramble", w => [...head(w)].filter(ch => /[a-z]/i.test(ch)).length <= 14);
+    const max = { easy: 10, normal: 14, hard: 20 }[lvl()] || 14, base = lvl() === "easy" ? 1 : 0;
+    const d = deck("scramble" + lvl(), w => [...head(w)].filter(ch => /[a-z]/i.test(ch)).length <= max);
     let w, mixed, hints, revealed, t;
     const isL = ch => /[a-z]/i.test(ch);
     const mix = () => { const letters = [...head(w)].filter(isL).map(c => c.toUpperCase()); let m; for (let k = 0; k < 20; k++) { m = shuffle(letters.slice()); if (m.join("") !== letters.join("") || letters.length < 2) break; } return m; };
-    const worth = () => Math.max(100, 300 - hints * 100);
-    function next() { if (t) t.stop(); [w] = d.take(1); mixed = mix(); hints = 0; revealed = false; draw(true); setCounter(`Word ${d.pos} of ${d.size}`); beep("open"); }
+    const worth = () => Math.max(100, 300 - (hints - base) * 100);
+    function next() { if (t) t.stop(); [w] = d.take(1); mixed = mix(); hints = base; revealed = false; draw(true); setCounter(`Word ${d.pos} of ${d.size}`); beep("open"); }
     // fresh = a new word (new timer); anim = drop the tiles in again
     function draw(fresh, anim = fresh) {
       const color = SEC_COLORS[w.s % SEC_COLORS.length], word = head(w).toUpperCase(), letters = [...word].filter(isL);
@@ -238,13 +313,13 @@
     const info = el("div", { style: "min-height:30px;width:100%;display:grid;justify-items:center" });
     function draw() {
       const cols = pairs * 2 <= 12 ? 4 : 5;
-      const grid = el("div", { class: "mem", style: `--cols:${cols}` }, cards.map((c, i) => {
-        const b = el("button", { class: "mcard" + (c.done ? " done" : "") + (open.includes(i) ? " up" : ""), style: c.done ? `--c:${c.done}` : "", "aria-label": c.done || open.includes(i) ? (c.side === "en" ? head(c.w) : c.w.tr) : `Card ${i + 1}`, onclick: () => flip(i) },
-          el("div", { class: "in" }, el("div", { class: "face back" }, "?"), el("div", { class: "face front" + (c.side === "tr" ? " trf" : "") }, el("small", {}, c.side === "tr" ? "TR" : "EN"), c.side === "en" ? head(c.w) : c.w.tr)));
+      const grid = el("div", { class: "mem" + (EN_ONLY() ? " mlong" : ""), style: `--cols:${cols}` }, cards.map((c, i) => {
+        const b = el("button", { class: "mcard" + (c.done ? " done" : "") + (open.includes(i) ? " up" : ""), style: c.done ? `--c:${c.done}` : "", "aria-label": c.done || open.includes(i) ? (c.side === "en" ? head(c.w) : (EN_ONLY() ? c.w.m : c.w.tr)) : `Card ${i + 1}`, onclick: () => flip(i) },
+          el("div", { class: "in" }, el("div", { class: "face back" }, "?"), el("div", { class: "face front" + (c.side === "tr" ? (EN_ONLY() ? " trf mf" : " trf") : "") }, el("small", {}, c.side === "tr" ? (EN_ONLY() ? "MEANING" : "TR") : "EN"), c.side === "en" ? head(c.w) : (EN_ONLY() ? c.w.m : c.w.tr))));
         return b;
       }));
       const stage = el("div", { class: "stage", style: "--cc:var(--teal)" },
-        el("div", { style: "font-weight:800;font-size:20px" }, found === pairs ? "All pairs found!" : el("span", {}, el("span", { style: `color:${S.teams[turn].color}` }, S.teams[turn].name), "'s turn: find an English word and its Turkish")),
+        el("div", { style: "font-weight:800;font-size:20px" }, found === pairs ? "All pairs found!" : el("span", {}, el("span", { style: `color:${S.teams[turn].color}` }, S.teams[turn].name), EN_ONLY() ? "'s turn: find a word and its meaning" : "'s turn: find an English word and its Turkish")),
         info, grid,
         found === pairs ? el("button", { class: "btn gold big", onclick: round }, "Next round →") : null);
       const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame("Memory Match", "", sizes, stage, turn);
@@ -259,7 +334,7 @@
       if (a.w === b.w) {
         a.done = b.done = S.teams[turn].color; open = []; found++;
         award(turn, 100);
-        put(info, el("div", { class: "matched", style: `--c:${S.teams[turn].color}` }, el("b", {}, head(a.w)), " = ", el("b", {}, a.w.tr), el("span", {}, " · " + a.w.m)));
+        put(info, el("div", { class: "matched", style: `--c:${S.teams[turn].color}` }, el("b", {}, head(a.w)), " = ", EN_ONLY() ? el("span", {}, a.w.m) : [el("b", {}, a.w.tr), el("span", {}, " · " + a.w.m)]));
         setTimeout(draw, 50);
       } else {
         locked = true;
@@ -303,7 +378,7 @@
       const stage = el("div", { class: "stage", style: `--cc:${t.color}` },
         el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${t.color};font-size:20px` }, t.name), el("div", { class: "ring" }, el("b", {}, String(Math.ceil(left)))), el("b", { style: "font-size:20px" }, `Correct: ${got.filter(x => x.ok).length}`)),
         el("div", { class: "hs-word" }, head(w)),
-        el("div", { class: "hs-sub" }, el("span", { class: "flag" }, "TR"), w.tr, "  ·  ", w.pos),
+        el("div", { class: "hs-sub" }, EN_ONLY() ? null : [el("span", { class: "flag" }, "TR"), w.tr, "  ·  "], w.pos),
         el("div", { class: "actions" }, el("button", { class: "btn huge", style: "background:var(--green);border-color:var(--green);color:#fff", onclick: () => mark(true) }, "Got it"),
           el("button", { class: "btn huge", onclick: () => mark(false) }, "Skip →"),
           el("button", { class: "btn big", onclick: () => { paused = !paused; if (paused) clearInterval(id); else { last = Date.now(); id = setInterval(tick, 100); } draw(); } }, paused ? "Resume" : "Pause")),
@@ -337,10 +412,12 @@
     parts.push(rest);
     return parts;
   }
-  function choices(w) {
-    const same = pool().filter(x => x !== w && x.pos === w.pos && !w.ex.toLowerCase().includes(head(x).toLowerCase()));
-    const any = WORDS.filter(x => x !== w && !w.ex.toLowerCase().includes(head(x).toLowerCase()));
-    const picks = []; for (const x of shuffle(same).concat(shuffle(any))) { if (picks.length === 3) break; if (!picks.some(p => head(p) === head(x)) && head(x) !== head(w)) picks.push(x); }
+  // easy: 3 choices that look different; normal and hard: 4, from the same word class
+  function choices(w, n = lvl() === "easy" ? 3 : 4) {
+    const ok = x => x !== w && !w.ex.toLowerCase().includes(head(x).toLowerCase());
+    const same = lvl() === "easy" ? pool().filter(x => ok(x) && x.s !== w.s) : pool().filter(x => ok(x) && x.pos === w.pos);
+    const any = WORDS.filter(ok);
+    const picks = []; for (const x of shuffle(same).concat(shuffle(any))) { if (picks.length === n - 1) break; if (!picks.some(p => head(p) === head(x)) && head(x) !== head(w)) picks.push(x); }
     return shuffle([w, ...picks]);
   }
   function gap() {
@@ -353,7 +430,8 @@
       const stage = el("div", { class: "stage", style: `--cc:${color}` },
         el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, U.sections[w.s].name), el("b", { style: "color:var(--gold)" }, "Worth 200")),
         done ? null : el("div", { class: "sentence" }, gapSentence(w)),
-        done ? null : el("div", { class: "opts4" }, opts.map((o, i) => el("button", { class: "opt4" + (done && o === w ? " right" : "") + (tried.includes(o) ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABCD"[i]), head(o)))),
+        done || lvl() !== "easy" ? null : el("div", { class: "hs-sub" }, el("span", { class: "flag" }, "TR"), w.tr),
+        done ? null : el("div", { class: "opts4" + (opts.length === 3 ? " g3" : "") }, opts.map((o, i) => el("button", { class: "opt4" + (done && o === w ? " right" : "") + (tried.includes(o) ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABCD"[i]), head(o)))),
         done ? null : t.node,
         done ? answerCard(w, color) : null,
         done ? awardRow(200, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); draw(false); } }, "Show the answer")),
@@ -471,14 +549,18 @@
   }
 
   /* ================= 5. quiz board ================= */
-  const CATS = [
+  const ALL_CATS = [
     { id: "tr", name: "Türkçe → English", sub: "Say it in English", c: "var(--c1)" },
     { id: "def", name: "What's the word?", sub: "From the meaning", c: "var(--c2)" },
     { id: "gap", name: "Missing word", sub: "Fill the gap", c: "var(--c3)" },
     { id: "scr", name: "Unscramble", sub: "Fix the letters", c: "var(--c4)" },
     { id: "use", name: "Use it!", sub: "Make a sentence", c: "var(--c6)" }
   ];
+  const boardCats = () => ALL_CATS.map(c =>
+    lvl() === "easy" && c.id === "use" ? { id: "en", name: "English → Türkçe", sub: "Say it in Türkçe", c: c.c } :
+    EN_ONLY() && c.id === "tr" ? { id: "exp", name: "Explain it", sub: "Say what it means", c: c.c } : c);
   function board() {
+    const CATS = boardCats();
     const d = deck("board");
     let cells, from, overlay = null;
     function newBoard() { from = d.pos + 1; const ws = d.take(25); cells = CATS.map((c, ci) => [0, 1, 2, 3, 4].map(r => ({ w: ws[ci * 5 + r], v: (r + 1) * 100, used: false }))); draw(); beep("open"); }
@@ -497,6 +579,7 @@
         let q;
         if (c.id === "tr") q = el("div", { class: "clue" }, el("div", { class: "tr", style: "font-size:clamp(38px,5vw,70px)" }, el("span", { class: "flag" }, "TR"), w.tr));
         else if (c.id === "def") q = el("div", { class: "clue" }, el("div", { class: "tr" }, w.m));
+        else if (c.id === "en" || c.id === "exp") q = el("div", { style: "display:grid;gap:8px;justify-items:center" }, el("div", { class: "hs-word", style: "font-size:clamp(40px,6vw,90px)" }, head(w)), el("div", { class: "muted", style: "font-weight:700" }, c.id === "en" ? "What is it in Türkçe?" : "Explain it in English. Don't say the word!"));
         else if (c.id === "gap") q = el("div", { class: "sentence" }, gapSentence(w));
         else if (c.id === "scr") { const ls = shuffle([...head(w).toUpperCase()].filter(ch => /[A-Z]/.test(ch))); q = el("div", { class: "ltiles", style: `--cc:${c.c}` }, ls.map((ch, i) => el("div", { class: "ltile", style: `--i:${i};--cc:${c.c};--r:${((i * 37) % 13) - 6}deg` }, ch))); }
         else q = el("div", { style: "display:grid;gap:8px;justify-items:center" }, el("div", { class: "hs-word", style: "font-size:clamp(44px,6vw,90px)" }, head(w)), el("div", { class: "muted", style: "font-weight:700" }, "Make your own sentence with this word"));
@@ -533,7 +616,7 @@
       put(grid, list.map(w => el("button", { class: "wcard" + (backs ? " flip" : ""), onclick: e => { e.currentTarget.classList.toggle("flip"); beep("flip"); } },
         el("div", { class: "in" },
           el("div", { class: "face" }, el("b", {}, w.w), el("div", {}, el("span", { class: "pos" }, w.pos)), el("div", { class: "muted", style: "font-size:12px" }, U.sections[w.s].name)),
-          el("div", { class: "face back" }, el("div", { class: "tr" }, w.tr), el("div", { class: "m" }, w.m), exampleNode(w))))),
+          el("div", { class: "face back" }, EN_ONLY() ? null : el("div", { class: "tr" }, w.tr), el("div", { class: "m" }, w.m), exampleNode(w))))),
         list.length ? null : el("p", { class: "muted" }, "No words match."));
     };
     put($("#app"),
@@ -567,7 +650,7 @@
   }
 
   /* ================= routing ================= */
-  const ROUTES = { "": hub, scramble, memory, mime, hotseat, gap, grammar, board, cards };
+  const ROUTES = { "": hub, tf, quick, scramble, memory, mime, hotseat, gap, grammar, board, cards };
   function route() {
     cleanup();
     const id = location.hash.replace(/^#\/?/, "");

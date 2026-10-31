@@ -4,6 +4,7 @@
    Grammar: t = topic, q = sentence (___ is the gap), o = choices, a = answer, why = the rule. */
 window.UNIT = {
 "key": "A2U1",
+"level": "easy",
 "title": "Unit 1",
 "name": "Summer Camps & Etiquette",
 "book": "Limitless A2.2",
