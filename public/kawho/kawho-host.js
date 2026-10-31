@@ -252,7 +252,7 @@ Number of questions: [e.g. 12]`;
   async function dashboard() {
     document.title = "Ka-Who? Studio";
     const main = el("main", { class: "studio" }, el("div", { class: "spin" }));
-    put(app, topbar(el("a", { class: "btn-x small", href: "/kawho", target: "_blank" }, "Player page", ic("ext", 16))), main);
+    put(app, topbar(el("a", { class: "btn-x small", href: "/kawho", target: "_blank", "aria-label": "Open the player page" }, el("span", { class: "lbl" }, "Player page"), ic("ext", 16))), main);
     try { quizzes = (await authApi("quizzes")).quizzes; } catch (e) { put(main, el("p", { class: "err" }, e.message)); return; }
     put(main,
       el("div", { class: "s-hero" }, el("div", {}, el("h1", { class: "s-title" }, "Your quizzes"), el("p", { class: "s-sub" }, quizzes.length ? "Press Host to start a live game. Players join at " + location.host + "/kawho" : "Make your first quiz. Paste questions or build them one by one.")),
@@ -423,7 +423,7 @@ Number of questions: [e.g. 12]`;
 [double]  [no points]          points
 image: https://…               picture for the question`)));
     }
-    put(app, topbar(saveBtn, el("button", { class: "btn-x", onclick: () => save(true) }, ic("play", 16), "Save & host")),
+    put(app, topbar(saveBtn, el("button", { class: "btn-x", onclick: () => save(true) }, ic("play", 16), el("span", { class: "lbl" }, "Save & host"))),
       el("main", { class: "studio narrow" }, el("a", { class: "back", href: "#/", onclick: e => { if (dirty && !confirm("Leave without saving?")) e.preventDefault(); } }, ic("left", 16), "All quizzes"), head, tabs, bodyBox));
     body();
     addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } }, { once: true });
