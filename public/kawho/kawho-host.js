@@ -1,9 +1,9 @@
-/* Kawho host studio: sign in, build quizzes (visual editor or paste), and run
+/* Ka-Who? host studio: sign in, build quizzes (visual editor or paste), and run
    the big-screen game: lobby with PIN and QR, questions, results, leaderboard,
    podium and Excel export. */
 (() => {
   "use strict";
-  const { $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, sound, confetti, TYPE_NAMES, logo } = window.KW;
+  const { $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, TYPE_NAMES, logo } = window.KW;
   const app = $("#app");
   const TIMES = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240];
   const TYPES = ["quiz", "tf", "multi", "type", "slider", "order", "poll", "cloud"];
@@ -249,7 +249,7 @@ Number of questions: [e.g. 12]`;
   /* ================= dashboard ================= */
   let quizzes = [];
   async function dashboard() {
-    document.title = "Kawho Studio";
+    document.title = "Ka-Who? Studio";
     const main = el("main", { class: "studio" }, el("div", { class: "spin" }));
     put(app, topbar(el("a", { class: "btn-x small", href: "/kawho", target: "_blank" }, "Player page ↗")), main);
     try { quizzes = (await authApi("quizzes")).quizzes; } catch (e) { put(main, el("p", { class: "err" }, e.message)); return; }
@@ -295,7 +295,7 @@ Number of questions: [e.g. 12]`;
 
   /* ================= editor ================= */
   async function editor(id) {
-    document.title = "Edit quiz · Kawho";
+    document.title = "Edit quiz · Ka-Who?";
     let Q = { title: "", questions: [normQ({ type: "quiz", q: "", options: [{ t: "" }, { t: "" }, { t: "" }, { t: "" }] })] }, dirty = false;
     if (id) {
       put(app, topbar(), el("main", { class: "studio" }, el("div", { class: "spin" })));
@@ -430,7 +430,7 @@ image: https://…               picture for the question`)));
 
   /* ================= live game ================= */
   async function game(pin) {
-    document.title = `Kawho · ${pin}`;
+    document.title = `Ka-Who? · ${pin}`;
     document.body.classList.add("on-air");
     let H = null, offset = 0, key = "", busy = false, alive = true, seenReact = {}, music = store.get("kw.music", true), revealing = -1;
     const now = () => Date.now() + offset;
@@ -504,8 +504,8 @@ image: https://…               picture for the question`)));
       put(stage, controls(lock, el("button", { class: "btn-x small", onclick: e => { music = !music; store.set("kw.music", music); sound.music(music); e.currentTarget.textContent = music ? "♫ Music on" : "♫ Music off"; } }, music ? "♫ Music on" : "♫ Music off")),
         el("section", { class: "lobby-h" },
           el("div", { class: "join-box" }, el("div", { class: "join-l" }, el("div", { class: "j1" }, "Join at ", el("b", {}, url)), el("div", { class: "j2" }, "Game PIN:"), el("div", { class: "pin-big" }, pin.slice(0, 3) + " " + pin.slice(3))), qr),
-          el("div", { class: "lobby-bottom" }, el("div", { class: "row" }, el("div", { class: "p-count" }, el("b", { id: "pc" }, "0"), " players"), el("span", { class: "spacer" }), el("button", { class: "btn-x primary big", onclick: next }, "Start ▶")),
-            el("div", { class: "bubbles", id: "bubbles" }, el("div", { class: "waiting" }, "Waiting for players… scan the code or go to ", url)))));
+          el("div", { class: "lobby-bottom" }, el("div", { class: "row" }, owl("idle", 64), el("div", { class: "p-count" }, "Who's here? ", el("b", { id: "pc" }, "0")), el("span", { class: "spacer" }), el("button", { class: "btn-x primary big", onclick: next }, "Start ▶")),
+            el("div", { class: "bubbles", id: "bubbles" }, el("div", { class: "waiting" }, "Nobody yet. Scan the code or go to ", url)))));
       lobbyPlayers(true);
       if (music) sound.music(true);
       loadScript(LIBS.qr).then(() => { const q = window.qrcode(0, "M"); q.addData(`${location.origin}/kawho/${pin}`); q.make(); const n = q.getModuleCount(), g = qr.getContext("2d"), cell = 420 / (n + 4); g.fillStyle = "#fff"; g.fillRect(0, 0, 420, 420); g.fillStyle = "#140F2E"; for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) g.fillRect(Math.floor((c + 2) * cell), Math.floor((r + 2) * cell), Math.ceil(cell), Math.ceil(cell)); }).catch(() => qr.remove());
@@ -520,7 +520,7 @@ image: https://…               picture for the question`)));
         if (H.players.length > (lobbyIds ? lobbyIds.split(",").length : 0) && !force) sound.play("join");
         lobbyIds = ids;
         put(box, H.players.length ? H.players.map(p => el("button", { class: "bubble" + (before.has(p.id) ? "" : " new"), "data-id": p.id, title: "Click to remove", onclick: () => { if (confirm(`Remove ${p.name} from the game?`)) act("kick", { pid: p.id }); } }, el("span", { class: "b-av" }, p.avatar), p.name))
-          : el("div", { class: "waiting" }, "Waiting for players… scan the code or go to ", location.host + "/kawho"));
+          : el("div", { class: "waiting" }, "Nobody yet. Scan the code or go to ", location.host + "/kawho"));
       }
       for (const p of H.players) if (p.react_at && p.react_at !== seenReact[p.id]) {
         const fresh = seenReact[p.id] !== undefined || Date.now() - (p.react_at - offset) < 5000; seenReact[p.id] = p.react_at;
@@ -530,7 +530,7 @@ image: https://…               picture for the question`)));
     function qHead() { const s = st(), q = cur(); return el("div", { class: "q-top" }, el("span", { class: "q-num" }, `${s.q + 1} / ${Qs().length}`), el("span", { class: "q-type" }, TYPE_ICON[q.type], " ", TYPE_NAMES[q.type], q.points === 2 ? " · ×2" : q.points === 0 && !["poll", "cloud"].includes(q.type) ? " · no points" : "")); }
     function ready() {
       const q = cur();
-      put(stage, controls(), el("section", { class: "ready-h" }, qHead(), el("h1", { class: "q-text big" }, q.q), el("div", { class: "ready-n" }, "3"), el("div", { class: "ready-bar" }, el("i"))));
+      put(stage, controls(), el("section", { class: "ready-h" }, qHead(), el("h1", { class: "q-text big" }, q.q), el("div", { class: "ready-row" }, owl("think", 150), el("div", { class: "ready-n" }, "3")), el("div", { class: "ready-bar" }, el("i"))));
       sound.play("go");
     }
     const optTiles = (q, mode) => el("div", { class: "h-opts n" + q.options.length }, q.options.map((o, i) => el("div", { class: "h-opt" + (mode === "reveal" ? (o.ok || q.type === "poll" ? " right" : " dim") : ""), style: `--c:${COLORS[i]}` }, shape(i, 40), o.img ? el("img", { src: o.img, alt: "" }) : null, el("span", {}, o.t), mode === "reveal" && o.ok ? el("b", { class: "tick" }, "✓") : null)));
@@ -543,7 +543,7 @@ image: https://…               picture for the question`)));
       else bottom = el("div", { class: "h-hint" }, q.type === "cloud" ? "☁ Type a word or two on your phone" : "⌨ Type your answer on your phone");
       put(stage, controls(el("button", { class: "btn-x small primary", onclick: next }, "Skip ▶")),
         el("section", { class: "q-h" }, qHead(), el("h1", { class: "q-text" }, q.q),
-          el("div", { class: "q-mid" }, el("div", { class: "h-ring" }, el("b", {}, String(q.time))), q.image ? el("img", { class: "q-pic", src: q.image, alt: "" }) : el("div", { class: "q-art" }, TYPE_ICON[q.type]), el("div", { class: "h-count" }, el("b", {}, "0"), el("span", {}, "answers"))),
+          el("div", { class: "q-mid" }, el("div", { class: "h-ring" }, el("b", {}, String(q.time))), q.image ? el("img", { class: "q-pic", src: q.image, alt: "" }) : el("div", { class: "q-art" }, owl("think", 170)), el("div", { class: "h-count" }, el("b", {}, "0"), el("span", {}, "answers"))),
           bottom));
       live();
     }
@@ -576,7 +576,7 @@ image: https://…               picture for the question`)));
     }
     function board() {
       const top = st().top || [];
-      put(stage, controls(), el("section", { class: "lb-h" }, el("h1", { class: "lb-title" }, "Leaderboard"),
+      put(stage, controls(), el("section", { class: "lb-h" }, el("div", { class: "lb-head" }, owl("happy", 90), el("h1", { class: "lb-title" }, "Who's winning?")),
         el("div", { class: "lb" }, top.length ? top.map((p, i) => el("div", { class: "lb-row", style: `--d:${i * 120}ms` }, el("span", { class: "lb-rank" }, String(i + 1)), el("span", { class: "lb-av" }, p.avatar), el("span", { class: "lb-name" }, p.name, p.streak >= 3 ? el("span", { class: "fire" }, ` 🔥${p.streak}`) : null),
           p.move > 0 ? el("span", { class: "mv up" }, "▲", p.move) : p.move < 0 ? el("span", { class: "mv down" }, "▼", -p.move) : el("span", { class: "mv" }), el("b", { class: "lb-score" }, p.score.toLocaleString()))) : el("p", {}, "No players yet")),
         el("button", { class: "btn-x primary big", onclick: next }, nextLabel())));
@@ -585,7 +585,7 @@ image: https://…               picture for the question`)));
     async function podium() {
       const top = st().top || [];
       const spot = (p, place) => p ? el("div", { class: "pod p" + place }, el("div", { class: "pod-av" }, p.avatar), el("div", { class: "pod-name" }, p.name), el("div", { class: "pod-score" }, p.score.toLocaleString()), el("div", { class: "pod-block" }, String(place))) : el("div", { class: "pod p" + place + " empty" });
-      put(stage, controls(), el("section", { class: "podium-h" }, el("h1", { class: "lb-title" }, "🏆 Final results"),
+      put(stage, controls(), el("section", { class: "podium-h" }, el("div", { class: "lb-head" }, owl("happy", 100), el("h1", { class: "lb-title" }, "And the owl says… who?")),
         el("div", { class: "podium" }, spot(top[1], 2), spot(top[0], 1), spot(top[2], 3)),
         top.length > 3 ? el("div", { class: "rest" }, top.slice(3).map((p, i) => el("span", {}, `${i + 4}. ${p.avatar} ${p.name} · ${p.score.toLocaleString()}`))) : null,
         el("div", { class: "row center" }, el("button", { class: "btn-x primary", onclick: e => exportXlsx(e.currentTarget) }, "⬇ Download results (Excel)"),

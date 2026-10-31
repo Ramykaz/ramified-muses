@@ -1,7 +1,7 @@
-/* Kawho player app (phones): join with a PIN, answer, see your result. */
+/* Ka-Who? player app (phones): join with a PIN, answer, see your result. */
 (() => {
   "use strict";
-  const { $, el, put, toast, store, api, COLORS, shape, sound, confetti, AVATARS, TYPE_NAMES, logo, sleep } = window.KW;
+  const { $, el, put, toast, store, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo, sleep } = window.KW;
   const app = $("#app");
   const SESSION = "kw.player";
   let me = store.get(SESSION, null);         // { pin, pid, secret, name, avatar }
@@ -30,7 +30,7 @@
     inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
     inp.addEventListener("input", () => { const d = inp.value.replace(/\D/g, "").slice(0, 6); inp.value = d.length > 3 ? d.slice(0, 3) + " " + d.slice(3) : d; msg.textContent = ""; });
     screen("center", logo("big"), el("div", { class: "join-card" }, inp, btn, msg),
-      el("p", { class: "fine" }, "Look for the PIN on the big screen."),
+      el("p", { class: "fine" }, "Who's playing? You are. The PIN is on the big screen."),
       el("a", { class: "host-link", href: "/kawho/host" }, "Host a game →"));
     inp.dispatchEvent(new Event("input"));
     setTimeout(() => inp.focus(), 100);
@@ -125,15 +125,15 @@
       const f = el("span", { class: "float-emoji" }, em); e.currentTarget.append(f); setTimeout(() => f.remove(), 1200);
       api("react", { method: "POST", body: { pin: me.pin, pid: me.pid, secret: me.secret, emoji: em } }).catch(() => {});
     };
-    screen("center lobby-p", head(), el("div", { class: "avatar-big bounce" }, me.avatar),
-      el("h1", { class: "p-title" }, "You're in!"), el("p", { class: "p-sub" }, "See your name on the screen? The game starts soon."),
+    screen("center lobby-p", head(), el("div", { class: "lobby-duo" }, owl("idle", 110), el("div", { class: "avatar-big bounce" }, me.avatar)),
+      el("h1", { class: "p-title" }, "You're in, ", el("span", { class: "hl" }, me.name), "!"), el("p", { class: "p-sub" }, "Find your name on the big screen. The owl is warming up…"),
       el("div", { class: "reacts" }, ["👍", "😂", "😮", "🔥", "❤️", "👏"].map(x => el("button", { class: "react", "data-e": x, onclick: react, "aria-label": "Send " + x }, x))),
       el("p", { class: "fine" }, "Tap to cheer"));
   }
   function ready() {
     const q = S.question;
     screen("center ready", head(), el("div", { class: "pill" }, TYPE_NAMES[q.type] || "Question", q.points === 2 ? " · Double points!" : q.points === 0 ? " · No points" : ""),
-      el("h1", { class: "p-q" }, q.q), el("div", { class: "count-big" }, Math.max(1, Math.ceil((S.startAt - now()) / 1000))), el("p", { class: "p-sub" }, "Get ready…"));
+      owl("think", 84), el("h1", { class: "p-q" }, q.q), el("div", { class: "count-big" }, Math.max(1, Math.ceil((S.startAt - now()) / 1000))), el("p", { class: "p-sub" }, "Get ready…"));
     sound.play("tick");
   }
   function timerBar() { return el("div", { class: "p-timer" }, el("i"), el("b", {}, "")); }
@@ -188,10 +188,10 @@
   }
   const QUIPS = ["Lightning fingers! ⚡", "Answer locked in 🔒", "Fingers crossed 🤞", "Bold choice 😎", "Let's see… 👀"];
   function sent() {
-    screen("center", head(), answered[S.q] === "sending" ? el("div", { class: "spin" }) : el("div", { class: "big-emoji pop" }, "🚀"),
+    screen("center", head(), answered[S.q] === "sending" ? el("div", { class: "spin" }) : owl("think", 130),
       el("h1", { class: "p-title" }, answered[S.q] === "sending" ? "Sending…" : QUIPS[S.q % QUIPS.length]), el("p", { class: "p-sub" }, "Waiting for the others"));
   }
-  function late() { screen("center", head(), el("div", { class: "big-emoji" }, "⏰"), el("h1", { class: "p-title" }, "Time's up!"), el("p", { class: "p-sub" }, "Be quicker next time")); }
+  function late() { screen("center", head(), owl("sad", 130), el("h1", { class: "p-title" }, "Too slow!"), el("p", { class: "p-sub" }, "The owl waits for no one. Be quicker next time.")); }
 
   async function result() {
     const q = S.q, qtype = S.question.type;
@@ -199,11 +199,11 @@
     const r = results[q] || (results[q] = await fetchMe(q)); if (!r || shownKey !== `reveal:${q}:`) return;
     const scored = !["poll", "cloud"].includes(qtype) && S.question.points !== 0;
     const ok = r.last && r.last.correct;
-    if (!scored) { screen("center", head(), el("div", { class: "big-emoji pop" }, r.last ? "🙌" : "🤐"), el("h1", { class: "p-title" }, r.last ? "Thanks for answering!" : "No answer this time"), standingLine(r)); return; }
+    if (!scored) { screen("center", head(), owl(r.last ? "happy" : "sad", 130), el("h1", { class: "p-title" }, r.last ? "Thanks! Hoo-hoo!" : "No answer this time"), standingLine(r)); return; }
     sound.play(ok ? "right" : "wrong"); vibrate(ok ? [30, 40, 30] : 120);
     put(app, el("main", { class: "p-screen center result " + (ok ? "good" : "bad") }, head(),
-      el("div", { class: "res-mark pop" }, ok ? "✓" : r.last ? "✗" : "…"),
-      el("h1", { class: "p-title" }, ok ? "Correct!" : r.last ? "Not this time" : "No answer"),
+      el("div", { class: "res-owl" }, owl(ok ? "happy" : "sad", 150), el("span", { class: "stamp pop" }, ok ? "✓" : r.last ? "✗" : "?")),
+      el("h1", { class: "p-title" }, ok ? "Hoo-ray!" : r.last ? "Not quite…" : "Too slow!"),
       ok ? el("div", { class: "points-pill" }, "+" + r.last.points) : null,
       r.streak >= 2 ? el("div", { class: "streak" }, "🔥 ", r.streak, " in a row") : null,
       standingLine(r)));
@@ -216,14 +216,14 @@
   async function standing() {
     const q = S.q, key = shownKey;
     const r = results[q] || (results[q] = await fetchMe(q)); if (!r || shownKey !== key) return;
-    screen("center", head(), el("div", { class: "avatar-big" }, me.avatar), el("h1", { class: "p-title" }, r.rank <= 3 ? "On the podium! 🏆" : "Keep going!"), standingLine(r), el("p", { class: "p-sub" }, "Next question coming up"));
+    screen("center", head(), owl(r.rank <= 3 ? "happy" : "idle", 120), el("h1", { class: "p-title" }, r.rank <= 3 ? "Top three! Keep it up" : "Keep going!"), standingLine(r), el("p", { class: "p-sub" }, "Next question coming up"));
   }
   async function final() {
     const key = shownKey;
     const r = await fetchMe(-1); if (!r || shownKey !== key) return;
     const medal = ["🥇", "🥈", "🥉"][r.rank - 1];
     if (medal) { confetti(5000); sound.play("win"); }
-    screen("center final", head(), el("div", { class: "big-emoji pop" }, medal || me.avatar),
+    screen("center final", head(), el("div", { class: "lobby-duo" }, owl(medal ? "happy" : "idle", 120), el("div", { class: "big-emoji pop" }, medal || me.avatar)),
       el("h1", { class: "p-title" }, medal ? `You came ${ordinal(r.rank)}!` : `You finished ${ordinal(r.rank)}`),
       el("div", { class: "standing" }, el("div", { class: "score" }, r.score.toLocaleString(), " pts"), el("div", {}, `out of ${r.total} players`)),
       el("button", { class: "btn-x", onclick: () => leave() }, "Leave game"));

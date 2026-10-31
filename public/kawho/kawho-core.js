@@ -1,4 +1,4 @@
-/* Kawho shared core: DOM helpers, API calls, sounds, answer shapes, confetti. */
+/* Ka-Who? shared core: DOM helpers, API calls, sounds, the owl, answer cards, confetti. */
 (() => {
   "use strict";
   const $ = (s, r = document) => r.querySelector(s);
@@ -38,13 +38,22 @@
     return j;
   }
 
-  // answer colours and shapes, in the order options are shown
-  const COLORS = ["#E5484D", "#3E63DD", "#F5A524", "#2BA471", "#8E4EC6", "#12A5A5"];
-  const SHAPES = [
-    '<path d="M12 3l9.5 17h-19z"/>', '<path d="M12 2l10 10-10 10L2 12z"/>', '<circle cx="12" cy="12" r="9.5"/>',
-    '<rect x="3" y="3" width="18" height="18" rx="2.5"/>', '<path d="M12 2l8.7 5v10L12 22l-8.7-5V7z"/>', '<path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9z"/>'
-  ];
-  const shape = (i, size = 28) => el("span", { class: "shape", style: `width:${size}px;height:${size}px`, html: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${SHAPES[i % SHAPES.length]}</svg>` });
+  // answer cards: a letter, a colour and a pattern each (patterns live in the CSS)
+  const COLORS = ["#FF5B3A", "#2D5BFF", "#FFC21A", "#19C39C", "#B48CFF", "#FF7AB6"];
+  const LETTERS = "ABCDEF";
+  const shape = (i, size = 28) => el("span", { class: "letter", style: `--s:${size}px`, "aria-hidden": "true" }, LETTERS[i] || "•");
+
+  // the Ka-Who? owl: idle (blinks), think, happy, sad
+  function owl(mood = "idle", size = 120) {
+    return el("span", { class: "owl " + mood, style: `--o:${size}px`, "aria-hidden": "true", html: `<svg viewBox="0 0 120 120">
+      <path class="o-body" d="M60 14c-8 0-14 3-19 7l-9-12-3 20C21 36 18 48 18 62c0 30 19 48 42 48s42-18 42-48c0-14-3-26-11-33l-3-20-9 12c-5-4-11-7-19-7z"/>
+      <path class="o-belly" d="M60 66c-14 0-24 12-24 26 0 9 10 14 24 14s24-5 24-14c0-14-10-26-24-26z"/>
+      <path class="o-wing" d="M20 70q-6 18 8 30q2-16-8-30zM100 70q6 18-8 30q-2-16 8-30z"/>
+      <g class="o-open"><circle class="o-eye" cx="42" cy="50" r="16"/><circle class="o-eye" cx="78" cy="50" r="16"/><circle class="o-pupil" cx="44" cy="52" r="7"/><circle class="o-pupil" cx="80" cy="52" r="7"/><circle class="o-shine" cx="47" cy="48" r="2.5"/><circle class="o-shine" cx="83" cy="48" r="2.5"/><rect class="o-lid" x="24" y="32" width="72" height="0" rx="8"/></g>
+      <g class="o-happy"><circle class="o-eye" cx="42" cy="50" r="16"/><circle class="o-eye" cx="78" cy="50" r="16"/><path class="o-arc" d="M33 54q9-10 18 0M69 54q9-10 18 0"/></g>
+      <g class="o-sad"><circle class="o-eye" cx="42" cy="52" r="15"/><circle class="o-eye" cx="78" cy="52" r="15"/><circle class="o-pupil" cx="42" cy="58" r="6"/><circle class="o-pupil" cx="78" cy="58" r="6"/><path class="o-brow" d="M28 38l22 6M92 38l-22 6"/></g>
+      <path class="o-beak" d="M54 64l6 10 6-10z"/></svg>` });
+  }
 
   /* ---------- sound (made in the browser, no files) ---------- */
   let ctx = null, musicTimer = null;
@@ -100,7 +109,7 @@
 
   const AVATARS = ["🦊", "🐼", "🐸", "🐯", "🦁", "🐨", "🐙", "🦄", "🐝", "🐢", "🦉", "🐧", "🐬", "🦖", "🐳", "🦋", "🍉", "🌵", "🚀", "⚡", "🍩", "🎧", "🌈", "🐻"];
   const TYPE_NAMES = { quiz: "Quiz", tf: "True or false", multi: "Pick all correct", type: "Type the answer", slider: "Slider", order: "Put in order", poll: "Poll", cloud: "Word cloud" };
-  const logo = (size = "") => el("div", { class: "logo " + size }, el("span", { class: "logo-mark", html: '<svg viewBox="0 0 48 48"><path d="M14 20l6-9 6 9z" fill="#fff"/><rect x="28" y="11" width="9" height="9" rx="2" transform="rotate(45 32.5 15.5)" fill="#FFD23F"/><circle cx="17" cy="31" r="5" fill="#38E1A0"/><rect x="28" y="26.5" width="9" height="9" rx="2.2" fill="#fff" opacity=".9"/></svg>' }), el("span", { class: "logo-word" }, "Kawho"));
+  const logo = (size = "") => el("div", { class: "logo " + size }, owl("idle", size === "big" ? 92 : 40), el("span", { class: "logo-word" }, "Ka", el("i", {}, "-"), el("b", {}, "Who?")));
 
-  window.KW = { $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, sound, confetti, AVATARS, TYPE_NAMES, logo };
+  window.KW = { $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo };
 })();
