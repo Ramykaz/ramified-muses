@@ -223,7 +223,6 @@ Number of questions: [e.g. 12]`;
     const user = el("input", { class: "name-input", placeholder: "Username", autocomplete: "username", autocapitalize: "none", spellcheck: "false", value: store.get("kw.user", "") });
     const pw = el("input", { class: "name-input", type: "password", placeholder: "Password", autocomplete: first ? "new-password" : "current-password" });
     const pw2 = first ? el("input", { class: "name-input", type: "password", placeholder: "Password again", autocomplete: "new-password" }) : null;
-    const old = el("input", { class: "name-input", type: "password", placeholder: "Old studio password", autocomplete: "off", hidden: !first || !!store.get("forms.token", null) });
     const msg = el("div", { class: "err" });
     const btn = el("button", { class: "btn-x primary", type: "submit" }, first ? "Make my account" : "Sign in");
     const go = async e => {
@@ -232,18 +231,16 @@ Number of questions: [e.g. 12]`;
       btn.disabled = true;
       try {
         const body = { username: user.value, password: pw.value };
-        if (first) Object.assign(body, { oldToken: store.get("forms.token", null), oldPassword: old.value });
         const r = await api(first ? "setup" : "login", { method: "POST", body });
         store.set("kw.token", r.token); store.set("kw.user", r.me.username); boot();
       } catch (x) {
         msg.textContent = x.message; btn.disabled = false;
-        if (first && x.status === 403) { old.hidden = false; old.focus(); }
       }
     };
     put(app, el("main", { class: "studio center" }, logo("big"), el("form", { class: "join-card", onsubmit: go },
       el("h2", { class: "s-h" }, first ? "Make your host account" : "Host sign in"),
       el("p", { class: "fine left" }, first ? "Pick a username and password. Your quizzes move into this account, and you can add accounts for friends later. Players never need one." : "Players don't need an account. They join with the game PIN."),
-      user, pw, pw2, old, btn, msg)));
+      user, pw, pw2, btn, msg)));
     setTimeout(() => (user.value ? pw : user).focus(), 50);
   }
   const authApi = (action, opts = {}) => api(action, { ...opts, auth: true }).catch(e => { if (e.status === 401) { store.del("kw.token"); ME = null; signIn(false); } throw e; });

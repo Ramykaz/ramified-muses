@@ -70,16 +70,6 @@ async function whoAmI(req: VercelRequest): Promise<Me | null> {
   const r = (await db.execute(sql`SELECT u.username, u.owner FROM kw_sessions s JOIN kw_users u ON u.username = s.username WHERE s.token = ${token} AND s.created_at > ${Date.now() - SESSION_MS}`)).rows[0] as Row | undefined
   return r ? { username: String(r.username), owner: Boolean(r.owner) } : null
 }
-// the old studio sign-in (before accounts), so only the site owner can make the first account
-async function oldStudioOk(body: Row) {
-  try {
-    const pw = (await db.execute(sql`SELECT v FROM forms_admin WHERE k = 'password'`)).rows[0] as Row | undefined
-    if (!pw) return true
-    const t = String(body.oldToken ?? '')
-    if (/^[a-f0-9]{48}$/.test(t) && (await db.execute(sql`SELECT 1 FROM forms_sessions WHERE token = ${t} AND created_at > ${Date.now() - SESSION_MS}`)).rows.length) return true
-    return typeof body.oldPassword === 'string' && checkPassword(body.oldPassword, String(pw.v))
-  } catch { return true } // no old studio tables: a fresh site
-}
 async function loadGame(pin: string) {
   const r = (await db.execute(sql`SELECT pin, quiz_id, quiz, state, owner FROM kw_games WHERE pin = ${pin}`)).rows[0] as Row | undefined
   return r ? { pin, quizId: String(r.quiz_id ?? ''), quiz: r.quiz as Quiz, state: r.state as State, owner: r.owner == null ? null : String(r.owner) } : null
@@ -247,7 +237,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const username = cleanUser(body.username), pw = String(body.password ?? '')
       if (!USER_RE.test(username)) return res.status(400).json({ error: userError })
       if (pw.length < 6) return res.status(400).json({ error: 'Use at least 6 characters for the password.' })
-      if (!(await oldStudioOk(body))) return res.status(403).json({ error: 'Type your old studio password once, so we know it is you.', needOld: true })
       const ins = await db.execute(sql`INSERT INTO kw_users (username, pw, owner, created_at) SELECT ${username}, ${hashPassword(pw)}, true, ${now} WHERE NOT EXISTS (SELECT 1 FROM kw_users) RETURNING username`)
       if (!ins.rows.length) return res.status(409).json({ error: 'The first account is already made. Sign in instead.' })
       // everything made before accounts belongs to the owner
