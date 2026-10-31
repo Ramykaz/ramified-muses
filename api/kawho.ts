@@ -16,7 +16,9 @@ const CORS = {
 const GET_READY_MS = 4000
 const GRACE_MS = 800
 const MAX_PLAYERS = 200
-const AVATARS = Array.from({ length: 24 }, (_, i) => 'a' + i)
+// must match the lists in public/kawho/kawho-core.js: 20 drawn people (p), 60 emoji (e), 24 old critters (a)
+const NEW_AVATARS = [...Array.from({ length: 20 }, (_, i) => 'p' + i), ...Array.from({ length: 60 }, (_, i) => 'e' + i)]
+const AVATARS = [...NEW_AVATARS, ...Array.from({ length: 24 }, (_, i) => 'a' + i)]
 
 let schemaReady: Promise<unknown> | null = null
 function ensureSchema() {
@@ -146,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (g.state.phase === 'podium') return res.status(409).json({ error: 'This game has finished.' })
       const name = String(body.name ?? '').replace(/\s+/g, ' ').trim().slice(0, 20)
       if (name.length < 2) return res.status(400).json({ error: 'Write a name with at least 2 letters.' })
-      const avatar = AVATARS.includes(String(body.avatar)) ? String(body.avatar) : AVATARS[randomInt(AVATARS.length)]
+      const avatar = AVATARS.includes(String(body.avatar)) ? String(body.avatar) : NEW_AVATARS[randomInt(NEW_AVATARS.length)]
       const players = (await db.execute(sql`SELECT name FROM kw_players WHERE pin = ${pin}`)).rows as Row[]
       if (players.length >= MAX_PLAYERS) return res.status(409).json({ error: 'This game is full.' })
       if (players.some(p => fold(p.name) === fold(name))) return res.status(409).json({ error: 'Someone already has that name. Try another one.' })

@@ -43,7 +43,15 @@
     const name = el("input", { class: "name-input", maxlength: 20, autocomplete: "nickname", autocapitalize: "words", enterkeyhint: "go", placeholder: "Your nickname", "aria-label": "Your nickname", value: store.get("kw.name", "") });
     const msg = el("div", { class: "err", role: "alert" });
     const big = el("div", { class: "me-big" }, avatar(av, 64));
-    const grid = el("div", { class: "avatars" }, AVATARS.map(a => el("button", { class: "av" + (a === av ? " on" : ""), type: "button", "aria-label": "Choose this avatar", onclick: e => { av = a; put(big, avatar(a, 64)); grid.querySelectorAll(".av").forEach(x => x.classList.toggle("on", x === e.currentTarget)); vibrate(10); } }, avatar(a, 34))));
+    const groups = window.KW.AV_GROUPS;
+    let tab = Math.max(0, groups.findIndex(g => g.ids.includes(av)));
+    const grid = el("div", { class: "avatars" });
+    const tabs = el("div", { class: "av-tabs", role: "tablist" });
+    const paint = () => {
+      put(tabs, groups.map((g, i) => el("button", { type: "button", role: "tab", class: i === tab ? "on" : "", "aria-selected": i === tab ? "true" : "false", onclick: () => { tab = i; paint(); } }, g.name)));
+      put(grid, groups[tab].ids.map(a => el("button", { class: "av" + (a === av ? " on" : ""), type: "button", "aria-label": "Choose this avatar", onclick: e => { av = a; put(big, avatar(a, 64)); grid.querySelectorAll(".av").forEach(x => x.classList.toggle("on", x === e.currentTarget)); vibrate(10); } }, avatar(a, 36))));
+    };
+    paint();
     const go = async () => {
       if (name.value.trim().length < 2) { msg.textContent = "Write a nickname with at least 2 letters."; name.focus(); return; }
       btn.disabled = true; put(btn, "Joining…");
@@ -60,7 +68,7 @@
     const btn = el("button", { class: "btn-x primary", onclick: go }, "Join", ic("right", 20));
     name.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
     screen("center join-s", el("div", { class: "quiz-name" }, st.title || "Quiz"),
-      el("div", { class: "join-card" }, el("div", { class: "name-row" }, big, name), btn, msg, el("div", { class: "fine left" }, "Pick your avatar"), grid),
+      el("div", { class: "join-card" }, el("div", { class: "name-row" }, big, name), btn, msg, el("div", { class: "fine left" }, "Pick your avatar"), tabs, grid),
       el("button", { class: "host-link", onclick: () => { history.replaceState(null, "", "/kawho"); pinScreen(); } }, ic("left", 16), "Different PIN"));
     setTimeout(() => name.focus(), 100);
   }

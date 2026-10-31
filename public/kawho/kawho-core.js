@@ -149,13 +149,89 @@
   const ic = (name, size = 20, cls = "") => el("span", { class: "ic " + cls, style: `--i:${size}px`, "aria-hidden": "true", html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${IC[name] || ""}</svg>` });
   const REACTS = ["like", "haha", "wow", "fire", "love", "clap"];
 
-  // 24 little critters in the owl's style: 8 colours x 3 ear shapes
+  // Avatars. "p" = drawn people (hijabi heroes, kufi, caps...), "e" = emoji, "a" = the old critters (still drawn for old games).
+  // Never reorder these lists: players keep the id they picked.
+  const SKIN = ["#F6D2B8", "#E8B48F", "#C68B5E", "#8D5A3B", "#5E3A24"];
+  const AV_BG = ["#FFE3D8", "#DCE6FF", "#FFF1C2", "#D2F5EA", "#ECE2FF", "#FFE0EF", "#D6F0FF", "#E6F4D3"];
+  const PEOPLE = [
+    { top: "hijab", c: "#19C39C", skin: 2, shirt: "#2D5BFF", cape: "#FF5B3A", mask: "#FF5B3A", hero: 1 },
+    { top: "hijab", c: "#FF7AB6", skin: 0, shirt: "#B48CFF", glasses: 1 },
+    { top: "hijab", c: "#B48CFF", skin: 3, shirt: "#FFC21A" },
+    { top: "hijab", c: "#FFC21A", skin: 4, shirt: "#19C39C", cape: "#2D5BFF", hero: 1 },
+    { top: "hijab", c: "#2D5BFF", skin: 1, shirt: "#FF7AB6", phones: "#FFC21A" },
+    { top: "hijab", c: "#24304F", skin: 2, shirt: "#FF5B3A" },
+    { top: "hijab", c: "#FF5B3A", skin: 3, shirt: "#38B6FF", cape: "#B48CFF", mask: "#B48CFF", hero: 1 },
+    { top: "hijab", c: "#F4EBDC", skin: 1, shirt: "#8BC34A", glasses: 1 },
+    { top: "hijab", c: "#8BC34A", skin: 0, shirt: "#FFC21A", cape: "#19C39C", hero: 1 },
+    { top: "kufi", c: "#FFFFFF", skin: 2, shirt: "#19C39C" },
+    { top: "kufi", c: "#FFC21A", skin: 4, shirt: "#B48CFF" },
+    { top: "kufi", c: "#FFFFFF", skin: 1, shirt: "#2D5BFF", cape: "#FF5B3A", mask: "#FF5B3A", hero: 1 },
+    { top: "kufi", c: "#19C39C", skin: 3, shirt: "#FF5B3A", glasses: 1 },
+    { top: "cap", c: "#FF5B3A", hair: "#2B1B12", skin: 0, shirt: "#38B6FF" },
+    { top: "cap", c: "#2D5BFF", hair: "#151515", skin: 4, shirt: "#FFC21A" },
+    { top: "short", hair: "#2B1B12", skin: 2, shirt: "#FF7AB6", glasses: 1 },
+    { top: "curly", hair: "#2B1B12", skin: 4, shirt: "#19C39C", phones: "#FF5B3A" },
+    { top: "long", hair: "#6B3E1F", skin: 0, shirt: "#B48CFF" },
+    { top: "long", hair: "#151515", skin: 2, shirt: "#38B6FF", phones: "#FFC21A" },
+    { top: "beanie", c: "#FFC21A", hair: "#2B1B12", skin: 3, shirt: "#2D5BFF" }
+  ];
+  const EMOJI = ["🧕", "🧕🏻", "🧕🏽", "🧕🏾", "🧕🏿", "🦸‍♀️", "🦸", "🧑‍🎓", "🧑‍🚀", "🥷", "👑",
+    "🕌", "🌙", "🕋", "📿", "🤲", "🫖", "🐪", "🌴", "🧆", "🍯", "⭐",
+    "🦁", "🐯", "🦊", "🐼", "🐨", "🐸", "🐧", "🦉", "🐙", "🦋", "🐬", "🦄", "🐢", "🐱", "🐶", "🐰", "🦅", "🐝",
+    "🚀", "⚽", "🏀", "🎮", "🎧", "🎨", "📚", "🧠", "🤖", "👽", "🦖", "🍉", "🍕", "🌈", "🔥", "💎", "🎯", "🌸", "☕", "🧩"];
+  const P = PEOPLE.map((_, i) => "p" + i), E = i => "e" + i;
+  const range = (a, b) => Array.from({ length: b - a }, (_, i) => E(a + i));
+  const AV_GROUPS = [
+    { name: "People", ids: [...P, ...range(0, 11)] },
+    { name: "Islamic", ids: range(11, 22) },
+    { name: "Animals", ids: range(22, 40) },
+    { name: "Fun", ids: range(40, EMOJI.length) }
+  ];
+  const AVATARS = AV_GROUPS.flatMap(g => g.ids);
+  const OLD = Array.from({ length: 24 }, (_, i) => "a" + i);
+  let avSeq = 0;
+  const S_ = 'stroke="#151515" stroke-width="2" stroke-linejoin="round"';
+  function person(n) {
+    const d = PEOPLE[n], skin = SKIN[d.skin], bg = AV_BG[n % AV_BG.length], id = "kwc" + (++avSeq);
+    const face = `<circle cx="20.5" cy="23.5" r="1.6" fill="#151515"/><circle cx="27.5" cy="23.5" r="1.6" fill="#151515"/><circle cx="18.3" cy="27" r="1.7" fill="#FF7AB6" opacity=".45"/><circle cx="29.7" cy="27" r="1.7" fill="#FF7AB6" opacity=".45"/><path d="M21.3 28 Q24 30.4 26.7 28" fill="none" stroke="#151515" stroke-width="1.7" stroke-linecap="round"/>`;
+    let out = `<rect width="48" height="48" fill="${bg}"/>`;
+    if (d.cape) out += `<path d="M-3 50 L8 26 Q24 20.5 40 26 L51 50 Z" fill="${d.cape}" ${S_}/><path d="M8 26 L3 40 M40 26 L45 40" stroke="#151515" stroke-width="1.3" opacity=".35"/>`;
+    if (d.top === "long") out += `<path d="M13 37 Q10.5 13 24 11 Q37.5 13 35 37 Z" fill="${d.hair}" ${S_}/>`;
+    out += `<path d="M7 50 Q7.5 35 24 34 Q40.5 35 41 50 Z" fill="${d.shirt}" ${S_}/>`;
+    const star = `<path d="M24 37.6 l1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z" fill="#FFC21A" stroke="#151515" stroke-width="1.2" stroke-linejoin="round"/>`;
+    if (d.hero && d.top !== "hijab") out += star;
+    if (d.top === "hijab") {
+      out += `<path d="M10.5 47 Q8.5 30 12 20.5 Q14.5 8 24 8 Q33.5 8 36 20.5 Q39.5 30 37.5 47 Q24 41 10.5 47 Z" fill="${d.c}" ${S_}/>`;
+      out += `<path d="M14.5 35 Q24 39.5 33.5 35" fill="none" stroke="#151515" stroke-width="1.4" opacity=".35" stroke-linecap="round"/>`;
+      out += `<ellipse cx="24" cy="23.5" rx="7.8" ry="9" fill="${skin}" ${S_}/>`;
+      if (d.hero) out += star;
+    } else {
+      out += `<rect x="21" y="28" width="6" height="7" fill="${skin}" ${S_}/><circle cx="24" cy="22.5" r="9.5" fill="${skin}" ${S_}/>`;
+      if (d.top === "short" || d.top === "long" || d.top === "cap" || d.top === "beanie") out += `<path d="M14.5 21.5 Q13.8 11.5 24 12 Q34.2 11.5 33.5 21.5 Q30.5 15.8 24 16.5 Q17.5 15.8 14.5 21.5 Z" fill="${d.hair}" ${S_}/>`;
+      if (d.top === "curly") out += [[15, 17], [18, 13.5], [22.5, 12], [27, 12], [30.5, 13.5], [33, 17]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${d.hair}" ${S_}/>`).join("");
+      if (d.top === "kufi") out += `<path d="M14.8 19 Q15 10.5 24 10.5 Q33 10.5 33.2 19 Z" fill="${d.c}" ${S_}/><path d="M17 16.3 H31" stroke="#151515" stroke-width="1.3" stroke-dasharray="1.4 2" opacity=".5"/>`;
+      if (d.top === "cap") out += `<path d="M14.5 18.5 Q15 10 24 10 Q33 10 33.5 18.5 Z" fill="${d.c}" ${S_}/><path d="M30 18 Q38.5 17.5 40.5 20.3 Q34 21.5 30 20.3 Z" fill="${d.c}" ${S_}/>`;
+      if (d.top === "beanie") out += `<path d="M14 19.5 Q14 9 24 9 Q34 9 34 19.5 Z" fill="${d.c}" ${S_}/><rect x="13.5" y="17" width="21" height="4.2" rx="2" fill="${d.c}" ${S_}/><circle cx="24" cy="8.3" r="2.6" fill="#fff" ${S_}/>`;
+    }
+    if (d.mask) out += `<rect x="15.2" y="20.2" width="17.6" height="6.4" rx="3.2" fill="${d.mask}" ${S_}/><circle cx="20.5" cy="23.4" r="2" fill="#fff"/><circle cx="27.5" cy="23.4" r="2" fill="#fff"/>`;
+    out += face;
+    if (d.glasses) out += `<g fill="none" stroke="#151515" stroke-width="1.4"><circle cx="20.5" cy="23.5" r="3.3"/><circle cx="27.5" cy="23.5" r="3.3"/><path d="M23.8 23.3 h.4"/></g>`;
+    if (d.phones) out += `<path d="M13.6 22 Q13.5 8.5 24 8.5 Q34.5 8.5 34.4 22" fill="none" stroke="#151515" stroke-width="2.4"/><rect x="11" y="19.5" width="4.6" height="7.5" rx="2.2" fill="${d.phones}" ${S_}/><rect x="32.4" y="19.5" width="4.6" height="7.5" rx="2.2" fill="${d.phones}" ${S_}/>`;
+    return `<svg viewBox="0 0 48 48"><defs><clipPath id="${id}"><circle cx="24" cy="24" r="22.5"/></clipPath></defs><g clip-path="url(#${id})">${out}</g><circle cx="24" cy="24" r="22.5" fill="none" stroke="#151515" stroke-width="2.2"/></svg>`;
+  }
+  // the first critters, for games that started before the new avatars
   const AV_COLORS = ["#FF5B3A", "#2D5BFF", "#FFC21A", "#19C39C", "#B48CFF", "#FF7AB6", "#38B6FF", "#8BC34A"];
-  const AVATARS = Array.from({ length: 24 }, (_, i) => "a" + i);
-  function avatar(id, size = 40) {
-    const n = Math.max(0, AVATARS.indexOf(id)), c = AV_COLORS[n % 8], ears = Math.floor(n / 8);
+  function critter(n) {
+    const c = AV_COLORS[n % 8], ears = Math.floor(n / 8);
     const earPath = ears === 0 ? '<circle cx="11" cy="11" r="6"/><circle cx="37" cy="11" r="6"/>' : ears === 1 ? '<path d="M7 20L9 3l11 9zM41 20L39 3 28 12z"/>' : '<path d="M14 9q4-8 10-6-4 2-4 8zM34 9q-4-8-10-6 4 2 4 8z"/>';
-    return el("span", { class: "avatar", style: `--a:${size}px`, "aria-hidden": "true", html: `<svg viewBox="0 0 48 48"><g fill="${c}" stroke="#151515" stroke-width="2.5" stroke-linejoin="round">${earPath}<rect x="5" y="9" width="38" height="35" rx="17"/></g><circle cx="17" cy="24" r="6.5" fill="#fff" stroke="#151515" stroke-width="2.2"/><circle cx="31" cy="24" r="6.5" fill="#fff" stroke="#151515" stroke-width="2.2"/><circle cx="18" cy="25" r="2.8" fill="#151515"/><circle cx="32" cy="25" r="2.8" fill="#151515"/><path d="M21 33q3 3 6 0" fill="none" stroke="#151515" stroke-width="2.4" stroke-linecap="round"/></svg>` });
+    return `<svg viewBox="0 0 48 48"><g fill="${c}" stroke="#151515" stroke-width="2.5" stroke-linejoin="round">${earPath}<rect x="5" y="9" width="38" height="35" rx="17"/></g><circle cx="17" cy="24" r="6.5" fill="#fff" stroke="#151515" stroke-width="2.2"/><circle cx="31" cy="24" r="6.5" fill="#fff" stroke="#151515" stroke-width="2.2"/><circle cx="18" cy="25" r="2.8" fill="#151515"/><circle cx="32" cy="25" r="2.8" fill="#151515"/><path d="M21 33q3 3 6 0" fill="none" stroke="#151515" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+  }
+  function avatar(id, size = 40) {
+    id = String(id || "");
+    const k = id[0], n = parseInt(id.slice(1), 10);
+    if (k === "e" && EMOJI[n]) return el("span", { class: "avatar emo", style: `--a:${size}px;background:${AV_BG[n % AV_BG.length]}`, "aria-hidden": "true" }, el("span", {}, EMOJI[n]));
+    if (k === "p" && PEOPLE[n]) return el("span", { class: "avatar", style: `--a:${size}px`, "aria-hidden": "true", html: person(n) });
+    return el("span", { class: "avatar", style: `--a:${size}px`, "aria-hidden": "true", html: critter(OLD.includes(id) ? n : 0) });
   }
   const TYPE_NAMES = { quiz: "Quiz", tf: "True or false", multi: "Pick all correct", type: "Type the answer", slider: "Slider", order: "Put in order", poll: "Poll", cloud: "Word cloud" };
   const logo = (size = "") => el("div", { class: "logo " + size }, owl("idle", size === "big" ? 92 : 40), el("span", { class: "logo-word" }, "Ka", el("i", {}, "-"), el("b", {}, "Who?")));
@@ -172,5 +248,5 @@
   const themeButton = () => el("button", { class: "btn-x small ghost theme-b", type: "button", title: "Day or night look", "aria-label": "Switch day or night look", onclick: toggleTheme }, ic(theme() === "night" ? "sun" : "moon", 18));
   setTheme(store.get("kw.theme", "day"), false);
 
-  window.KW = { ic, avatar, REACTS, theme, setTheme, toggleTheme, themeButton, $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo };
+  window.KW = { ic, avatar, REACTS, theme, setTheme, toggleTheme, themeButton, $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, AVATARS, AV_GROUPS, TYPE_NAMES, logo };
 })();
