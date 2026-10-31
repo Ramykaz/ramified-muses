@@ -7,6 +7,7 @@
   let me = store.get(SESSION, null);         // { pin, pid, secret, name, avatar }
   let offset = 0;                            // server clock minus ours
   let S = null;                              // latest game state
+  let hostTheme = null;
   let shownKey = "", answered = {}, results = {}, failures = 0, alive = true, tickT = null;
   const now = () => Date.now() + offset;
   const vibrate = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { /* not supported */ } };
@@ -29,7 +30,7 @@
     const btn = el("button", { class: "btn-x primary", onclick: go }, "Enter");
     inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
     inp.addEventListener("input", () => { const d = inp.value.replace(/\D/g, "").slice(0, 6); inp.value = d.length > 3 ? d.slice(0, 3) + " " + d.slice(3) : d; msg.textContent = ""; });
-    screen("center", logo("big"), el("div", { class: "join-card" }, inp, btn, msg),
+    screen("center", el("div", { class: "corner" }, window.KW.themeButton()), logo("big"), el("div", { class: "join-card" }, inp, btn, msg),
       el("p", { class: "fine" }, "Who's playing? You are. The PIN is on the big screen."),
       el("a", { class: "host-link", href: "/kawho/host" }, "Host a game →"));
     inp.dispatchEvent(new Event("input"));
@@ -75,6 +76,8 @@
         // the time bucket makes every phone ask for the same URL each second, so the CDN answers most of them
         const st = await api("state", { query: { pin: me.pin, t: Math.floor(now() / 1000) } });
         failures = 0; setOffline(false);
+        // the host's day/night choice reaches every phone
+        if (st.theme && st.theme !== hostTheme) { hostTheme = st.theme; window.KW.setTheme(st.theme, false); }
         S = st; render();
       } catch (e) {
         if (e.status === 404) { leave("That game has ended."); return; }
@@ -115,7 +118,7 @@
     const bar = $(".p-timer i"), out = $(".p-timer b");
     if (bar) { const left = Math.max(0, S.endAt - t), all = S.endAt - S.startAt; bar.style.transform = `scaleX(${left / all})`; out.textContent = Math.ceil(left / 1000); bar.parentElement.classList.toggle("low", left < 5000); }
   }
-  const head = () => el("div", { class: "p-head" }, el("span", { class: "me" }, el("span", { class: "me-av" }, me.avatar), me.name), el("span", { class: "q-of" }, S.phase === "lobby" ? `${S.players} playing` : `${S.q + 1} / ${S.total}`));
+  const head = () => el("div", { class: "p-head" }, el("span", { class: "me" }, el("span", { class: "me-av" }, me.avatar), me.name), el("span", { class: "spacer" }), window.KW.themeButton(), el("span", { class: "q-of" }, S.phase === "lobby" ? `${S.players} playing` : `${S.q + 1} / ${S.total}`));
 
   function lobby() {
     let last = 0;

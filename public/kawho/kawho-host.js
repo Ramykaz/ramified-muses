@@ -244,7 +244,7 @@ Number of questions: [e.g. 12]`;
     if (h[0] === "play" && h[1]) return game(h[1]);
     return dashboard();
   }
-  const topbar = (...right) => el("header", { class: "s-top" }, el("a", { href: "#/", class: "s-brand" }, logo(), el("span", { class: "studio-tag" }, "Studio")), el("span", { class: "spacer" }), right);
+  const topbar = (...right) => el("header", { class: "s-top" }, el("a", { href: "#/", class: "s-brand" }, logo(), el("span", { class: "studio-tag" }, "Studio")), el("span", { class: "spacer" }), window.KW.themeButton(), right);
 
   /* ================= dashboard ================= */
   let quizzes = [];
@@ -436,7 +436,7 @@ image: https://…               picture for the question`)));
     const now = () => Date.now() + offset;
     const stage = el("main", { class: "stage-h" });
     put(app, stage);
-    stopGame = () => { alive = false; sound.music(false); document.body.classList.remove("on-air"); };
+    stopGame = () => { stopLb(); alive = false; sound.music(false); document.body.classList.remove("on-air"); };
     async function poll() {
       while (alive) {
         try { const r = await authApi("host-state", { query: { pin } }); offset = r.serverNow - Date.now(); H = r; draw(); }
@@ -455,15 +455,20 @@ image: https://…               picture for the question`)));
       return el("div", { class: "h-bar" }, logo(), el("span", { class: "h-title" }, H.quiz.title), el("span", { class: "spacer" }),
         el("button", { class: "btn-x small ghost", title: "Sound", onclick: e => { const on = sound.toggle(); e.currentTarget.textContent = on ? "🔊" : "🔇"; if (on && st().phase === "lobby" && music) sound.music(true); } }, sound.on ? "🔊" : "🔇"),
         el("button", { class: "btn-x small ghost", title: "Full screen", onclick: () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); } }, "⛶"),
+        el("button", { class: "btn-x small ghost theme-b", title: "Day or night look (players follow)", onclick: () => { const t = window.KW.toggleTheme(); act("theme", { theme: t }); } }, window.KW.theme() === "night" ? "☀" : "☾"),
         el("button", { class: "btn-x small ghost", onclick: () => { if (confirm("End the game now and show the podium?")) act("end"); } }, "End"), btns);
     }
-    const nextLabel = () => st().phase === "lobby" ? "Start ▶" : st().phase === "question" ? "Skip ▶" : st().phase === "reveal" ? (st().q >= Qs().length - 1 ? "Final results 🏆" : "Leaderboard ▶") : st().phase === "leaderboard" ? "Next question ▶" : "";
+    const nextLabel = () => st().phase === "lobby" ? "Start ▶" : st().phase === "question" ? "Skip ▶" : st().phase === "reveal" ? (st().q >= Qs().length - 1 ? "Final results 🏆" : "Next ▶") : st().phase === "leaderboard" ? "Next now ▶" : "";
+    // the leaderboard shows itself after "Next", then counts down into the next question
+    const LB_SECONDS = 6;
+    let lbTimer = null, lbPaused = false;
+    const stopLb = () => { clearInterval(lbTimer); lbTimer = null; };
     function next() {
       const p = st().phase;
       if (p === "lobby") { if (!H.players.length) { toast("Wait for at least one player"); return; } sound.music(false); act("next"); }
       else if (p === "question") act("reveal");
       else if (p === "reveal") act(st().q >= Qs().length - 1 ? "next" : "leaderboard");
-      else if (p === "leaderboard") act("next");
+      else if (p === "leaderboard") { stopLb(); act("next"); }
     }
     document.onkeydown = e => { if (!alive) return; if ((e.key === " " || e.key === "Enter" || e.key === "ArrowRight") && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); next(); } };
 
@@ -474,7 +479,7 @@ image: https://…               picture for the question`)));
       if (s.phase === "question" && revealing !== s.q && t > s.startAt && (t > s.endAt + 400 || (H.players.length && answeredN() >= H.players.length))) { revealing = s.q; act("reveal"); return; }
       const sub = s.phase === "question" ? (t < s.startAt ? "ready" : "go") : "";
       const k = `${s.phase}:${s.q}:${sub}`;
-      if (k !== key) { key = k; full(); } else live();
+      if (k !== key) { key = k; if (s.phase !== "leaderboard") stopLb(); full(); } else live();
     }
     // update counters without redrawing the whole screen
     function live() {
@@ -579,8 +584,20 @@ image: https://…               picture for the question`)));
       put(stage, controls(), el("section", { class: "lb-h" }, el("div", { class: "lb-head" }, owl("happy", 90), el("h1", { class: "lb-title" }, "Who's winning?")),
         el("div", { class: "lb" }, top.length ? top.map((p, i) => el("div", { class: "lb-row", style: `--d:${i * 120}ms` }, el("span", { class: "lb-rank" }, String(i + 1)), el("span", { class: "lb-av" }, p.avatar), el("span", { class: "lb-name" }, p.name, p.streak >= 3 ? el("span", { class: "fire" }, ` 🔥${p.streak}`) : null),
           p.move > 0 ? el("span", { class: "mv up" }, "▲", p.move) : p.move < 0 ? el("span", { class: "mv down" }, "▼", -p.move) : el("span", { class: "mv" }), el("b", { class: "lb-score" }, p.score.toLocaleString()))) : el("p", {}, "No players yet")),
-        el("button", { class: "btn-x primary big", onclick: next }, nextLabel())));
+        el("div", { class: "lb-next" }, el("span", { class: "lb-count" }, el("i", { id: "lbBar" }), el("b", { id: "lbN" }, `Next question in ${LB_SECONDS}`)),
+          el("button", { class: "btn-x small", id: "lbPause", onclick: () => { lbPaused = !lbPaused; $("#lbPause").textContent = lbPaused ? "▶ Continue" : "❚❚ Pause"; } }, "❚❚ Pause"),
+          el("button", { class: "btn-x primary", onclick: next }, nextLabel()))));
       sound.play("go");
+      stopLb(); lbPaused = false;
+      let left = LB_SECONDS * 10;
+      lbTimer = setInterval(() => {
+        if (!alive || lbPaused) return;
+        left--;
+        const n = $("#lbN"), bar = $("#lbBar");
+        if (n) n.textContent = `Next question in ${Math.ceil(left / 10)}`;
+        if (bar) bar.style.width = `${100 - (left / (LB_SECONDS * 10)) * 100}%`;
+        if (left <= 0) { stopLb(); act("next"); }
+      }, 100);
     }
     async function podium() {
       const top = st().top || [];

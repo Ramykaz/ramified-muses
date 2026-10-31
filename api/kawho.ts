@@ -33,7 +33,7 @@ function ensureSchema() {
 type Opt = { t?: string; img?: string; ok?: boolean }
 type Q = { id?: string; type: string; q: string; image?: string; time?: number; points?: number; options?: Opt[]; answers?: string[]; min?: number; max?: number; step?: number; correct?: number; tol?: number; unit?: string; items?: string[] }
 type Quiz = { title?: string; description?: string; cover?: string; questions: Q[] }
-type State = { phase: 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'podium'; q: number; startAt?: number; endAt?: number; v: number; locked?: boolean; order?: number[]; orders?: Record<string, number[]>; stats?: unknown; top?: unknown[]; ranks?: Record<string, number> }
+type State = { phase: 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'podium'; q: number; startAt?: number; endAt?: number; v: number; locked?: boolean; theme?: 'day' | 'night'; order?: number[]; orders?: Record<string, number[]>; stats?: unknown; top?: unknown[]; ranks?: Record<string, number> }
 type Row = Record<string, unknown>
 
 const newId = (n = 10) => [...randomBytes(n)].map(b => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('')
@@ -132,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!g) return res.status(404).json({ error: 'No game with that PIN.' })
       const st = g.state, qs = g.quiz.questions, q = qs[st.q]
       const cnt = Number(((await db.execute(sql`SELECT count(*) AS n FROM kw_players WHERE pin = ${g.pin}`)).rows[0] as Row).n)
-      const out: Row = { pin: g.pin, title: g.quiz.title ?? 'Quiz', cover: g.quiz.cover ?? null, phase: st.phase, q: st.q, total: qs.length, v: st.v, players: cnt, locked: !!st.locked, serverNow: now }
+      const out: Row = { pin: g.pin, title: g.quiz.title ?? 'Quiz', cover: g.quiz.cover ?? null, phase: st.phase, q: st.q, total: qs.length, v: st.v, players: cnt, locked: !!st.locked, theme: st.theme ?? null, serverNow: now }
       if (q && st.phase !== 'lobby') { out.question = publicQuestion(q, st); out.startAt = st.startAt; out.endAt = st.endAt }
       if (q && (st.phase === 'reveal')) { out.reveal = revealInfo(q); out.stats = st.stats }
       if (st.phase === 'leaderboard' || st.phase === 'podium') out.top = (st.top ?? []).slice(0, 5)
@@ -276,6 +276,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         st.phase = 'leaderboard'
       } else if (what === 'end') {
         st.phase = 'podium'; st.top = (await top(pin, 10)).map(p => ({ name: p.name, avatar: p.avatar, score: Number(p.score) }))
+      } else if (what === 'theme') {
+        st.theme = body.theme === 'night' ? 'night' : 'day'
       } else if (what === 'lock' || what === 'unlock') {
         st.locked = what === 'lock'
       } else if (what === 'kick') {

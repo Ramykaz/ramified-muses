@@ -39,7 +39,8 @@
   }
 
   // answer cards: a letter, a colour and a pattern each (patterns live in the CSS)
-  const COLORS = ["#FF5B3A", "#2D5BFF", "#FFC21A", "#19C39C", "#B48CFF", "#FF7AB6"];
+  // CSS variables, so day and night can use their own shades
+  const COLORS = ["var(--a1)", "var(--a2)", "var(--a3)", "var(--a4)", "var(--a5)", "var(--a6)"];
   const LETTERS = "ABCDEF";
   const shape = (i, size = 28) => el("span", { class: "letter", style: `--s:${size}px`, "aria-hidden": "true" }, LETTERS[i] || "•");
 
@@ -97,7 +98,7 @@
   function confetti(ms = 6000) {
     const c = el("canvas", { class: "confetti" }); document.body.append(c);
     const x = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
-    const cols = COLORS.concat(["#FFD23F", "#FF4FA3", "#7B5CFF"]);
+    const cols = ["#FF5B3A", "#2D5BFF", "#FFC21A", "#19C39C", "#B48CFF", "#FF7AB6", "#E8B84B"];
     const bits = Array.from({ length: 180 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height, s: 6 + Math.random() * 9, v: 2 + Math.random() * 4, w: Math.random() * 2 - 1, r: Math.random() * 6, c: cols[Math.floor(Math.random() * cols.length)] }));
     const end = Date.now() + ms;
     (function f() {
@@ -111,5 +112,17 @@
   const TYPE_NAMES = { quiz: "Quiz", tf: "True or false", multi: "Pick all correct", type: "Type the answer", slider: "Slider", order: "Put in order", poll: "Poll", cloud: "Word cloud" };
   const logo = (size = "") => el("div", { class: "logo " + size }, owl("idle", size === "big" ? 92 : 40), el("span", { class: "logo-word" }, "Ka", el("i", {}, "-"), el("b", {}, "Who?")));
 
-  window.KW = { $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo };
+  /* ---------- day / night look ---------- */
+  const theme = () => document.documentElement.dataset.theme === "night" ? "night" : "day";
+  function setTheme(t, save = true) {
+    document.documentElement.dataset.theme = t === "night" ? "night" : "day";
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", t === "night" ? "#0D1017" : "#F4EBDC");
+    if (save) store.set("kw.theme", t);
+    document.querySelectorAll(".theme-b").forEach(b => { b.textContent = t === "night" ? "☀" : "☾"; });
+  }
+  const toggleTheme = () => { const t = theme() === "night" ? "day" : "night"; setTheme(t); return t; };
+  const themeButton = () => el("button", { class: "btn-x small ghost theme-b", type: "button", title: "Day or night look", "aria-label": "Switch day or night look", onclick: toggleTheme }, theme() === "night" ? "☀" : "☾");
+  setTheme(store.get("kw.theme", "day"), false);
+
+  window.KW = { theme, setTheme, toggleTheme, themeButton, $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo };
 })();
