@@ -5,6 +5,8 @@
   "rewrites": [
     { "source": "/api/(.*)",  "destination": "/api/$1" },
     { "source": "/(.*)", "has": [{ "type": "host", "value": "forms.ramyfied.me" }], "destination": "/forms/index.html" },
+    { "source": "/kawho",     "destination": "/kawho/index.html" },
+    { "source": "/kawho/(.*)", "destination": "/kawho/index.html" },
     { "source": "/forms",     "destination": "/forms/index.html" },
     { "source": "/forms/(.*)", "destination": "/forms/index.html" },
     { "source": "/English",   "destination": "/English.html" },
