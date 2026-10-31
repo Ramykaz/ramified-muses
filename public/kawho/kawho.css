@@ -617,7 +617,7 @@ html[data-theme="night"] .medal b { color: #14110A; }
 .lb-row { min-width: 0; }
 .lb-score { flex: none; }
 @media (max-width: 640px) {
-  .h-bar { flex-wrap: nowrap; }
+  .h-bar { flex-wrap: wrap; row-gap: 6px; }
   .h-bar .logo-word { display: none; }
   .h-bar .btn-x.small { padding: 6px 9px; min-height: 38px; }
   .h-bar .btn-x .lbl { display: none; }
