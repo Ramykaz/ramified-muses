@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Vocabulary and grammar games for Limitless A2.2, Unit 1: Summer Adventure Camps and Japanese Etiquette.">
+<title>A2 Unit 1 Games</title>
+<link rel="icon" type="image/svg+xml" href="/English/jeopardy/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Serif+Display&display=swap">
+<link rel="stylesheet" href="/English/jeopardy/unit1/unit1.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <a class="brand" href="#/" id="brand">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="#1a6b72"/><rect x="10" y="11" width="12" height="11" rx="3" fill="#E2725B"/><rect x="26" y="11" width="12" height="11" rx="3" fill="#E39B2B"/><rect x="10" y="26" width="12" height="11" rx="3" fill="#7C5CBF"/><rect x="26" y="26" width="12" height="11" rx="3" fill="#C9A84C"/></svg>
+      <span><b>A2 Unit 1 Games</b><small>Limitless A2.2 · Camps &amp; Etiquette</small></span>
+    </a>
+    <div class="tools">
+      <a class="link" href="/English/jeopardy">← Class Games</a>
+      <button class="btn" id="soundBtn" aria-pressed="true">Sound: on</button>
+      <button class="btn" id="fsBtn">Full screen</button>
+    </div>
+  </header>
+  <main id="app"></main>
+</div>
+<div class="overlay" id="winner" hidden role="dialog" aria-modal="true" aria-label="Results"><canvas id="confetti"></canvas><div class="win" id="winBox"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="/English/jeopardy/a2-unit1/words.js"></script>
+<script src="/English/jeopardy/unit1/unit1.js"></script>
+</body>
+</html>

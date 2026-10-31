@@ -28,22 +28,22 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
   };
   // the word as students say it: "move away (from)" -> "move away", "feel like + -ing" -> "feel like"
-  const head = w => w.w.replace(/\([^)]*\)/g, "").replace(/\+\s*-?\w+/g, "").replace(/\.\.\./g, "").replace(/\s+/g, " ").trim();
+  const head = w => w.h || w.w.replace(/\([^)]*\)/g, "").replace(/\+\s*-?\w+/g, "").replace(/\.\.\./g, "").replace(/\s+/g, " ").trim();
   const COLORS = ["#E2725B", "#1A8A8F", "#7C5CBF", "#E39B2B", "#5E8C4F", "#D6457A"];
   const NAMES = ["Tulips", "Seagulls", "Simits", "Lions", "Comets", "Rockets"];
   const SEC_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)", "var(--teal)", "var(--gold)", "#4C5FD5"];
 
   /* ================= state shared by all games ================= */
-  const KEY = "u1.state." + (U.title || "unit").replace(/\W+/g, "");
+  const KEY = "u1.state." + (U.key || U.title || "unit").replace(/\W+/g, "");
   const S = Object.assign({ teams: NAMES.slice(0, 2).map((name, i) => ({ name, color: COLORS[i], score: 0 })), secs: U.sections.map((_, i) => i), clue: "both", timer: 0, sound: true }, store.get(KEY, {}));
   const save = () => store.set(KEY, S);
   const pool = () => WORDS.filter(w => S.secs.includes(w.s));
 
   // goes through every word in the chosen lessons once before repeating
   const decks = {};
-  function deck(name) {
+  function deck(name, filt) {
     const sig = S.secs.join(",");
-    if (!decks[name] || decks[name].sig !== sig) decks[name] = { sig, order: shuffle(pool().slice()), pos: 0 };
+    if (!decks[name] || decks[name].sig !== sig) { const p = pool(), f = filt ? p.filter(filt) : p; decks[name] = { sig, order: shuffle((f.length ? f : p).slice()), pos: 0 }; }
     const d = decks[name];
     return {
       take(n) { const out = []; for (let k = 0; k < n; k++) { if (d.pos >= d.order.length) { d.order = shuffle(d.order); d.pos = 0; toast("All the words done! Starting again."); } out.push(d.order[d.pos++]); } return out; },
@@ -141,13 +141,17 @@
   const GAMES = [
     { id: "scramble", name: "Word Scramble", art: "S·W·D", g: "linear-gradient(135deg,#7C5CBF,#9C5FC4 55%,#D6457A)", p: "Mixed-up letters and a clue. Which team finds the word first?" },
     { id: "memory", name: "Memory Match", art: "EN=TR", g: "linear-gradient(135deg,#1a6b72,#1A8A8F 60%,#3DB2A6)", p: "Flip two cards: find each English word and its Turkish meaning." },
+    { id: "mime", name: "Act It Out", art: "MIME", g: "linear-gradient(135deg,#D6457A,#E2725B 60%,#E39B2B)", p: "One player acts a chore or a gesture. No talking! The team shouts the word.", need: () => U.sections.some(s => s.act) },
     { id: "hotseat", name: "Hot Seat", art: "60s", g: "linear-gradient(135deg,#E2725B,#E39B2B 70%,#F2C14E)", p: "One player can't see the board. The team explains words in English, fast!" },
     { id: "gap", name: "Missing Word", art: "___", g: "linear-gradient(135deg,#4C5FD5,#5AA9E6)", p: "A sentence with a gap and four choices. Pick the right word." },
+    { id: "grammar", name: "Grammar Battle", art: "A/B", g: "linear-gradient(135deg,#C9A84C,#E39B2B 55%,#E2725B)", p: "Pick the right grammar: do or make, must or mustn't, will or not.", need: () => (U.grammar || []).length > 0 },
     { id: "board", name: "Quiz Board", art: "500", g: "linear-gradient(135deg,#2E4A6B,#1a6b72)", p: "Jeopardy with the unit words: Turkish, meanings, gaps and more." },
-    { id: "cards", name: "Word Cards", art: "133", g: "linear-gradient(135deg,#5E8C4F,#7FB069)", p: "All the words. Tap a card to see the Turkish and an example." }
+    { id: "cards", name: "Word Cards", art: String(WORDS.length), g: "linear-gradient(135deg,#5E8C4F,#7FB069)", p: "All the words. Tap a card to see the Turkish and an example." }
   ];
+  for (let i = GAMES.length - 1; i >= 0; i--) if (GAMES[i].need && !GAMES[i].need()) GAMES.splice(i, 1);
+  const NUM_WORDS = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
   function hub() {
-    document.title = "Unit 1 Word Games";
+    document.title = `${U.title} Word Games`;
     const n = pool().length;
     const secChips = el("div", { class: "sec-chips" }, U.sections.map((s, i) => el("button", { class: "chip" + (S.secs.includes(i) ? " on" : ""), style: `--cc:${SEC_COLORS[i % SEC_COLORS.length]}`, "aria-pressed": S.secs.includes(i) ? "true" : "false",
       onclick: () => { S.secs = S.secs.includes(i) ? S.secs.filter(x => x !== i) : S.secs.concat(i).sort((a, b) => a - b); save(); hub(); } }, s.name, el("small", {}, String(WORDS.filter(w => w.s === i).length)))));
@@ -160,8 +164,8 @@
       el("b", {}, String(t.score)))));
     put($("#app"),
       el("div", { class: "hub-hero" },
-        el("div", {}, el("div", { class: "eyebrow" }, `${U.book} · ${U.title}`), el("h1", {}, "Our Life and ", el("em", {}, "Times")),
-          el("p", { class: "lede" }, `All ${WORDS.length} words from ${U.title} in five team games. Points add up across the games, so play a few and crown the winner at the end.`)),
+        el("div", {}, el("div", { class: "eyebrow" }, `${U.book} · ${U.title}`), el("h1", {}, (U.hero || ["Our Life and ", "Times"])[0], el("em", {}, (U.hero || ["", "Times"])[1])),
+          el("p", { class: "lede" }, `All ${WORDS.length} words from ${U.title} in ${(n => NUM_WORDS[n] || n)(GAMES.filter(g => g.id !== "cards" && g.id !== "grammar").length)} team games${GAMES.some(g => g.id === "grammar") ? ", plus a grammar battle" : ""}. Points add up across the games, so play a few and crown the winner at the end.`)),
         el("div", { class: "panel", style: "align-content:center" }, el("div", { class: "eyebrow" }, "Words in play"), el("div", { style: "font:400 56px/1 var(--serif)" }, String(n)),
           el("div", { class: "muted", style: "font-size:14px" }, n === WORDS.length ? "All the lessons are on. Change them below." : `From ${S.secs.length} of ${U.sections.length} lessons.`))),
       el("div", { class: "games" }, GAMES.map((g, i) => el("a", { class: "gcard", href: "#/" + g.id, style: `--g:${g.g};text-decoration:none` },
@@ -185,7 +189,7 @@
 
   /* ================= 1. word scramble ================= */
   function scramble() {
-    const d = deck("scramble");
+    const d = deck("scramble", w => [...head(w)].filter(ch => /[a-z]/i.test(ch)).length <= 14);
     let w, mixed, hints, revealed, t;
     const isL = ch => /[a-z]/i.test(ch);
     const mix = () => { const letters = [...head(w)].filter(isL).map(c => c.toUpperCase()); let m; for (let k = 0; k < 20; k++) { m = shuffle(letters.slice()); if (m.join("") !== letters.join("") || letters.length < 2) break; } return m; };
@@ -282,7 +286,7 @@
           el("div", {}, el("b", {}, "1. "), "One player sits with their back to the board."),
           el("div", {}, el("b", {}, "2. "), "The team explains each word in English. No Turkish, and don't say the word!"),
           el("div", {}, el("b", {}, "3. "), `Correct = +100. Skip if it's too hard. You have ${secs} seconds.`)),
-        el("button", { class: "btn gold huge", onclick: startRound }, "Start ▶"));
+        el("button", { class: "btn gold huge", onclick: startRound }, "Start"));
       const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame("Hot Seat", "", lens, stage, turn);
       const sb = $("#scorebar"); if (sb) sb.replaceWith(scorebar(turn));
       setCounter(`${d.pos} of ${d.size} words used`);
@@ -360,6 +364,110 @@
     keys = e => { const k = e.key.toLowerCase(); if (done) { if (k === "n" || k === "enter") $("[data-nobody]").click(); return; } const i = "abcd".indexOf(k); if (i >= 0 && opts[i]) choose(opts[i]); else if (k === "p" && t) t.toggle(); };
     frame("Missing Word", "", null, el("div", { class: "stage" }));
     next();
+  }
+
+  /* ================= act it out ================= */
+  // the actor holds the card to peek at the word; the class only sees it when it's guessed
+  function mime() {
+    const d = deck("mime", w => U.sections[w.s].act);
+    let secs = store.get("u1.mime", 90), live = false, left, last, id, w, got = [], paused = false, shown = false;
+    turn = turn % S.teams.length;
+    const lens = el("div", { class: "seg" }, [60, 90, 120].map(n => el("button", { class: secs === n ? "on" : "", onclick: e => { secs = n; store.set("u1.mime", n); [...lens.children].forEach(b => b.classList.toggle("on", b === e.currentTarget)); } }, `${n} s`)));
+    function intro() {
+      live = false; clearInterval(id);
+      const t = S.teams[turn];
+      const stage = el("div", { class: "stage", style: `--cc:${t.color}` },
+        el("div", { class: "eyebrow" }, "Next up"), el("div", { class: "hs-word", style: `color:${t.color}` }, t.name),
+        el("div", { style: "display:grid;gap:8px;font-size:clamp(17px,1.8vw,22px);font-weight:600;text-align:left;max-width:640px" },
+          el("div", {}, el("b", {}, "1. "), "One player comes to the screen (or takes the phone)."),
+          el("div", {}, el("b", {}, "2. "), "They hold the card to see the word, then act it. No talking, no sounds!"),
+          el("div", {}, el("b", {}, "3. "), `The team shouts the word in English. Correct = +100. You have ${secs} seconds.`)),
+        el("button", { class: "btn gold huge", onclick: startRound }, "Start"));
+      const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame("Act It Out", "", lens, stage, turn);
+      const sb = $("#scorebar"); if (sb) sb.replaceWith(scorebar(turn));
+      setCounter(`${d.pos} of ${d.size} words used`);
+    }
+    function startRound() { live = true; got = []; left = secs; paused = false; shown = false; [w] = d.take(1); last = Date.now(); clearInterval(id); id = setInterval(tick, 100); stopAll.push(() => clearInterval(id)); beep("open"); draw(); }
+    function tick() {
+      const now = Date.now(); left = Math.max(0, left - (now - last) / 1000); last = now;
+      const r = $(".ring"); if (r) { r.style.setProperty("--p", left / secs); r.classList.toggle("low", left <= 10); r.querySelector("b").textContent = Math.ceil(left); }
+      if (left <= 10 && left > 0 && Math.ceil(left) !== tick.l) { tick.l = Math.ceil(left); beep("tick"); }
+      if (left <= 0) { clearInterval(id); beep("end"); summary(); }
+    }
+    function draw() {
+      const t = S.teams[turn];
+      const peek = el("button", { class: "peek" + (shown ? " open" : ""), "aria-label": "Hold to see the word",
+        onpointerdown: e => { e.preventDefault(); peek.classList.add("open"); }, onpointerup: () => peek.classList.remove("open"), onpointerleave: () => peek.classList.remove("open"), onpointercancel: () => peek.classList.remove("open"), oncontextmenu: e => e.preventDefault() },
+        el("span", { class: "cover" }, el("b", {}, "Actor only"), el("small", {}, "Hold here to see the word")),
+        el("span", { class: "secret" }, el("b", {}, head(w)), el("small", {}, w.tr)));
+      const stage = el("div", { class: "stage", style: `--cc:${t.color}` },
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${t.color};font-size:20px` }, t.name), el("div", { class: "ring" }, el("b", {}, String(Math.ceil(left)))), el("b", { style: "font-size:20px" }, `Correct: ${got.filter(x => x.ok).length}`)),
+        peek,
+        el("div", { class: "actions" }, el("button", { class: "btn huge", style: "background:var(--green);border-color:var(--green);color:#fff", onclick: () => mark(true) }, "Got it"),
+          el("button", { class: "btn huge", onclick: () => mark(false) }, "Skip"),
+          el("button", { class: "btn big", "data-pause": "1", onclick: () => { paused = !paused; if (paused) clearInterval(id); else { last = Date.now(); id = setInterval(tick, 100); } draw(); } }, paused ? "Resume" : "Pause")),
+        el("div", { class: "hint" }, "Space = got it · S = skip · P = pause · W = peek on a laptop"));
+      $("#app .stage").replaceWith(stage);
+    }
+    function mark(ok) {
+      if (!live || paused) return; got.push({ w, ok });
+      if (ok) { award(turn, 100); toast(`${head(w)} = ${w.tr}`); } else beep("pass");
+      [w] = d.take(1); draw();
+    }
+    function summary() {
+      live = false; const t = S.teams[turn], n = got.filter(x => x.ok).length;
+      const stage = el("div", { class: "stage", style: `--cc:${t.color}` },
+        el("div", { class: "eyebrow" }, "Time's up!"), el("div", { class: "hs-word", style: `color:${t.color}` }, `${t.name}: +${n * 100}`),
+        el("div", { class: "got" }, got.map(x => el("span", { class: x.ok ? "" : "skip", title: `${x.w.tr} · ${x.w.m}` }, head(x.w)))),
+        el("p", { class: "muted", style: "margin:0" }, "Everyone: act the skipped words together!"),
+        el("button", { class: "btn gold huge", onclick: () => { turn = (turn + 1) % S.teams.length; intro(); } }, `Next: ${S.teams[(turn + 1) % S.teams.length].name}`));
+      $("#app .stage").replaceWith(stage); setCounter(`${d.pos} of ${d.size} words used`);
+    }
+    keys = e => {
+      if (!live) return; const k = e.key.toLowerCase();
+      if (k === " " || k === "enter") mark(true); else if (k === "s") mark(false); else if (k === "p") $("[data-pause]").click();
+      else if (k === "w") { const p = $(".peek"); if (p) { p.classList.add("open"); setTimeout(() => p.classList.remove("open"), 1500); } }
+    };
+    frame("Act It Out", "", lens, el("div", { class: "stage" }), turn);
+    intro();
+  }
+
+  /* ================= grammar battle ================= */
+  function grammar() {
+    const G = U.grammar.map((g, i) => ({ ...g, i })), TOP = U.grammarTopics || [];
+    let on = store.get("u1.gtop." + KEY, TOP.map((_, i) => i)).filter(i => TOP[i]); if (!on.length) on = TOP.map((_, i) => i);
+    let order, pos, q, opts, tried, done, t;
+    const chips = el("div", { class: "sec-chips gtops" });
+    function paintChips() {
+      put(chips, TOP.map((name, i) => el("button", { class: "chip" + (on.includes(i) ? " on" : ""), style: `--cc:${SEC_COLORS[i % SEC_COLORS.length]}`, "aria-pressed": on.includes(i) ? "true" : "false",
+        onclick: () => { const nx = on.includes(i) ? on.filter(x => x !== i) : on.concat(i).sort((a, b) => a - b); if (!nx.length) { toast("Keep at least one topic on"); return; } on = nx; store.set("u1.gtop." + KEY, on); paintChips(); restart(); } }, name, el("small", {}, String(G.filter(g => g.t === i).length)))));
+    }
+    function restart() { order = shuffle(G.filter(g => on.includes(g.t))); pos = 0; next(); }
+    function next() {
+      if (t) t.stop();
+      if (pos >= order.length) { order = shuffle(order); pos = 0; toast("All the questions done! Starting again."); }
+      q = order[pos++]; opts = q.o.slice(); tried = []; done = false; draw(true); setCounter(`Question ${pos} of ${order.length}`); beep("open");
+    }
+    const filled = () => { const [a, b] = q.q.split("___"); return [q.a[0] === "'" ? a.trimEnd() : a, el("mark", {}, q.a), b]; };
+    const blanked = () => { const [a, b] = q.q.split("___"); return [a, el("span", { class: "blank" }, " "), b]; };
+    function draw(fresh) {
+      const color = SEC_COLORS[q.t % SEC_COLORS.length];
+      if (fresh) t = timer(S.timer);
+      const worth = tried.length ? 100 : 200;
+      const stage = el("div", { class: "stage", style: `--cc:${color}` },
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, TOP[q.t]), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "sentence" }, done ? filled() : blanked()),
+        done ? null : el("div", { class: "opts4 g" + opts.length }, opts.map((o, i) => el("button", { class: "opt4" + (tried.includes(o) ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABCD"[i]), o))),
+        done ? null : t.node,
+        done ? el("div", { class: "why", style: `--cc:${color}` }, el("b", {}, "Why? "), q.why) : null,
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); draw(false); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Click the team that got it, or press N." : "Tap the answer a team says (or press A–C). A wrong answer turns red and the next team can steal it for 100."));
+      const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame("Grammar Battle", "", null, el("div", { class: "gwrap" }, chips, stage));
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === q.a) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(o); beep("no"); } draw(false); }
+    keys = e => { const k = e.key.toLowerCase(); if (done) { if (k === "n" || k === "enter") $("[data-nobody]").click(); return; } const i = "abcd".indexOf(k); if (i >= 0 && opts[i]) choose(opts[i]); else if (k === "p" && t) t.toggle(); };
+    frame("Grammar Battle", "", null, el("div", { class: "gwrap" }, chips, el("div", { class: "stage" })));
+    paintChips(); restart();
   }
 
   /* ================= 5. quiz board ================= */
@@ -459,7 +567,7 @@
   }
 
   /* ================= routing ================= */
-  const ROUTES = { "": hub, scramble, memory, hotseat, gap, board, cards };
+  const ROUTES = { "": hub, scramble, memory, mime, hotseat, gap, grammar, board, cards };
   function route() {
     cleanup();
     const id = location.hash.replace(/^#\/?/, "");

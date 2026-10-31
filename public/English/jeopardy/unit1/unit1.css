@@ -195,11 +195,30 @@ h2 { font: 400 clamp(26px, 3vw, 36px)/1.1 var(--serif); margin: 0; }
 #toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 20px); opacity: 0; background: var(--ink); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 999px; z-index: 80; transition: .25s; pointer-events: none; max-width: calc(100% - 32px); text-align: center; }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* grammar battle */
+.gwrap { display: grid; gap: 14px; }
+.gtops { justify-content: center; }
+.opts4.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.opts4.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(640px, 100%); }
+.sentence mark { background: color-mix(in srgb, var(--cc) 22%, transparent); color: inherit; padding: 0 .15em; border-radius: 8px; }
+.why { max-width: 760px; width: 100%; background: color-mix(in srgb, var(--cc) 10%, var(--card)); border-left: 6px solid var(--cc); border-radius: 16px; padding: 14px 18px; font-size: clamp(17px, 1.9vw, 23px); font-weight: 600; text-align: left; }
+/* act it out: the card the actor holds to peek */
+.peek { position: relative; width: min(620px, 100%); min-height: clamp(170px, 30vh, 280px); border-radius: 26px; border: 3px dashed var(--cc); background: color-mix(in srgb, var(--cc) 8%, var(--card)); display: grid; place-items: center; padding: 18px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.peek > span { grid-area: 1 / 1; display: grid; gap: 6px; justify-items: center; min-width: 0; max-width: 100%; }
+.peek .cover b { font: 400 clamp(30px, 4vw, 48px)/1.1 var(--serif); color: var(--cc); }
+.peek .cover small { color: var(--muted); font-weight: 700; font-size: 16px; }
+.peek .secret { visibility: hidden; }
+.peek .secret b { font: 400 clamp(40px, 7vw, 96px)/1.05 var(--serif); overflow-wrap: anywhere; text-wrap: balance; }
+.peek .secret small { font-weight: 700; color: var(--muted); font-size: 18px; }
+.peek.open { border-style: solid; background: var(--card); }
+.peek.open .cover { visibility: hidden; }
+.peek.open .secret { visibility: visible; }
+
 @media (max-width: 860px) {
   .hub-hero, .panel-grid { grid-template-columns: 1fr; }
   .board { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
   .bcat { font-size: 10px; padding: 8px 4px; min-height: 52px; }
-  .opts4 { grid-template-columns: 1fr; }
+  .opts4, .opts4.g3, .opts4.g2 { grid-template-columns: 1fr; }
 }
 /* on a wide screen the memory grid fills the space left on the screen */
 @media (min-width: 861px) {

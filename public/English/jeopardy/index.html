@@ -94,6 +94,11 @@ h2 { font: 400 30px/1.15 var(--serif); margin: 0; }
 .unit-tiles { display: flex; gap: 6px; }
 .unit-tiles i { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font: 800 24px/1 var(--sans); font-style: normal; color: #fff; background: var(--c3); transform: rotate(-6deg); box-shadow: 0 4px 0 #5a3e96; }
 .unit-tiles i + i { background: var(--c1); transform: rotate(5deg); box-shadow: 0 4px 0 #b4533f; }
+.unit-link.a2 { margin-top: 12px; border-color: var(--teal, #1a6b72); }
+.unit-link.a2 .tagline { color: #1a6b72; }
+.unit-link.a2 .go { background: #1a6b72; }
+.unit-link.a2 .unit-tiles i { background: #1A8A8F; box-shadow: 0 4px 0 #0f5458; }
+.unit-link.a2 .unit-tiles i + i { background: #E39B2B; box-shadow: 0 4px 0 #a8701a; }
 .unit-link .go { background: var(--gold); color: #fff; font-weight: 800; padding: 9px 18px; border-radius: 999px; }
 @media (max-width: 640px) { .unit-link { grid-template-columns: 1fr; } .unit-link .go { justify-self: start; } }
 .gamecard.scr { background: linear-gradient(135deg, #7C5CBF, #9C5FC4 55%, #D6457A); }
@@ -387,6 +392,11 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
       <a class="unit-link" href="/English/jeopardy/unit1/">
         <span class="unit-tiles" aria-hidden="true"><i>U</i><i>1</i></span>
         <span><span class="tagline">Timeless B1 · Vocabulary</span><b>Unit 1 Word Games</b><span>All 133 words in five games: Scramble, Memory Match, Hot Seat, Missing Word and Quiz Board.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link a2" href="/English/jeopardy/a2-unit1/">
+        <span class="unit-tiles" aria-hidden="true"><i>A</i><i>2</i></span>
+        <span><span class="tagline">Limitless A2.2 · Unit 1A and 1B</span><b>A2 Unit 1 Games</b><span>All 100 words and the unit grammar: Scramble, Memory Match, Act It Out, Hot Seat, Missing Word, Grammar Battle and Quiz Board.</span></span>
         <span class="go">Open →</span>
       </a>
 
