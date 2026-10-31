@@ -3,11 +3,12 @@
    podium and Excel export. */
 (() => {
   "use strict";
-  const { $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, TYPE_NAMES, logo } = window.KW;
+  const { $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, TYPE_NAMES, logo, ic, avatar } = window.KW;
   const app = $("#app");
   const TIMES = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240];
   const TYPES = ["quiz", "tf", "multi", "type", "slider", "order", "poll", "cloud"];
-  const TYPE_ICON = { quiz: "◆", tf: "✓✗", multi: "☑", type: "⌨", slider: "⟷", order: "↕", poll: "📊", cloud: "☁" };
+  const TYPE_ICON = { quiz: "quiz", tf: "tf", multi: "multi", type: "type", slider: "slider", order: "order", poll: "poll", cloud: "cloud" };
+  const tIcon = (t, size = 18) => ic(TYPE_ICON[t] || "quiz", size);
   const LIBS = { xlsx: "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", qr: "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" };
   const scripts = {};
   const loadScript = src => scripts[src] ??= new Promise((ok, fail) => { const s = el("script", { src }); s.onload = ok; s.onerror = () => { delete scripts[src]; fail(new Error("Could not load " + src)); }; document.head.append(s); });
@@ -101,7 +102,7 @@
       if (!cur) { startQ(line); continue; }
       if ((m = line.match(/^(?:image|img|picture)\s*:\s*(\S+)/i))) { cur.image = m[1]; continue; }
       if ((m = line.match(/^(?:time|timer)\s*:\s*(\d+)/i))) { cur.tags.push(m[1] + "s"); continue; }
-      if ((m = line.match(/^[*+✓]\s*(.+)$/))) { cur.opts.push({ t: m[1], ok: true }); continue; }
+      if ((m = line.match(/^[*+]\s*(.+)$/))) { cur.opts.push({ t: m[1], ok: true }); continue; }
       if ((m = line.match(/^[-–•]\s*(.+)$/))) { cur.opts.push({ t: m[1], ok: false }); continue; }
       if ((m = line.match(/^=\s*(.+)$/))) { cur.answers.push(m[1]); continue; }
       if ((m = line.match(/^>\s*(.+)$/))) { cur.items.push(m[1]); continue; }
@@ -251,13 +252,13 @@ Number of questions: [e.g. 12]`;
   async function dashboard() {
     document.title = "Ka-Who? Studio";
     const main = el("main", { class: "studio" }, el("div", { class: "spin" }));
-    put(app, topbar(el("a", { class: "btn-x small", href: "/kawho", target: "_blank" }, "Player page ↗")), main);
+    put(app, topbar(el("a", { class: "btn-x small", href: "/kawho", target: "_blank" }, "Player page", ic("ext", 16))), main);
     try { quizzes = (await authApi("quizzes")).quizzes; } catch (e) { put(main, el("p", { class: "err" }, e.message)); return; }
     put(main,
       el("div", { class: "s-hero" }, el("div", {}, el("h1", { class: "s-title" }, "Your quizzes"), el("p", { class: "s-sub" }, quizzes.length ? "Press Host to start a live game. Players join at " + location.host + "/kawho" : "Make your first quiz. Paste questions or build them one by one.")),
         el("div", { class: "row" }, el("a", { class: "btn-x primary", href: "#/new" }, "+ New quiz"))),
       quizzes.length ? el("div", { class: "q-grid" }, quizzes.map(card)) :
-        el("div", { class: "empty-s" }, el("div", { class: "big-emoji" }, "🎉"), el("h2", { class: "s-h" }, "No quizzes yet"),
+        el("div", { class: "empty-s" }, owl("happy", 100), el("h2", { class: "s-h" }, "No quizzes yet"),
           el("div", { class: "row center" }, el("button", { class: "btn-x primary", onclick: async () => { const r = await authApi("quiz-save", { method: "POST", body: { data: parseAny(EXAMPLE_TEXT) } }); location.hash = "#/edit/" + r.id; } }, "Start from an example"), el("a", { class: "btn-x", href: "#/new" }, "Blank quiz"))));
   }
   function card(x) {
@@ -265,7 +266,7 @@ Number of questions: [e.g. 12]`;
     return el("article", { class: "q-card" },
       el("div", { class: "q-cover", style: d.cover ? `background-image:url("${encodeURI(d.cover)}")` : "" }, d.cover ? null : el("span", {}, ...d.questions.slice(0, 4).map((q, i) => shape(i, 34)))),
       el("div", { class: "q-body" }, el("h3", {}, d.title), el("div", { class: "fine left" }, `${n} question${n === 1 ? "" : "s"} · about ${Math.max(1, Math.round(d.questions.reduce((t, q) => t + q.time + 12, 0) / 60))} min`),
-        el("div", { class: "row" }, el("button", { class: "btn-x primary", onclick: () => host(x.id) }, "▶ Host"), el("a", { class: "btn-x", href: "#/edit/" + x.id }, "Edit"),
+        el("div", { class: "row" }, el("button", { class: "btn-x primary", onclick: () => host(x.id) }, ic("play", 16), "Host"), el("a", { class: "btn-x", href: "#/edit/" + x.id }, "Edit"),
           el("button", { class: "btn-x ghost", title: "Duplicate", onclick: async () => { await authApi("quiz-save", { method: "POST", body: { data: { ...d, title: d.title + " (copy)" } } }); dashboard(); } }, "Copy"),
           el("button", { class: "btn-x ghost danger", title: "Delete", onclick: async () => { if (!confirm(`Delete "${d.title}"?`)) return; await authApi("quiz-delete", { method: "POST", body: { id: x.id } }); dashboard(); } }, "Delete"))));
   }
@@ -312,12 +313,12 @@ Number of questions: [e.g. 12]`;
       if (!Q.questions.length) { toast("Add at least one question"); return; }
       if (bad.length) { toast(`Question ${bad[0][0] + 1}: ${bad[0][1][0]}`); const c = list.children[bad[0][0]]; if (c) c.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
       saveBtn.disabled = true;
-      try { const r = await authApi("quiz-save", { method: "POST", body: { id: id || undefined, data: Q } }); quizzes = []; dirty = false; saveBtn.textContent = "Saved ✓"; if (!id) { id = r.id; history.replaceState(null, "", "#/edit/" + id); } if (thenHost) host(id); }
+      try { const r = await authApi("quiz-save", { method: "POST", body: { id: id || undefined, data: Q } }); quizzes = []; dirty = false; put(saveBtn, ic("check", 18), "Saved"); if (!id) { id = r.id; history.replaceState(null, "", "#/edit/" + id); } if (thenHost) host(id); }
       catch (e) { toast(e.message); } finally { saveBtn.disabled = false; }
     }
     const coverBox = el("div");
     const drawCover = () => put(coverBox, Q.cover ? el("div", { class: "cover-prev", style: `background-image:url("${encodeURI(Q.cover)}")` }, el("button", { class: "x", "aria-label": "Remove cover", onclick: () => { delete Q.cover; mark(); drawCover(); } }, "×"))
-      : el("button", { class: "btn-x small", onclick: () => pickImage(1600, u => { Q.cover = u; mark(); drawCover(); }) }, "🖼 Add cover picture"));
+      : el("button", { class: "btn-x small", onclick: () => pickImage(1600, u => { Q.cover = u; mark(); drawCover(); }) }, ic("image", 18), "Add cover picture"));
     drawCover();
     const head = el("div", { class: "ed-head" },
       el("input", { class: "title-input", placeholder: "Quiz title", value: Q.title, "aria-label": "Quiz title", oninput: e => { Q.title = e.target.value; mark(); } }),
@@ -332,27 +333,27 @@ Number of questions: [e.g. 12]`;
         if (t === "slider") Object.assign(base, { min: 0, max: 100, correct: 50 });
         const nq = normQ(base); if (nq.options) nq.options = nq.options.map(o => ({ t: o.t, ok: false })); if (t === "tf") nq.options = [{ t: "True", ok: true }, { t: "False", ok: false }];
         Q.questions.push(nq); mark(); drawList(); setTimeout(() => { const c = list.lastElementChild; c.scrollIntoView({ behavior: "smooth", block: "center" }); c.querySelector("textarea").focus({ preventScroll: true }); }, 50);
-      } }, el("span", { class: "ti" }, TYPE_ICON[t]), TYPE_NAMES[t]))));
+      } }, tIcon(t, 16), TYPE_NAMES[t]))));
     }
     function drawList() { put(list, Q.questions.map((q, i) => qCard(q, i))); }
     function qCard(q, i) {
       const card = el("section", { class: "ed-q" });
       const warn = el("div", { class: "ed-warn" });
-      const check = () => { const p = problems(q); put(warn, p.length ? "⚠ " + p.join(" ") : ""); };
+      const check = () => { const p = problems(q); put(warn, p.length ? [ic("alert", 16), " " + p.join(" ")] : ""); };
       const redraw = () => { card.replaceWith(qCard(q, i)); };
       const sel = (opts, val, on, label) => el("select", { class: "sel", "aria-label": label, onchange: e => on(e.target.value) }, opts.map(([v, l]) => el("option", { value: v, selected: String(v) === String(val) }, l)));
       const imgBox = el("div", { class: "q-img-box" });
       const drawImg = () => put(imgBox, q.image ? el("div", { class: "img-prev" }, el("img", { src: q.image, alt: "" }), el("button", { class: "x", "aria-label": "Remove picture", onclick: () => { delete q.image; mark(); drawImg(); } }, "×"))
-        : el("button", { class: "btn-x small", onclick: () => pickImage(1280, u => { q.image = u; mark(); drawImg(); }) }, "🖼 Add picture"));
+        : el("button", { class: "btn-x small", onclick: () => pickImage(1280, u => { q.image = u; mark(); drawImg(); }) }, ic("image", 18), "Add picture"));
       drawImg();
       let typeUI;
       if (["quiz", "multi", "poll"].includes(q.type)) {
         const rows = el("div", { class: "opt-rows" });
         const draw = () => put(rows, q.options.map((o, k) => el("div", { class: "opt-row", style: `--c:${COLORS[k]}` }, shape(k, 22),
           el("input", { class: "opt-in", value: o.t, placeholder: `Answer ${k + 1}`, maxlength: 90, oninput: e => { o.t = e.target.value; mark(); check(); } }),
-          o.img ? el("button", { class: "opt-img", title: "Remove picture", onclick: () => { delete o.img; mark(); draw(); }, style: `background-image:url("${encodeURI(o.img)}")` }, "×") : el("button", { class: "icon-b", title: "Add a picture", "aria-label": "Add a picture to this answer", onclick: () => pickImage(600, u => { o.img = u; mark(); draw(); check(); }) }, "🖼"),
-          q.type === "poll" ? null : el("button", { class: "ok-b" + (o.ok ? " on" : ""), "aria-pressed": o.ok ? "true" : "false", title: "Right answer", onclick: () => { if (q.type === "quiz") q.options.forEach(x => x.ok = x === o ? !o.ok : false); else o.ok = !o.ok; mark(); draw(); check(); } }, "✓"),
-          el("button", { class: "icon-b", "aria-label": "Remove answer", disabled: q.options.length <= 2, onclick: () => { q.options.splice(k, 1); mark(); draw(); check(); } }, "×"))),
+          o.img ? el("button", { class: "opt-img", title: "Remove picture", onclick: () => { delete o.img; mark(); draw(); }, style: `background-image:url("${encodeURI(o.img)}")` }, "×") : el("button", { class: "icon-b", title: "Add a picture", "aria-label": "Add a picture to this answer", onclick: () => pickImage(600, u => { o.img = u; mark(); draw(); check(); }) }, ic("image", 18)),
+          q.type === "poll" ? null : el("button", { class: "ok-b" + (o.ok ? " on" : ""), "aria-pressed": o.ok ? "true" : "false", title: "Right answer", onclick: () => { if (q.type === "quiz") q.options.forEach(x => x.ok = x === o ? !o.ok : false); else o.ok = !o.ok; mark(); draw(); check(); } }, ic("check", 20)),
+          el("button", { class: "icon-b", "aria-label": "Remove answer", disabled: q.options.length <= 2, onclick: () => { q.options.splice(k, 1); mark(); draw(); check(); } }, ic("x", 18)))),
           q.options.length < 6 ? el("button", { class: "btn-x small ghost", onclick: () => { q.options.push({ t: "", ok: false }); mark(); draw(); check(); } }, "+ Add answer") : null);
         draw(); typeUI = rows;
       } else if (q.type === "tf") {
@@ -368,21 +369,21 @@ Number of questions: [e.g. 12]`;
         const rows = el("div", { class: "opt-rows" });
         const draw = () => put(rows, el("div", { class: "fine left" }, "Write them in the right order. Players get them mixed up."), q.items.map((t, k) => el("div", { class: "opt-row", style: `--c:${COLORS[k]}` }, el("b", { class: "ord-n" }, String(k + 1)),
           el("input", { class: "opt-in", value: t, maxlength: 60, placeholder: `Item ${k + 1}`, oninput: e => { q.items[k] = e.target.value; mark(); check(); } }),
-          el("button", { class: "icon-b", "aria-label": "Move up", disabled: k === 0, onclick: () => { [q.items[k - 1], q.items[k]] = [q.items[k], q.items[k - 1]]; mark(); draw(); } }, "↑"),
-          el("button", { class: "icon-b", "aria-label": "Remove item", disabled: q.items.length <= 2, onclick: () => { q.items.splice(k, 1); mark(); draw(); check(); } }, "×"))),
+          el("button", { class: "icon-b", "aria-label": "Move up", disabled: k === 0, onclick: () => { [q.items[k - 1], q.items[k]] = [q.items[k], q.items[k - 1]]; mark(); draw(); } }, ic("up", 18)),
+          el("button", { class: "icon-b", "aria-label": "Remove item", disabled: q.items.length <= 2, onclick: () => { q.items.splice(k, 1); mark(); draw(); check(); } }, ic("x", 18)))),
           q.items.length < 6 ? el("button", { class: "btn-x small ghost", onclick: () => { q.items.push(""); mark(); draw(); check(); } }, "+ Add item") : null);
         draw(); typeUI = rows;
       } else typeUI = el("p", { class: "fine left" }, "Players type a word or two. Their answers appear as a word cloud. No points.");
       add(card,
         el("div", { class: "ed-q-head" }, el("span", { class: "qn" }, String(i + 1)),
-          sel(TYPES.map(t => [t, TYPE_ICON[t] + "  " + TYPE_NAMES[t]]), q.type, v => { const nq = normQ({ ...q, type: v, options: (q.options || []).length ? q.options : v === "order" ? undefined : [{ t: "" }, { t: "" }], items: q.items || (q.options || []).map(o => o.t), answers: q.answers || [], correct: q.correct ?? 50, min: q.min ?? 0, max: q.max ?? 100 }); if (v === "poll" && nq.options) nq.options.forEach(o => o.ok = false); Q.questions[i] = nq; mark(); drawList(); }, "Question type"),
-          sel(TIMES.map(t => [t, `⏱ ${t} s`]), q.time, v => { q.time = +v; mark(); }, "Time"),
+          sel(TYPES.map(t => [t, TYPE_NAMES[t]]), q.type, v => { const nq = normQ({ ...q, type: v, options: (q.options || []).length ? q.options : v === "order" ? undefined : [{ t: "" }, { t: "" }], items: q.items || (q.options || []).map(o => o.t), answers: q.answers || [], correct: q.correct ?? 50, min: q.min ?? 0, max: q.max ?? 100 }); if (v === "poll" && nq.options) nq.options.forEach(o => o.ok = false); Q.questions[i] = nq; mark(); drawList(); }, "Question type"),
+          sel(TIMES.map(t => [t, `${t} seconds`]), q.time, v => { q.time = +v; mark(); }, "Time"),
           ["poll", "cloud"].includes(q.type) ? null : sel([[1, "Standard points"], [2, "Double points"], [0, "No points"]], q.points, v => { q.points = +v; mark(); }, "Points"),
           el("span", { class: "spacer" }),
-          el("button", { class: "icon-b", "aria-label": "Move up", disabled: i === 0, onclick: () => { [Q.questions[i - 1], Q.questions[i]] = [Q.questions[i], Q.questions[i - 1]]; mark(); drawList(); } }, "↑"),
-          el("button", { class: "icon-b", "aria-label": "Move down", disabled: i === Q.questions.length - 1, onclick: () => { [Q.questions[i + 1], Q.questions[i]] = [Q.questions[i], Q.questions[i + 1]]; mark(); drawList(); } }, "↓"),
-          el("button", { class: "icon-b", "aria-label": "Duplicate", onclick: () => { Q.questions.splice(i + 1, 0, JSON.parse(JSON.stringify(q))); mark(); drawList(); } }, "⧉"),
-          el("button", { class: "icon-b danger", "aria-label": "Delete question", onclick: () => { if (Q.questions.length > 1 || confirm("Delete the last question?")) { Q.questions.splice(i, 1); mark(); drawList(); } } }, "🗑")),
+          el("button", { class: "icon-b", "aria-label": "Move up", disabled: i === 0, onclick: () => { [Q.questions[i - 1], Q.questions[i]] = [Q.questions[i], Q.questions[i - 1]]; mark(); drawList(); } }, ic("up", 18)),
+          el("button", { class: "icon-b", "aria-label": "Move down", disabled: i === Q.questions.length - 1, onclick: () => { [Q.questions[i + 1], Q.questions[i]] = [Q.questions[i], Q.questions[i + 1]]; mark(); drawList(); } }, ic("down", 18)),
+          el("button", { class: "icon-b", "aria-label": "Duplicate", onclick: () => { Q.questions.splice(i + 1, 0, JSON.parse(JSON.stringify(q))); mark(); drawList(); } }, ic("copy", 18)),
+          el("button", { class: "icon-b danger", "aria-label": "Delete question", onclick: () => { if (Q.questions.length > 1 || confirm("Delete the last question?")) { Q.questions.splice(i, 1); mark(); drawList(); } } }, ic("trash", 18))),
         el("textarea", { class: "q-in", rows: 2, maxlength: 240, placeholder: "Type your question", oninput: e => { q.q = e.target.value; mark(); check(); } }, q.q),
         imgBox, typeUI, warn);
       check();
@@ -399,15 +400,15 @@ Number of questions: [e.g. 12]`;
           parsed = parseAny(ta.value);
           const bad = parsed.questions.map((q, i) => [i, problems(q)]).filter(([, p]) => p.length);
           status.classList.add(bad.length ? "bad" : "ok");
-          put(status, `${bad.length ? "⚠" : "✓"} ${parsed.questions.length} questions found` + (parsed.title ? ` · "${parsed.title}"` : ""),
-            el("div", { class: "chips" }, parsed.questions.map((q, i) => el("span", { class: "mini-q" + (problems(q).length ? " bad" : ""), title: problems(q).join(" ") || q.q }, `${i + 1}. ${TYPE_ICON[q.type]} ${TYPE_NAMES[q.type]}`))),
+          put(status, el("span", { class: "st-line" }, ic(bad.length ? "alert" : "check", 18), ` ${parsed.questions.length} questions found` + (parsed.title ? ` · "${parsed.title}"` : "")),
+            el("div", { class: "chips" }, parsed.questions.map((q, i) => el("span", { class: "mini-q" + (problems(q).length ? " bad" : ""), title: problems(q).join(" ") || q.q }, `${i + 1}. ${TYPE_NAMES[q.type]}`))),
             bad.length ? el("div", {}, `Question ${bad[0][0] + 1}: ${bad[0][1][0]} You can fix it after importing too.`) : null);
         } catch (e) { status.classList.add("bad"); status.textContent = String(e); }
       };
       ta.addEventListener("input", () => { clearTimeout(check.t); check.t = setTimeout(check, 200); });
       const use = replace => { if (!parsed || !parsed.questions.length) { toast("Nothing to import yet"); return; } if (parsed.title && (replace || !Q.title)) { Q.title = parsed.title; head.querySelector(".title-input").value = parsed.title; } Q.questions = replace ? parsed.questions : Q.questions.filter(q => q.q || problems(q).length === 0).concat(parsed.questions); mark(); toast(`${parsed.questions.length} questions imported`); tab = "visual"; tabs.querySelectorAll("button").forEach((b, k) => b.classList.toggle("on", k === 0)); body(); };
       return el("div", { class: "paste-panel" },
-        el("div", { class: "row" }, el("button", { class: "btn-x small", onclick: () => { navigator.clipboard.writeText(AI_PROMPT).then(() => toast("Prompt copied. Paste it into ChatGPT."), () => { ta.value = AI_PROMPT; }); } }, "✨ Copy AI prompt"),
+        el("div", { class: "row" }, el("button", { class: "btn-x small", onclick: () => { navigator.clipboard.writeText(AI_PROMPT).then(() => toast("Prompt copied. Paste it into ChatGPT."), () => { ta.value = AI_PROMPT; }); } }, ic("spark", 16), "Copy AI prompt"),
           el("button", { class: "btn-x small", onclick: () => { ta.value = EXAMPLE_TEXT; check(); } }, "Fill example")),
         ta, status,
         el("div", { class: "row" }, el("button", { class: "btn-x primary", onclick: () => use(true) }, "Replace all questions"), el("button", { class: "btn-x", onclick: () => use(false) }, "Add to the end")),
@@ -422,8 +423,8 @@ Number of questions: [e.g. 12]`;
 [double]  [no points]          points
 image: https://…               picture for the question`)));
     }
-    put(app, topbar(saveBtn, el("button", { class: "btn-x", onclick: () => save(true) }, "▶ Save & host")),
-      el("main", { class: "studio narrow" }, el("a", { class: "back", href: "#/", onclick: e => { if (dirty && !confirm("Leave without saving?")) e.preventDefault(); } }, "← All quizzes"), head, tabs, bodyBox));
+    put(app, topbar(saveBtn, el("button", { class: "btn-x", onclick: () => save(true) }, ic("play", 16), "Save & host")),
+      el("main", { class: "studio narrow" }, el("a", { class: "back", href: "#/", onclick: e => { if (dirty && !confirm("Leave without saving?")) e.preventDefault(); } }, ic("left", 16), "All quizzes"), head, tabs, bodyBox));
     body();
     addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } }, { once: true });
   }
@@ -453,12 +454,12 @@ image: https://…               picture for the question`)));
     const answeredN = () => H.players.filter(p => p.answered).length;
     function controls(...btns) {
       return el("div", { class: "h-bar" }, logo(), el("span", { class: "h-title" }, H.quiz.title), el("span", { class: "spacer" }),
-        el("button", { class: "btn-x small ghost", title: "Sound", onclick: e => { const on = sound.toggle(); e.currentTarget.textContent = on ? "🔊" : "🔇"; if (on && st().phase === "lobby" && music) sound.music(true); } }, sound.on ? "🔊" : "🔇"),
-        el("button", { class: "btn-x small ghost", title: "Full screen", onclick: () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); } }, "⛶"),
-        el("button", { class: "btn-x small ghost theme-b", title: "Day or night look (players follow)", onclick: () => { const t = window.KW.toggleTheme(); act("theme", { theme: t }); } }, window.KW.theme() === "night" ? "☀" : "☾"),
+        el("button", { class: "btn-x small ghost", title: "Sound", onclick: e => { const on = sound.toggle(); if (on && st().phase === "lobby" && music) sound.music(true); put(e.currentTarget, ic(on ? "vol" : "mute", 18)); } }, ic(sound.on ? "vol" : "mute", 18)),
+        el("button", { class: "btn-x small ghost", title: "Full screen", onclick: () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); } }, ic("full", 18)),
+        el("button", { class: "btn-x small ghost theme-b", title: "Day or night look (players follow)", onclick: () => { const t = window.KW.toggleTheme(); act("theme", { theme: t }); } }, ic(window.KW.theme() === "night" ? "sun" : "moon", 18)),
         el("button", { class: "btn-x small ghost", onclick: () => { if (confirm("End the game now and show the podium?")) act("end"); } }, "End"), btns);
     }
-    const nextLabel = () => st().phase === "lobby" ? "Start ▶" : st().phase === "question" ? "Skip ▶" : st().phase === "reveal" ? (st().q >= Qs().length - 1 ? "Final results 🏆" : "Next ▶") : st().phase === "leaderboard" ? "Next now ▶" : "";
+    const nextLabel = () => { const p = st().phase; return p === "lobby" ? ["Start", ic("play", 16)] : p === "question" ? ["Skip", ic("right", 18)] : p === "reveal" ? (st().q >= Qs().length - 1 ? [ic("trophy", 18), "Final results"] : ["Next", ic("right", 18)]) : p === "leaderboard" ? ["Next now", ic("right", 18)] : ""; };
     // the leaderboard shows itself after "Next", then counts down into the next question
     const LB_SECONDS = 6;
     let lbTimer = null, lbPaused = false;
@@ -505,11 +506,11 @@ image: https://…               picture for the question`)));
     async function lobby() {
       const url = location.host + "/kawho";
       const qr = el("canvas", { class: "qr", width: 420, height: 420, "aria-label": "QR code to join" });
-      const lock = el("button", { class: "btn-x small", onclick: () => act(st().locked ? "unlock" : "lock") }, st().locked ? "🔒 Locked" : "🔓 Open");
-      put(stage, controls(lock, el("button", { class: "btn-x small", onclick: e => { music = !music; store.set("kw.music", music); sound.music(music); e.currentTarget.textContent = music ? "♫ Music on" : "♫ Music off"; } }, music ? "♫ Music on" : "♫ Music off")),
+      const lock = el("button", { class: "btn-x small", onclick: () => act(st().locked ? "unlock" : "lock") }, st().locked ? [ic("lock", 16), "Locked"] : [ic("unlock", 16), "Open"]);
+      put(stage, controls(lock, el("button", { class: "btn-x small", onclick: e => { music = !music; store.set("kw.music", music); sound.music(music); put(e.currentTarget, ic("music", 16), music ? "Music on" : "Music off"); } }, ic("music", 16), music ? "Music on" : "Music off")),
         el("section", { class: "lobby-h" },
           el("div", { class: "join-box" }, el("div", { class: "join-l" }, el("div", { class: "j1" }, "Join at ", el("b", {}, url)), el("div", { class: "j2" }, "Game PIN:"), el("div", { class: "pin-big" }, pin.slice(0, 3) + " " + pin.slice(3))), qr),
-          el("div", { class: "lobby-bottom" }, el("div", { class: "row" }, owl("idle", 64), el("div", { class: "p-count" }, "Who's here? ", el("b", { id: "pc" }, "0")), el("span", { class: "spacer" }), el("button", { class: "btn-x primary big", onclick: next }, "Start ▶")),
+          el("div", { class: "lobby-bottom" }, el("div", { class: "row" }, owl("idle", 64), el("div", { class: "p-count" }, "Who's here? ", el("b", { id: "pc" }, "0")), el("span", { class: "spacer" }), el("button", { class: "btn-x primary big", onclick: next }, "Start", ic("play", 18))),
             el("div", { class: "bubbles", id: "bubbles" }, el("div", { class: "waiting" }, "Nobody yet. Scan the code or go to ", url)))));
       lobbyPlayers(true);
       if (music) sound.music(true);
@@ -524,29 +525,29 @@ image: https://…               picture for the question`)));
         const before = new Set(lobbyIds.split(","));
         if (H.players.length > (lobbyIds ? lobbyIds.split(",").length : 0) && !force) sound.play("join");
         lobbyIds = ids;
-        put(box, H.players.length ? H.players.map(p => el("button", { class: "bubble" + (before.has(p.id) ? "" : " new"), "data-id": p.id, title: "Click to remove", onclick: () => { if (confirm(`Remove ${p.name} from the game?`)) act("kick", { pid: p.id }); } }, el("span", { class: "b-av" }, p.avatar), p.name))
+        put(box, H.players.length ? H.players.map(p => el("button", { class: "bubble" + (before.has(p.id) ? "" : " new"), "data-id": p.id, title: "Click to remove", onclick: () => { if (confirm(`Remove ${p.name} from the game?`)) act("kick", { pid: p.id }); } }, avatar(p.avatar, 30), p.name))
           : el("div", { class: "waiting" }, "Nobody yet. Scan the code or go to ", location.host + "/kawho"));
       }
       for (const p of H.players) if (p.react_at && p.react_at !== seenReact[p.id]) {
         const fresh = seenReact[p.id] !== undefined || Date.now() - (p.react_at - offset) < 5000; seenReact[p.id] = p.react_at;
-        const b = box.querySelector(`[data-id="${p.id}"]`); if (b && fresh) { const f = el("span", { class: "float-emoji" }, p.react); b.append(f); setTimeout(() => f.remove(), 1600); }
+        const b = box.querySelector(`[data-id="${p.id}"]`); if (b && fresh) { const f = el("span", { class: "float-emoji" }, ic(p.react || "like", 30)); b.append(f); setTimeout(() => f.remove(), 1600); }
       }
     }
-    function qHead() { const s = st(), q = cur(); return el("div", { class: "q-top" }, el("span", { class: "q-num" }, `${s.q + 1} / ${Qs().length}`), el("span", { class: "q-type" }, TYPE_ICON[q.type], " ", TYPE_NAMES[q.type], q.points === 2 ? " · ×2" : q.points === 0 && !["poll", "cloud"].includes(q.type) ? " · no points" : "")); }
+    function qHead() { const s = st(), q = cur(); return el("div", { class: "q-top" }, el("span", { class: "q-num" }, `${s.q + 1} / ${Qs().length}`), el("span", { class: "q-type" }, tIcon(q.type, 18), " ", TYPE_NAMES[q.type], q.points === 2 ? " · ×2" : q.points === 0 && !["poll", "cloud"].includes(q.type) ? " · no points" : "")); }
     function ready() {
       const q = cur();
       put(stage, controls(), el("section", { class: "ready-h" }, qHead(), el("h1", { class: "q-text big" }, q.q), el("div", { class: "ready-row" }, owl("think", 150), el("div", { class: "ready-n" }, "3")), el("div", { class: "ready-bar" }, el("i"))));
       sound.play("go");
     }
-    const optTiles = (q, mode) => el("div", { class: "h-opts n" + q.options.length }, q.options.map((o, i) => el("div", { class: "h-opt" + (mode === "reveal" ? (o.ok || q.type === "poll" ? " right" : " dim") : ""), style: `--c:${COLORS[i]}` }, shape(i, 40), o.img ? el("img", { src: o.img, alt: "" }) : null, el("span", {}, o.t), mode === "reveal" && o.ok ? el("b", { class: "tick" }, "✓") : null)));
+    const optTiles = (q, mode) => el("div", { class: "h-opts n" + q.options.length }, q.options.map((o, i) => el("div", { class: "h-opt" + (mode === "reveal" ? (o.ok || q.type === "poll" ? " right" : " dim") : ""), style: `--c:${COLORS[i]}` }, shape(i, 40), o.img ? el("img", { src: o.img, alt: "" }) : null, el("span", {}, o.t), mode === "reveal" && o.ok ? el("b", { class: "tick" }, ic("check", 26)) : null)));
     function question() {
       const s = st(), q = cur();
       let bottom;
       if (q.options) bottom = optTiles(q);
       else if (q.type === "order") bottom = el("div", { class: "h-order" }, (s.order || []).map((ix, k) => el("div", { class: "h-opt", style: `--c:${COLORS[k]}` }, shape(k, 34), el("span", {}, q.items[ix]))));
       else if (q.type === "slider") bottom = el("div", { class: "h-hint" }, `Slide to a number between ${q.min} and ${q.max}${q.unit ? " " + q.unit : ""}`);
-      else bottom = el("div", { class: "h-hint" }, q.type === "cloud" ? "☁ Type a word or two on your phone" : "⌨ Type your answer on your phone");
-      put(stage, controls(el("button", { class: "btn-x small primary", onclick: next }, "Skip ▶")),
+      else bottom = el("div", { class: "h-hint" }, q.type === "cloud" ? [ic("cloud", 30), " Type a word or two on your phone"] : [ic("keyboard", 30), " Type your answer on your phone"]);
+      put(stage, controls(el("button", { class: "btn-x small primary", onclick: next }, "Skip", ic("right", 18))),
         el("section", { class: "q-h" }, qHead(), el("h1", { class: "q-text" }, q.q),
           el("div", { class: "q-mid" }, el("div", { class: "h-ring" }, el("b", {}, String(q.time))), q.image ? el("img", { class: "q-pic", src: q.image, alt: "" }) : el("div", { class: "q-art" }, owl("think", 170)), el("div", { class: "h-count" }, el("b", {}, "0"), el("span", {}, "answers"))),
           bottom));
@@ -557,7 +558,7 @@ image: https://…               picture for the question`)));
       let mid;
       if (q.options) {
         const max = Math.max(1, ...(x.counts || [0]));
-        mid = el("div", { class: "chart" }, q.options.map((o, i) => el("div", { class: "col" + (q.type === "poll" || o.ok ? "" : " dim"), style: `--c:${COLORS[i]}` }, el("b", {}, String((x.counts || [])[i] || 0), o.ok ? " ✓" : ""), el("div", { class: "bar-box" }, el("div", { class: "bar", style: `height:${Math.max(3, ((x.counts || [])[i] || 0) / max * 100)}%` })), shape(i, 30))));
+        mid = el("div", { class: "chart" }, q.options.map((o, i) => el("div", { class: "col" + (q.type === "poll" || o.ok ? "" : " dim"), style: `--c:${COLORS[i]}` }, el("b", {}, String((x.counts || [])[i] || 0), o.ok ? ic("check", 22) : null), el("div", { class: "bar-box" }, el("div", { class: "bar", style: `height:${Math.max(3, ((x.counts || [])[i] || 0) / max * 100)}%` })), shape(i, 30))));
       } else if (q.type === "type" || q.type === "cloud") {
         const words = x.words || [], mx = Math.max(1, ...words.map(w => w.n)), accepted = new Set((q.answers || []).map(a => fold(a).replace(/[^a-z0-9]+/g, " ").trim()));
         mid = words.length ? el("div", { class: "cloud" }, words.map((w, i) => el("span", { class: q.type === "type" ? (accepted.has(fold(w.text).replace(/[^a-z0-9]+/g, " ").trim()) ? "w right" : "w dim") : "w", style: `font-size:${18 + 46 * (w.n / mx)}px;--c:${COLORS[i % 6]}` }, w.text, el("sub", {}, String(w.n))))) : el("div", { class: "h-hint" }, "No answers");
@@ -582,10 +583,10 @@ image: https://…               picture for the question`)));
     function board() {
       const top = st().top || [];
       put(stage, controls(), el("section", { class: "lb-h" }, el("div", { class: "lb-head" }, owl("happy", 90), el("h1", { class: "lb-title" }, "Who's winning?")),
-        el("div", { class: "lb" }, top.length ? top.map((p, i) => el("div", { class: "lb-row", style: `--d:${i * 120}ms` }, el("span", { class: "lb-rank" }, String(i + 1)), el("span", { class: "lb-av" }, p.avatar), el("span", { class: "lb-name" }, p.name, p.streak >= 3 ? el("span", { class: "fire" }, ` 🔥${p.streak}`) : null),
-          p.move > 0 ? el("span", { class: "mv up" }, "▲", p.move) : p.move < 0 ? el("span", { class: "mv down" }, "▼", -p.move) : el("span", { class: "mv" }), el("b", { class: "lb-score" }, p.score.toLocaleString()))) : el("p", {}, "No players yet")),
+        el("div", { class: "lb" }, top.length ? top.map((p, i) => el("div", { class: "lb-row", style: `--d:${i * 120}ms` }, el("span", { class: "lb-rank" }, String(i + 1)), avatar(p.avatar, 44), el("span", { class: "lb-name" }, p.name, p.streak >= 3 ? el("span", { class: "fire" }, ic("flame", 18), p.streak) : null),
+          p.move > 0 ? el("span", { class: "mv up" }, ic("up", 18), p.move) : p.move < 0 ? el("span", { class: "mv down" }, ic("down", 18), -p.move) : el("span", { class: "mv" }), el("b", { class: "lb-score" }, p.score.toLocaleString()))) : el("p", {}, "No players yet")),
         el("div", { class: "lb-next" }, el("span", { class: "lb-count" }, el("i", { id: "lbBar" }), el("b", { id: "lbN" }, `Next question in ${LB_SECONDS}`)),
-          el("button", { class: "btn-x small", id: "lbPause", onclick: () => { lbPaused = !lbPaused; $("#lbPause").textContent = lbPaused ? "▶ Continue" : "❚❚ Pause"; } }, "❚❚ Pause"),
+          el("button", { class: "btn-x small", id: "lbPause", onclick: () => { lbPaused = !lbPaused; put($("#lbPause"), ic(lbPaused ? "play" : "pause", 16), lbPaused ? "Continue" : "Pause"); } }, ic("pause", 16), "Pause"),
           el("button", { class: "btn-x primary", onclick: next }, nextLabel()))));
       sound.play("go");
       stopLb(); lbPaused = false;
@@ -601,32 +602,32 @@ image: https://…               picture for the question`)));
     }
     async function podium() {
       const top = st().top || [];
-      const spot = (p, place) => p ? el("div", { class: "pod p" + place }, el("div", { class: "pod-av" }, p.avatar), el("div", { class: "pod-name" }, p.name), el("div", { class: "pod-score" }, p.score.toLocaleString()), el("div", { class: "pod-block" }, String(place))) : el("div", { class: "pod p" + place + " empty" });
+      const spot = (p, place) => p ? el("div", { class: "pod p" + place }, el("div", { class: "pod-av" }, avatar(p.avatar, 76)), el("div", { class: "pod-name" }, p.name), el("div", { class: "pod-score" }, p.score.toLocaleString()), el("div", { class: "pod-block" }, String(place))) : el("div", { class: "pod p" + place + " empty" });
       put(stage, controls(), el("section", { class: "podium-h" }, el("div", { class: "lb-head" }, owl("happy", 100), el("h1", { class: "lb-title" }, "And the owl says… who?")),
         el("div", { class: "podium" }, spot(top[1], 2), spot(top[0], 1), spot(top[2], 3)),
-        top.length > 3 ? el("div", { class: "rest" }, top.slice(3).map((p, i) => el("span", {}, `${i + 4}. ${p.avatar} ${p.name} · ${p.score.toLocaleString()}`))) : null,
-        el("div", { class: "row center" }, el("button", { class: "btn-x primary", onclick: e => exportXlsx(e.currentTarget) }, "⬇ Download results (Excel)"),
+        top.length > 3 ? el("div", { class: "rest" }, top.slice(3).map((p, i) => el("span", {}, `${i + 4}. `, avatar(p.avatar, 22), ` ${p.name} · ${p.score.toLocaleString()}`))) : null,
+        el("div", { class: "row center" }, el("button", { class: "btn-x primary", onclick: e => exportXlsx(e.currentTarget) }, ic("download", 18), "Download results (Excel)"),
           el("button", { class: "btn-x", onclick: () => { if (H.quizId) host(H.quizId); else location.hash = "#/"; } }, "Play again"),
           el("a", { class: "btn-x ghost", href: "#/" }, "Back to studio"))));
       sound.play("win"); setTimeout(() => confetti(8000), 2200);
     }
     async function exportXlsx(btn) {
-      btn.disabled = true; btn.textContent = "Preparing…";
+      btn.disabled = true; put(btn, "Preparing…");
       try {
         await loadScript(LIBS.xlsx);
         const r = await authApi("results", { query: { pin } }), X = window.XLSX, qs = r.quiz.questions;
         const byP = {}; for (const a of r.answers) (byP[a.player_id] ||= {})[a.q] = a;
         const txt = (q, a, qi) => { if (a == null) return ""; if (q.type === "multi") return [].concat(a).map(i => q.options[i] ? q.options[i].t : "").join("; "); if (q.options && typeof a === "number") return q.options[a] ? q.options[a].t : ""; if (q.type === "order") return [].concat(a).map(i => q.items[((r.orders || {})[qi] || [])[i]] ?? "?").join(" > "); return String(a); };
-        const lb = [["Rank", "Avatar", "Name", "Score", "Right answers", "Accuracy"]].concat(r.players.map((p, i) => { const mine = Object.values(byP[p.id] || {}); const right = mine.filter(a => a.correct).length, scored = qs.filter(q => !["poll", "cloud"].includes(q.type)).length; return [i + 1, p.avatar, p.name, p.score, right, scored ? right / scored : 0]; }));
-        const ans = [["Name", ...qs.map((q, i) => `${i + 1}. ${q.q}`)]].concat(r.players.map(p => [p.name, ...qs.map((q, i) => { const a = (byP[p.id] || {})[i]; return a ? `${txt(q, a.answer, i)}${a.correct === true ? " ✓" : a.correct === false ? " ✗" : ""}${a.points ? ` (+${a.points})` : ""}` : "—"; })]));
+        const lb = [["Rank", "Name", "Score", "Right answers", "Accuracy"]].concat(r.players.map((p, i) => { const mine = Object.values(byP[p.id] || {}); const right = mine.filter(a => a.correct).length, scored = qs.filter(q => !["poll", "cloud"].includes(q.type)).length; return [i + 1, p.name, p.score, right, scored ? right / scored : 0]; }));
+        const ans = [["Name", ...qs.map((q, i) => `${i + 1}. ${q.q}`)]].concat(r.players.map(p => [p.name, ...qs.map((q, i) => { const a = (byP[p.id] || {})[i]; return a ? `${txt(q, a.answer, i)}${a.correct === true ? " (right)" : a.correct === false ? " (wrong)" : ""}${a.points ? ` (+${a.points})` : ""}` : "—"; })]));
         const qst = [["#", "Question", "Type", "Answered", "Right", "% right", "Average time (s)"]].concat(qs.map((q, i) => { const a = r.answers.filter(x => x.q === i), right = a.filter(x => x.correct).length; return [i + 1, q.q, TYPE_NAMES[q.type], a.length, ["poll", "cloud"].includes(q.type) ? "" : right, ["poll", "cloud"].includes(q.type) || !a.length ? "" : right / a.length, a.length ? Math.round(a.reduce((t, x) => t + x.ms, 0) / a.length / 100) / 10 : ""]; }));
         const wb = X.utils.book_new(), s1 = X.utils.aoa_to_sheet(lb), s2 = X.utils.aoa_to_sheet(ans), s3 = X.utils.aoa_to_sheet(qst);
-        for (let i = 1; i < lb.length; i++) { const c = s1[X.utils.encode_cell({ r: i, c: 5 })]; if (c) c.z = "0%"; }
+        for (let i = 1; i < lb.length; i++) { const c = s1[X.utils.encode_cell({ r: i, c: 4 })]; if (c) c.z = "0%"; }
         for (let i = 1; i < qst.length; i++) { const c = s3[X.utils.encode_cell({ r: i, c: 5 })]; if (c && typeof c.v === "number") c.z = "0%"; }
-        s1["!cols"] = [{ wch: 6 }, { wch: 7 }, { wch: 22 }, { wch: 10 }, { wch: 14 }, { wch: 10 }]; s2["!cols"] = [{ wch: 20 }, ...qs.map(() => ({ wch: 26 }))]; s3["!cols"] = [{ wch: 4 }, { wch: 50 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 9 }, { wch: 16 }];
+        s1["!cols"] = [{ wch: 6 }, { wch: 22 }, { wch: 10 }, { wch: 14 }, { wch: 10 }]; s2["!cols"] = [{ wch: 20 }, ...qs.map(() => ({ wch: 26 }))]; s3["!cols"] = [{ wch: 4 }, { wch: 50 }, { wch: 16 }, { wch: 10 }, { wch: 8 }, { wch: 9 }, { wch: 16 }];
         X.utils.book_append_sheet(wb, s1, "Leaderboard"); X.utils.book_append_sheet(wb, s2, "Answers"); X.utils.book_append_sheet(wb, s3, "Questions");
         X.writeFile(wb, `kawho-${(r.quiz.title || "quiz").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${new Date().toISOString().slice(0, 10)}.xlsx`);
-      } catch (e) { toast(e.message); } finally { btn.disabled = false; btn.textContent = "⬇ Download results (Excel)"; }
+      } catch (e) { toast(e.message); } finally { btn.disabled = false; put(btn, ic("download", 18), "Download results (Excel)"); }
     }
     poll();
   }

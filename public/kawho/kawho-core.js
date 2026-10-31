@@ -108,7 +108,55 @@
     })();
   }
 
-  const AVATARS = ["🦊", "🐼", "🐸", "🐯", "🦁", "🐨", "🐙", "🦄", "🐝", "🐢", "🦉", "🐧", "🐬", "🦖", "🐳", "🦋", "🍉", "🌵", "🚀", "⚡", "🍩", "🎧", "🌈", "🐻"];
+  /* ---------- icons (line icons, no emoji anywhere) ---------- */
+  const IC = {
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+    vol: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
+    mute: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>',
+    full: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    image: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+    trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>',
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+    up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+    left: '<path d="M19 12H5M11 6l-6 6 6 6"/>', right: '<path d="M5 12h14M13 6l6 6-6 6"/>', ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    check: '<path d="M4.5 12.5l5 5L19.5 7"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', plus: '<path d="M12 5v14M5 12h14"/>',
+    play: '<path d="M7 4.5v15l12-7.5z" fill="currentColor"/>', pause: '<path d="M8 5v14M16 5v14"/>',
+    trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4a3 3 0 0 0 4 4M16 6h4a3 3 0 0 1-4 4M12 13v4M8 21h8M9 17h6v4H9z"/>',
+    flame: '<path d="M12 22a7 7 0 0 0 7-7c0-4-3-6-4-10-1 3-3 4-4 6-1-1-1.5-2-1.5-3C6 10 5 12.5 5 15a7 7 0 0 0 7 7z"/>',
+    crown: '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
+    medal: '<circle cx="12" cy="15" r="6"/><path d="M8.5 10L6 3h4l2 5M15.5 10L18 3h-4l-1.4 3.5"/>',
+    download: '<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>', spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',
+    alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
+    cloud: '<path d="M7 18a5 5 0 1 1 1.2-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/>',
+    // question types
+    quiz: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/>', tf: '<path d="M3 12.5l3.5 3.5L13 9.5M14 9l6 6M20 9l-6 6"/>',
+    multi: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M7.5 12l3 3 6-6"/>', type: '<path d="M4 7V5h16v2M9 19h6M12 5v14"/>',
+    slider: '<path d="M3 12h18"/><circle cx="14" cy="12" r="3.5" fill="currentColor"/>', order: '<path d="M8 4v16M4 8l4-4 4 4M16 20V4M12 16l4 4 4-4"/>',
+    poll: '<path d="M5 20V12M12 20V5M19 20v-6"/>',
+    // reactions
+    like: '<path d="M7 11v9H4v-9zM7 11l4-7a2 2 0 0 1 3 2l-1 4h6a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.8 20H7"/>',
+    haha: '<circle cx="12" cy="12" r="9"/><path d="M7.5 13.5a4.5 4.5 0 0 0 9 0zM8 9.5l2 1-2 1M16 9.5l-2 1 2 1"/>',
+    wow: '<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><circle cx="12" cy="15.5" r="2"/>',
+    fire: '<path d="M12 22a7 7 0 0 0 7-7c0-4-3-6-4-10-1 3-3 4-4 6-1-1-1.5-2-1.5-3C6 10 5 12.5 5 15a7 7 0 0 0 7 7z"/>',
+    love: '<path d="M12 20s-7.5-4.6-9.5-9.3C1 7.4 3 4 6.6 4c2.1 0 3.6 1.2 5.4 3.2C13.8 5.2 15.3 4 17.4 4 21 4 23 7.4 21.5 10.7 19.5 15.4 12 20 12 20z"/>',
+    clap: '<path d="M8 13l-2.5-2.5a1.5 1.5 0 0 1 2.1-2.1L11 11.8M9.5 8.5L8 7a1.5 1.5 0 0 1 2.1-2.1l5.4 5.4M12.5 7.5l.5-.5a1.5 1.5 0 0 1 2.1 0l3.4 3.4a6 6 0 0 1-8.5 8.5L6 15a1.5 1.5 0 0 1 2.1-2.1L10 14.8M18 3l.5 2M21 6l-2 .5"/>'
+  };
+  const ic = (name, size = 20, cls = "") => el("span", { class: "ic " + cls, style: `--i:${size}px`, "aria-hidden": "true", html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${IC[name] || ""}</svg>` });
+  const REACTS = ["like", "haha", "wow", "fire", "love", "clap"];
+
+  // 24 little critters in the owl's style: 8 colours x 3 ear shapes
+  const AV_COLORS = ["#FF5B3A", "#2D5BFF", "#FFC21A", "#19C39C", "#B48CFF", "#FF7AB6", "#38B6FF", "#8BC34A"];
+  const AVATARS = Array.from({ length: 24 }, (_, i) => "a" + i);
+  function avatar(id, size = 40) {
+    const n = Math.max(0, AVATARS.indexOf(id)), c = AV_COLORS[n % 8], ears = Math.floor(n / 8);
+    const earPath = ears === 0 ? '<circle cx="11" cy="11" r="6"/><circle cx="37" cy="11" r="6"/>' : ears === 1 ? '<path d="M7 20L9 3l11 9zM41 20L39 3 28 12z"/>' : '<path d="M14 9q4-8 10-6-4 2-4 8zM34 9q-4-8-10-6 4 2 4 8z"/>';
+    return el("span", { class: "avatar", style: `--a:${size}px`, "aria-hidden": "true", html: `<svg viewBox="0 0 48 48"><g fill="${c}" stroke="#151515" stroke-width="2.5" stroke-linejoin="round">${earPath}<rect x="5" y="9" width="38" height="35" rx="17"/></g><circle cx="17" cy="24" r="6.5" fill="#fff" stroke="#151515" stroke-width="2.2"/><circle cx="31" cy="24" r="6.5" fill="#fff" stroke="#151515" stroke-width="2.2"/><circle cx="18" cy="25" r="2.8" fill="#151515"/><circle cx="32" cy="25" r="2.8" fill="#151515"/><path d="M21 33q3 3 6 0" fill="none" stroke="#151515" stroke-width="2.4" stroke-linecap="round"/></svg>` });
+  }
   const TYPE_NAMES = { quiz: "Quiz", tf: "True or false", multi: "Pick all correct", type: "Type the answer", slider: "Slider", order: "Put in order", poll: "Poll", cloud: "Word cloud" };
   const logo = (size = "") => el("div", { class: "logo " + size }, owl("idle", size === "big" ? 92 : 40), el("span", { class: "logo-word" }, "Ka", el("i", {}, "-"), el("b", {}, "Who?")));
 
@@ -118,11 +166,11 @@
     document.documentElement.dataset.theme = t === "night" ? "night" : "day";
     const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", t === "night" ? "#0D1017" : "#F4EBDC");
     if (save) store.set("kw.theme", t);
-    document.querySelectorAll(".theme-b").forEach(b => { b.textContent = t === "night" ? "☀" : "☾"; });
+    document.querySelectorAll(".theme-b").forEach(b => put(b, ic(t === "night" ? "sun" : "moon", 18)));
   }
   const toggleTheme = () => { const t = theme() === "night" ? "day" : "night"; setTheme(t); return t; };
-  const themeButton = () => el("button", { class: "btn-x small ghost theme-b", type: "button", title: "Day or night look", "aria-label": "Switch day or night look", onclick: toggleTheme }, theme() === "night" ? "☀" : "☾");
+  const themeButton = () => el("button", { class: "btn-x small ghost theme-b", type: "button", title: "Day or night look", "aria-label": "Switch day or night look", onclick: toggleTheme }, ic(theme() === "night" ? "sun" : "moon", 18));
   setTheme(store.get("kw.theme", "day"), false);
 
-  window.KW = { theme, setTheme, toggleTheme, themeButton, $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo };
+  window.KW = { ic, avatar, REACTS, theme, setTheme, toggleTheme, themeButton, $, el, put, add, toast, store, fold, sleep, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo };
 })();

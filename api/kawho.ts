@@ -16,7 +16,7 @@ const CORS = {
 const GET_READY_MS = 4000
 const GRACE_MS = 800
 const MAX_PLAYERS = 200
-const AVATARS = ['🦊', '🐼', '🐸', '🐯', '🦁', '🐨', '🐙', '🦄', '🐝', '🐢', '🦉', '🐧', '🐬', '🦖', '🐳', '🦋', '🍉', '🌵', '🚀', '⚡', '🍩', '🎧', '🌈', '🐻']
+const AVATARS = Array.from({ length: 24 }, (_, i) => 'a' + i)
 
 let schemaReady: Promise<unknown> | null = null
 function ensureSchema() {
@@ -198,7 +198,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'react' && req.method === 'POST') {
       const p = await player()
       if (!p) return res.status(404).json({ error: 'Not in the game.' })
-      const emoji = ['👍', '😂', '😮', '🔥', '❤️', '👏'].includes(String(body.emoji)) ? String(body.emoji) : '👍'
+      const emoji = ['like', 'haha', 'wow', 'fire', 'love', 'clap'].includes(String(body.emoji)) ? String(body.emoji) : 'like'
       await db.execute(sql`UPDATE kw_players SET react = ${emoji}, react_at = ${now} WHERE pin = ${pinOf(body.pin)} AND id = ${String(p.id)}`)
       return res.status(200).json({ ok: true })
     }

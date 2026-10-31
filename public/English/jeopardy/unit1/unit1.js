@@ -255,7 +255,7 @@
       if (a.w === b.w) {
         a.done = b.done = S.teams[turn].color; open = []; found++;
         award(turn, 100);
-        put(info, el("div", { class: "matched", style: `--c:${S.teams[turn].color}` }, el("b", {}, "✓ " + head(a.w)), " = ", el("b", {}, a.w.tr), el("span", {}, " · " + a.w.m)));
+        put(info, el("div", { class: "matched", style: `--c:${S.teams[turn].color}` }, el("b", {}, head(a.w)), " = ", el("b", {}, a.w.tr), el("span", {}, " · " + a.w.m)));
         setTimeout(draw, 50);
       } else {
         locked = true;
@@ -279,9 +279,9 @@
       const stage = el("div", { class: "stage", style: `--cc:${t.color}` },
         el("div", { class: "eyebrow" }, "Next up"), el("div", { class: "hs-word", style: `color:${t.color}` }, t.name),
         el("div", { style: "display:grid;gap:8px;font-size:clamp(17px,1.8vw,22px);font-weight:600;text-align:left;max-width:640px" },
-          el("div", {}, "🪑 One player sits with their back to the board."),
-          el("div", {}, "🗣️ The team explains each word in English. No Turkish, and don't say the word!"),
-          el("div", {}, `✅ Correct = +100. Skip if it's too hard. You have ${secs} seconds.`)),
+          el("div", {}, el("b", {}, "1. "), "One player sits with their back to the board."),
+          el("div", {}, el("b", {}, "2. "), "The team explains each word in English. No Turkish, and don't say the word!"),
+          el("div", {}, el("b", {}, "3. "), `Correct = +100. Skip if it's too hard. You have ${secs} seconds.`)),
         el("button", { class: "btn gold huge", onclick: startRound }, "Start ▶"));
       const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame("Hot Seat", "", lens, stage, turn);
       const sb = $("#scorebar"); if (sb) sb.replaceWith(scorebar(turn));
@@ -297,10 +297,10 @@
     function draw() {
       const t = S.teams[turn];
       const stage = el("div", { class: "stage", style: `--cc:${t.color}` },
-        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${t.color};font-size:20px` }, t.name), el("div", { class: "ring" }, el("b", {}, String(Math.ceil(left)))), el("b", { style: "font-size:20px" }, `✓ ${got.filter(x => x.ok).length}`)),
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${t.color};font-size:20px` }, t.name), el("div", { class: "ring" }, el("b", {}, String(Math.ceil(left)))), el("b", { style: "font-size:20px" }, `Correct: ${got.filter(x => x.ok).length}`)),
         el("div", { class: "hs-word" }, head(w)),
         el("div", { class: "hs-sub" }, el("span", { class: "flag" }, "TR"), w.tr, "  ·  ", w.pos),
-        el("div", { class: "actions" }, el("button", { class: "btn huge", style: "background:var(--green);border-color:var(--green);color:#fff", onclick: () => mark(true) }, "✓ Got it"),
+        el("div", { class: "actions" }, el("button", { class: "btn huge", style: "background:var(--green);border-color:var(--green);color:#fff", onclick: () => mark(true) }, "Got it"),
           el("button", { class: "btn huge", onclick: () => mark(false) }, "Skip →"),
           el("button", { class: "btn big", onclick: () => { paused = !paused; if (paused) clearInterval(id); else { last = Date.now(); id = setInterval(tick, 100); } draw(); } }, paused ? "Resume" : "Pause")),
         el("div", { class: "hint" }, "Space or → = got it · S = skip · P = pause"));

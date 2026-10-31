@@ -1,7 +1,7 @@
 /* Ka-Who? player app (phones): join with a PIN, answer, see your result. */
 (() => {
   "use strict";
-  const { $, el, put, toast, store, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo, sleep } = window.KW;
+  const { $, el, put, toast, store, api, COLORS, shape, owl, sound, confetti, AVATARS, TYPE_NAMES, logo, sleep, ic, avatar, REACTS } = window.KW;
   const app = $("#app");
   const SESSION = "kw.player";
   let me = store.get(SESSION, null);         // { pin, pid, secret, name, avatar }
@@ -18,48 +18,50 @@
   /* ================= joining ================= */
   function pinScreen(err) {
     shownKey = "";
-    const inp = el("input", { class: "pin-input", inputmode: "numeric", autocomplete: "off", maxlength: 7, placeholder: "Game PIN", "aria-label": "Game PIN", value: pathPin || "" });
+    const inp = el("input", { class: "pin-input", inputmode: "numeric", enterkeyhint: "go", autocomplete: "off", maxlength: 7, placeholder: "Game PIN", "aria-label": "Game PIN", value: pathPin || "" });
     const msg = el("div", { class: "err", role: "alert" }, err || "");
     const go = async () => {
       const pin = inp.value.replace(/\D/g, "");
       if (pin.length !== 6) { msg.textContent = "The PIN has 6 numbers."; inp.focus(); return; }
       btn.disabled = true; btn.textContent = "Checking…";
       try { const st = await api("state", { query: { pin, t: Math.floor(Date.now() / 1000) } }); nameScreen(pin, st); }
-      catch (e) { msg.textContent = e.status === 404 ? "No game with that PIN. Check the number on the screen." : e.message; btn.disabled = false; btn.textContent = "Enter"; }
+      catch (e) { msg.textContent = e.status === 404 ? "No game with that PIN. Check the number on the screen." : e.message; btn.disabled = false; put(btn, "Enter", ic("right", 20)); }
     };
-    const btn = el("button", { class: "btn-x primary", onclick: go }, "Enter");
+    const btn = el("button", { class: "btn-x primary", onclick: go }, "Enter", ic("right", 20));
     inp.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
     inp.addEventListener("input", () => { const d = inp.value.replace(/\D/g, "").slice(0, 6); inp.value = d.length > 3 ? d.slice(0, 3) + " " + d.slice(3) : d; msg.textContent = ""; });
-    screen("center", el("div", { class: "corner" }, window.KW.themeButton()), logo("big"), el("div", { class: "join-card" }, inp, btn, msg),
+    screen("center join-s", el("div", { class: "corner" }, window.KW.themeButton()), logo("big"), el("div", { class: "join-card" }, inp, btn, msg),
       el("p", { class: "fine" }, "Who's playing? You are. The PIN is on the big screen."),
-      el("a", { class: "host-link", href: "/kawho/host" }, "Host a game →"));
+      el("a", { class: "host-link", href: "/kawho/host" }, "Host a game", ic("right", 16)));
     inp.dispatchEvent(new Event("input"));
     setTimeout(() => inp.focus(), 100);
   }
 
   function nameScreen(pin, st) {
-    let avatar = store.get("kw.avatar", AVATARS[Math.floor(Math.random() * AVATARS.length)]);
-    const name = el("input", { class: "name-input", maxlength: 20, autocomplete: "nickname", autocapitalize: "words", placeholder: "Your nickname", "aria-label": "Your nickname", value: store.get("kw.name", "") });
+    let av = store.get("kw.avatar", null);
+    if (!AVATARS.includes(av)) av = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+    const name = el("input", { class: "name-input", maxlength: 20, autocomplete: "nickname", autocapitalize: "words", enterkeyhint: "go", placeholder: "Your nickname", "aria-label": "Your nickname", value: store.get("kw.name", "") });
     const msg = el("div", { class: "err", role: "alert" });
-    const big = el("div", { class: "avatar-big" }, avatar);
-    const grid = el("div", { class: "avatars" }, AVATARS.map(a => el("button", { class: "av" + (a === avatar ? " on" : ""), type: "button", "aria-label": "Avatar " + a, onclick: e => { avatar = a; big.textContent = a; grid.querySelectorAll(".av").forEach(b => b.classList.toggle("on", b === e.currentTarget)); vibrate(10); } }, a)));
+    const big = el("div", { class: "me-big" }, avatar(av, 64));
+    const grid = el("div", { class: "avatars" }, AVATARS.map(a => el("button", { class: "av" + (a === av ? " on" : ""), type: "button", "aria-label": "Choose this avatar", onclick: e => { av = a; put(big, avatar(a, 64)); grid.querySelectorAll(".av").forEach(x => x.classList.toggle("on", x === e.currentTarget)); vibrate(10); } }, avatar(a, 34))));
     const go = async () => {
       if (name.value.trim().length < 2) { msg.textContent = "Write a nickname with at least 2 letters."; name.focus(); return; }
-      btn.disabled = true; btn.textContent = "Joining…";
+      btn.disabled = true; put(btn, "Joining…");
       try {
-        const r = await api("join", { method: "POST", body: { pin, name: name.value, avatar } });
+        const r = await api("join", { method: "POST", body: { pin, name: name.value, avatar: av } });
         offset = r.serverNow - Date.now();
         me = { pin, pid: r.pid, secret: r.secret, name: r.name, avatar: r.avatar };
         store.set(SESSION, me); store.set("kw.name", r.name); store.set("kw.avatar", r.avatar);
         sound.play("join"); vibrate(40);
         if (location.pathname !== "/kawho/" + pin) history.replaceState(null, "", "/kawho/" + pin);
         start();
-      } catch (e) { msg.textContent = e.message; btn.disabled = false; btn.textContent = "Join"; }
+      } catch (e) { msg.textContent = e.message; btn.disabled = false; put(btn, "Join", ic("right", 20)); }
     };
-    const btn = el("button", { class: "btn-x primary", onclick: go }, "Join");
+    const btn = el("button", { class: "btn-x primary", onclick: go }, "Join", ic("right", 20));
     name.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
-    screen("center", el("div", { class: "quiz-name" }, st.title || "Quiz"), big, el("div", { class: "join-card" }, name, el("div", { class: "fine left" }, "Pick your avatar"), grid, btn, msg),
-      el("button", { class: "host-link", onclick: () => { history.replaceState(null, "", "/kawho"); pinScreen(); } }, "← Different PIN"));
+    screen("center join-s", el("div", { class: "quiz-name" }, st.title || "Quiz"),
+      el("div", { class: "join-card" }, el("div", { class: "name-row" }, big, name), btn, msg, el("div", { class: "fine left" }, "Pick your avatar"), grid),
+      el("button", { class: "host-link", onclick: () => { history.replaceState(null, "", "/kawho"); pinScreen(); } }, ic("left", 16), "Different PIN"));
     setTimeout(() => name.focus(), 100);
   }
 
@@ -118,19 +120,19 @@
     const bar = $(".p-timer i"), out = $(".p-timer b");
     if (bar) { const left = Math.max(0, S.endAt - t), all = S.endAt - S.startAt; bar.style.transform = `scaleX(${left / all})`; out.textContent = Math.ceil(left / 1000); bar.parentElement.classList.toggle("low", left < 5000); }
   }
-  const head = () => el("div", { class: "p-head" }, el("span", { class: "me" }, el("span", { class: "me-av" }, me.avatar), me.name), el("span", { class: "spacer" }), window.KW.themeButton(), el("span", { class: "q-of" }, S.phase === "lobby" ? `${S.players} playing` : `${S.q + 1} / ${S.total}`));
+  const head = () => el("div", { class: "p-head" }, el("span", { class: "me" }, avatar(me.avatar, 26), el("span", { class: "me-n" }, me.name)), el("span", { class: "spacer" }), window.KW.themeButton(), el("span", { class: "q-of" }, S.phase === "lobby" ? `${S.players} playing` : `${S.q + 1} / ${S.total}`));
 
   function lobby() {
     let last = 0;
     const react = e => {
       if (Date.now() - last < 1500) return; last = Date.now();
       const em = e.currentTarget.dataset.e; vibrate(15); sound.play("pop");
-      const f = el("span", { class: "float-emoji" }, em); e.currentTarget.append(f); setTimeout(() => f.remove(), 1200);
+      const f = el("span", { class: "float-emoji" }, ic(em, 28)); e.currentTarget.append(f); setTimeout(() => f.remove(), 1200);
       api("react", { method: "POST", body: { pin: me.pin, pid: me.pid, secret: me.secret, emoji: em } }).catch(() => {});
     };
-    screen("center lobby-p", head(), el("div", { class: "lobby-duo" }, owl("idle", 110), el("div", { class: "avatar-big bounce" }, me.avatar)),
+    screen("center lobby-p", head(), el("div", { class: "lobby-duo" }, owl("idle", 100), el("div", { class: "bounce" }, avatar(me.avatar, 84))),
       el("h1", { class: "p-title" }, "You're in, ", el("span", { class: "hl" }, me.name), "!"), el("p", { class: "p-sub" }, "Find your name on the big screen. The owl is warming up…"),
-      el("div", { class: "reacts" }, ["👍", "😂", "😮", "🔥", "❤️", "👏"].map(x => el("button", { class: "react", "data-e": x, onclick: react, "aria-label": "Send " + x }, x))),
+      el("div", { class: "reacts" }, REACTS.map((x, i) => el("button", { class: "react r" + i, "data-e": x, onclick: react, "aria-label": "Send a cheer" }, ic(x, 28)))),
       el("p", { class: "fine" }, "Tap to cheer"));
   }
   function ready() {
@@ -162,7 +164,7 @@
       const pick = new Set();
       const go = el("button", { class: "btn-x primary", disabled: true, onclick: () => send([...pick]) }, "Send answer");
       bodyEl = el("div", { class: "stack" }, el("p", { class: "p-sub" }, "Pick every right answer"),
-        el("div", { class: "tiles n" + opts.length }, opts.map((o, i) => el("button", { class: "tile multi", style: `--c:${COLORS[i]}`, "aria-pressed": "false", onclick: e => { const b = e.currentTarget; if (pick.has(i)) pick.delete(i); else pick.add(i); b.classList.toggle("on", pick.has(i)); b.setAttribute("aria-pressed", pick.has(i)); go.disabled = !pick.size; vibrate(10); } }, shape(i, 30), o.img ? el("img", { src: o.img, alt: "" }) : null, el("span", {}, o.t), el("i", { class: "chk" }, "✓")))), go);
+        el("div", { class: "tiles n" + opts.length }, opts.map((o, i) => el("button", { class: "tile multi", style: `--c:${COLORS[i]}`, "aria-pressed": "false", onclick: e => { const b = e.currentTarget; if (pick.has(i)) pick.delete(i); else pick.add(i); b.classList.toggle("on", pick.has(i)); b.setAttribute("aria-pressed", pick.has(i)); go.disabled = !pick.size; vibrate(10); } }, shape(i, 30), o.img ? el("img", { src: o.img, alt: "" }) : null, el("span", {}, o.t), el("i", { class: "chk" }, ic("check", 16))))), go);
     } else if (q.type === "type" || q.type === "cloud") {
       const inp = el("input", { class: "name-input", maxlength: q.type === "cloud" ? 25 : 40, autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: q.type === "cloud" ? "One or two words" : "Type your answer", "aria-label": "Your answer" });
       const go = () => { if (inp.value.trim()) send(inp.value.trim()); };
@@ -189,7 +191,7 @@
     screen("answer-s", head(), timerBar(), el("h2", { class: "p-q small" }, q.q), bodyEl);
     tickTimers(now());
   }
-  const QUIPS = ["Lightning fingers! ⚡", "Answer locked in 🔒", "Fingers crossed 🤞", "Bold choice 😎", "Let's see… 👀"];
+  const QUIPS = ["Lightning fingers!", "Answer locked in", "Fingers crossed", "Bold choice", "Let's see…"];
   function sent() {
     screen("center", head(), answered[S.q] === "sending" ? el("div", { class: "spin" }) : owl("think", 130),
       el("h1", { class: "p-title" }, answered[S.q] === "sending" ? "Sending…" : QUIPS[S.q % QUIPS.length]), el("p", { class: "p-sub" }, "Waiting for the others"));
@@ -205,15 +207,15 @@
     if (!scored) { screen("center", head(), owl(r.last ? "happy" : "sad", 130), el("h1", { class: "p-title" }, r.last ? "Thanks! Hoo-hoo!" : "No answer this time"), standingLine(r)); return; }
     sound.play(ok ? "right" : "wrong"); vibrate(ok ? [30, 40, 30] : 120);
     put(app, el("main", { class: "p-screen center result " + (ok ? "good" : "bad") }, head(),
-      el("div", { class: "res-owl" }, owl(ok ? "happy" : "sad", 150), el("span", { class: "stamp pop" }, ok ? "✓" : r.last ? "✗" : "?")),
+      el("div", { class: "res-owl" }, owl(ok ? "happy" : "sad", 150), el("span", { class: "stamp pop" }, ok ? ic("check", 34) : r.last ? ic("x", 34) : "?")),
       el("h1", { class: "p-title" }, ok ? "Hoo-ray!" : r.last ? "Not quite…" : "Too slow!"),
       ok ? el("div", { class: "points-pill" }, "+" + r.last.points) : null,
-      r.streak >= 2 ? el("div", { class: "streak" }, "🔥 ", r.streak, " in a row") : null,
+      r.streak >= 2 ? el("div", { class: "streak" }, ic("flame", 18), ` ${r.streak} in a row`) : null,
       standingLine(r)));
   }
   function standingLine(r) {
     return el("div", { class: "standing" }, el("div", {}, el("b", {}, ordinal(r.rank)), ` of ${r.total}`), el("div", { class: "score" }, r.score.toLocaleString(), " pts"),
-      r.above ? el("div", { class: "fine" }, `${r.above.gap.toLocaleString()} behind ${r.above.name}`) : r.rank === 1 && r.score > 0 ? el("div", { class: "fine" }, "You're in the lead! 👑") : null);
+      r.above ? el("div", { class: "fine" }, `${r.above.gap.toLocaleString()} behind ${r.above.name}`) : r.rank === 1 && r.score > 0 ? el("div", { class: "fine lead" }, ic("crown", 18), "You're in the lead!") : null);
   }
   const ordinal = n => n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th");
   async function standing() {
@@ -224,9 +226,9 @@
   async function final() {
     const key = shownKey;
     const r = await fetchMe(-1); if (!r || shownKey !== key) return;
-    const medal = ["🥇", "🥈", "🥉"][r.rank - 1];
+    const medal = ["gold", "silver", "bronze"][r.rank - 1];
     if (medal) { confetti(5000); sound.play("win"); }
-    screen("center final", head(), el("div", { class: "lobby-duo" }, owl(medal ? "happy" : "idle", 120), el("div", { class: "big-emoji pop" }, medal || me.avatar)),
+    screen("center final", head(), el("div", { class: "lobby-duo" }, owl(medal ? "happy" : "idle", 110), medal ? el("div", { class: "medal pop " + medal }, ic("medal", 64), el("b", {}, String(r.rank))) : avatar(me.avatar, 84)),
       el("h1", { class: "p-title" }, medal ? `You came ${ordinal(r.rank)}!` : `You finished ${ordinal(r.rank)}`),
       el("div", { class: "standing" }, el("div", { class: "score" }, r.score.toLocaleString(), " pts"), el("div", {}, `out of ${r.total} players`)),
       el("button", { class: "btn-x", onclick: () => leave() }, "Leave game"));

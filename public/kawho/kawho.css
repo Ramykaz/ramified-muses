@@ -523,3 +523,66 @@ html[data-theme="night"] .spin { border-color: rgba(255,255,255,.15); border-top
 html[data-theme="night"] .offline { background: var(--tomato); border: 0; color: #fff; }
 html[data-theme="night"] .lb-count i { background: rgba(232,184,75,.35); }
 html[data-theme="night"] .host-link, html[data-theme="night"] .back { color: var(--muted); }
+
+/* ---------- icons and drawn avatars (no emoji anywhere) ---------- */
+.ic { display: inline-grid; place-items: center; width: var(--i); height: var(--i); flex: none; vertical-align: -0.18em; }
+.ic svg { width: 100%; height: 100%; }
+.btn-x .ic, .chip-x .ic, .icon-b .ic { --i: 18px; }
+.avatar { display: inline-block; width: var(--a); height: var(--a); flex: none; vertical-align: middle; }
+.avatar svg { width: 100%; height: 100%; display: block; }
+.me-big { flex: none; }
+.name-row { display: flex; align-items: center; gap: 10px; }
+.name-row .name-input { flex: 1; min-width: 0; }
+.avatars { grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.av { display: grid; place-items: center; padding: 2px; aspect-ratio: 1; }
+.p-head .me { gap: 6px; }
+.me-n { overflow: hidden; text-overflow: ellipsis; }
+.react { display: grid; place-items: center; color: var(--ink); }
+.react.r0 { color: var(--cobalt); } .react.r1 { color: #D68A00; } .react.r2 { color: #7B4FC9; } .react.r3 { color: var(--tomato); } .react.r4 { color: #E0457B; } .react.r5 { color: #0F9C78; }
+.float-emoji { color: inherit; line-height: 0; }
+.bubble .float-emoji { color: var(--tomato); }
+.stamp .ic { --i: 34px; }
+.streak, .lead { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+.lead .ic { color: #D68A00; }
+.medal { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 50%; border: 4px solid var(--ink); box-shadow: var(--sh); }
+.medal.gold { background: #FFC21A; } .medal.silver { background: #D7DCE6; } .medal.bronze { background: #E39A64; }
+.medal .ic { --i: 60px; color: var(--ink); }
+.fire { display: inline-flex; align-items: center; gap: 2px; color: var(--tomato); margin-left: 8px; font-size: .8em; }
+.mv { display: inline-flex; align-items: center; gap: 2px; }
+.chart .col b { display: inline-flex; align-items: center; gap: 4px; }
+.h-hint .ic { --i: 30px; vertical-align: -6px; }
+.q-type { display: inline-flex; align-items: center; gap: 6px; }
+.st-line { display: inline-flex; align-items: center; gap: 6px; }
+.ed-warn .ic { vertical-align: -3px; }
+.pod-av .avatar { filter: drop-shadow(3px 3px 0 rgba(21,21,21,.25)); }
+.lb-row .avatar, .bubble .avatar { flex: none; }
+.rest span { display: inline-flex; align-items: center; gap: 4px; }
+.host-link { display: inline-flex; align-items: center; gap: 6px; }
+
+/* join screens: compact, so Enter / Join are always visible (also with the keyboard open) */
+.join-s { justify-content: flex-start; padding-top: calc(28px + env(safe-area-inset-top, 0px)); gap: 14px; }
+.join-s .join-card { padding: 16px; gap: 10px; }
+.join-s .logo.big .logo-word { font-size: clamp(40px, 12vw, 64px); }
+.join-s .logo.big .owl { --o: 72px !important; }
+.join-s .quiz-name { font-size: 16px; }
+@media (max-height: 700px) {
+  .join-s { padding-top: calc(14px + env(safe-area-inset-top, 0px)); gap: 10px; }
+  .join-s .logo.big .owl { --o: 52px !important; }
+  .join-s .logo.big .logo-word { font-size: 38px; }
+  .join-s .pin-input, .join-s .name-input { min-height: 54px; }
+  .join-s .join-card .btn-x { min-height: 52px; }
+  .p-screen.center .owl { max-width: 96px; max-height: 96px; }
+  .res-owl .owl { --o: 100px !important; }
+}
+html[data-theme="night"] .medal { border-color: transparent; box-shadow: var(--sh); }
+html[data-theme="night"] .medal .ic { color: #14110A; }
+html[data-theme="night"] .react.r0 { color: #7FA0FF; }
+/* avatar picker never wider than the card */
+.avatars { grid-template-columns: repeat(8, minmax(0, 1fr)); width: 100%; }
+.av { min-width: 0; }
+.av .avatar { width: 100%; height: auto; max-width: 40px; }
+.join-card { min-width: 0; max-width: min(400px, 100%); }
+@media (max-width: 380px) { .avatars { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.medal { position: relative; }
+.medal b { position: absolute; left: 50%; top: 59%; translate: -50% -50%; font: 900 22px/1 var(--disp); color: var(--ink); }
+html[data-theme="night"] .medal b { color: #14110A; }
