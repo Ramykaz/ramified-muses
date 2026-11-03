@@ -101,7 +101,7 @@
         el("button", { class: "btn big", "data-nobody": "1", onclick: () => go(-1) }, "Nobody, next")));
   }
   let stopAll = [], keys = null;
-  const cleanup = () => { stopAll.forEach(f => f()); stopAll = []; keys = null; };
+  const cleanup = () => { stopAll.forEach(f => f()); stopAll = []; keys = null; onSets = null; };
   function timer(secs, onEnd) {
     if (!secs) return { node: null, stop() {}, toggle() {} };
     let left = secs, last = 0, id = null, paused = false;
@@ -405,39 +405,175 @@
   }
 
   /* ================= 7. stop! ================= */
+  // Category sets: the built-in one plus sets pasted by the teacher. Pasted sets are
+  // saved online (/api/class-games, library "stop"), so every device has them.
+  const K_SETS = "fun.stopSets", K_SDEL = "fun.stopDel";
+  const BUILTIN = { id: "builtin", title: F.stop.title, cats: F.stop.cats.map(x => ({ c: x.c, w: x.w.split(",").map(s => s.trim()).filter(Boolean) })) };
+  let SETS = store.get(K_SETS, []), setsBusy = false, setsAgain = false, onSets = null;
+  const allSets = () => [BUILTIN, ...SETS];
+  async function syncSets() {
+    if (setsBusy) { setsAgain = true; return; }
+    setsBusy = true;
+    const dels = store.get(K_SDEL, {}), sent = {};
+    const payload = SETS.map(x => { sent[x.id] = x.updatedAt; return { id: x.id, updatedAt: x.updatedAt, deleted: false, data: x }; })
+      .concat(Object.entries(dels).map(([id, t]) => { sent[id] = t; return { id, updatedAt: t, deleted: true }; }));
+    try {
+      const r = await fetch("/api/class-games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ library: "stop", games: payload }) });
+      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "save failed");
+      const result = new Map(j.games.filter(x => !x.deleted && x.data && Array.isArray(x.data.cats)).map(x => [x.id, { ...x.data, id: x.id, updatedAt: x.updatedAt }]));
+      // keep what changed here while the request was on its way
+      for (const x of SETS) if (!(x.id in sent) || x.updatedAt > sent[x.id]) { result.set(x.id, x); setsAgain = true; }
+      const nowDels = store.get(K_SDEL, {});
+      for (const [id, t] of Object.entries(nowDels)) { if (id in sent && t <= sent[id]) delete nowDels[id]; else { result.delete(id); setsAgain = true; } }
+      const before = JSON.stringify(SETS);
+      SETS = [...result.values()].sort((a, b) => a.updatedAt - b.updatedAt);
+      store.set(K_SETS, SETS); store.set(K_SDEL, nowDels);
+      if (JSON.stringify(SETS) !== before && onSets) onSets();
+    } catch (e) { /* kept on this device; saved online next time */ }
+    finally { setsBusy = false; if (setsAgain) { setsAgain = false; setTimeout(syncSets, 300); } }
+  }
+  const STOP_PROMPT = `Make a "Stop!" word game (like Scattergories) for my English class.
+Level: A2 (easy words)
+Topic: [WRITE THE TOPIC, for example: food and cooking]
+
+Write 8 categories for this topic. For each category, write 30 easy English words that fit it. Use many different first letters (A to W, no X, Y or Z).
+Answer in exactly this format, with no other text:
+
+Title: [a short name for the set]
+[category 1]: word, word, word, word, ...
+[category 2]: word, word, word, word, ...
+
+Example:
+Title: Animals and Food
+an animal: ant, bear, cat, dog, eagle, fox, goat, horse, ...
+a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
+  // "Title: ..." and "category: word, word" lines, or JSON { title, categories: [{ name, words }] }
+  function parseStop(text) {
+    text = String(text || "").trim(); if (!text) throw "";
+    let title = "", letters = "", cats = [];
+    const fromJson = j => {
+      title = j.title || j.name || ""; letters = j.letters || "";
+      cats = (j.categories || j.cats || []).map(x => ({ c: String(x.name || x.category || x.c || "").trim(), w: (Array.isArray(x.words || x.w) ? (x.words || x.w) : String(x.words || x.w || "").split(/[,;]/)).map(s => String(s).trim()).filter(Boolean) }));
+    };
+    const json = text.replace(/^```(json)?|```$/g, "").trim();
+    if (/^[{[]/.test(json)) { try { const j = JSON.parse(json); fromJson(Array.isArray(j) ? { categories: j } : j); } catch (e) { throw "That JSON has a mistake. Try the simple text format."; } }
+    else for (let line of text.split(/\r?\n/)) {
+      line = line.replace(/\*\*/g, "").replace(/^\s*(?:[-•*]|\d+[.)])\s*/, "").trim();
+      if (!line || line.startsWith("#") || /^example:?$/i.test(line)) continue;
+      const k = line.indexOf(":"); if (k < 1) continue;
+      const head = line.slice(0, k).trim(), rest = line.slice(k + 1).trim();
+      if (/^(title|name|topic)$/i.test(head)) { if (!title) title = rest; continue; }
+      if (/^letters?$/i.test(head)) { letters = rest; continue; }
+      if (/^level$/i.test(head)) continue;
+      cats.push({ c: head, w: rest.split(/[,;]/).map(s => s.replace(/\.\.\.|…/g, "").trim()).filter(Boolean) });
+    }
+    cats = cats.filter(x => x.c && x.w.length);
+    const seen = new Set(); cats = cats.filter(x => { const k = x.c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    if (cats.length < 3) throw "Write at least 3 categories, one per line: category: word, word, word";
+    const thin = cats.filter(x => x.w.length < 3);
+    if (thin.length) throw `Add more words to "${thin[0].c}" (at least 3).`;
+    letters = String(letters).toUpperCase().replace(/[^A-Z]/g, "");
+    return { title: (title || "My Stop! set").slice(0, 60), letters, cats: cats.slice(0, 30).map(x => ({ c: x.c.slice(0, 60), w: x.w.slice(0, 120).map(s => s.slice(0, 40)) })) };
+  }
+  const first = w => (String(w).normalize("NFKD").replace(/[^\p{L}]/gu, "")[0] || "").toUpperCase();
   function stop() {
-    const EASY = "ABCDEFGHKLMPRST";
-    let secs = store.get("fun.stop", 60), letter = "", cats = [], rg = null, phase = "start", spinId = null;
+    let secs = store.get("fun.stop", 60), many = store.get("fun.stopN", 5), setId = store.get("fun.stopSet", "builtin");
+    let letter = "", cats = [], rg = null, phase = "start", spinId = null, showEx = false, pasting = false, pasteText = "";
     const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set("fun.stop", v); });
+    const cur = () => allSets().find(x => x.id === setId) || BUILTIN;
+    onSets = () => { if (phase === "start" && !pasting) paint(); };
     function newRound() {
-      phase = "spin"; cats = shuffle(F.stop.slice()).slice(0, 5); if (rg) rg.stop();
+      const set = cur();
+      phase = "spin"; showEx = false; if (rg) rg.stop();
+      cats = shuffle(set.cats.slice()).slice(0, many);
+      // a letter that has example answers in every category (or nearly)
+      const pool = [...(set.letters || (set.id === "builtin" ? "ABCDEFGHKLMPRST" : "ABCDEFGHIKLMNOPRSTW"))];
+      const score = L => cats.filter(x => x.w.some(w => first(w) === L)).length;
+      const best = Math.max(...pool.map(score));
+      const final = pick(pool.filter(L => score(L) >= Math.min(best, cats.length)));
       let k = 0; const end = 14 + Math.floor(Math.random() * 6);
       clearInterval(spinId);
-      spinId = setInterval(() => { letter = pick([...EASY]); beep("flip"); const b = $(".letter-box"); if (b) b.textContent = letter; if (++k >= end) { clearInterval(spinId); phase = "write"; rg = ring(secs, () => { phase = "score"; beep("end"); paint(); }); paint(); beep("open"); } }, 90);
+      spinId = setInterval(() => {
+        letter = ++k >= end ? final : pick(pool); beep("flip");
+        const b = $(".letter-box"); if (b) b.textContent = letter;
+        if (k >= end) { clearInterval(spinId); phase = "write"; rg = ring(secs, () => { phase = "score"; beep("end"); paint(); }); paint(); beep("open"); }
+      }, 90);
       stopAll.push(() => clearInterval(spinId));
       paint();
+    }
+    const examples = x => x.w.filter(w => first(w) === letter);
+    function setPicker() {
+      const sel = el("select", { class: "set-sel", "aria-label": "Category set", onchange: e => { setId = e.target.value; store.set("fun.stopSet", setId); paint(); } },
+        allSets().map(x => el("option", { value: x.id, selected: x.id === cur().id }, `${x.title} (${x.cats.length} categories)`)));
+      const set = cur();
+      return el("div", { class: "set-box" },
+        el("div", { class: "set-row" }, el("b", {}, "Category set"), sel),
+        el("div", { class: "set-row" }, el("b", {}, "Categories each round"), seg([[4, "4"], [5, "5"], [6, "6"]], many, v => { many = v; store.set("fun.stopN", v); paint(); })),
+        el("div", { class: "set-cats" }, set.cats.map(x => el("span", {}, x.c))),
+        el("div", { class: "actions" },
+          el("button", { class: "btn", onclick: () => { pasting = true; paint(); } }, "Paste a new set"),
+          set.id === "builtin" ? null : el("button", { class: "btn danger-t", onclick: () => {
+            if (!confirm(`Delete "${set.title}"?`)) return;
+            SETS = SETS.filter(x => x.id !== set.id); store.set(K_SETS, SETS);
+            const d = store.get(K_SDEL, {}); d[set.id] = Date.now(); store.set(K_SDEL, d);
+            setId = "builtin"; store.set("fun.stopSet", setId); syncSets(); paint(); toast("Set deleted");
+          } }, "Delete this set")));
+    }
+    function pasteBox() {
+      const status = el("div", { class: "paste-status" }), ta = el("textarea", { class: "paste-ta", rows: 9, spellcheck: "false", placeholder: "Title: Food and Cooking\na fruit: apple, banana, cherry, ...\na vegetable: bean, carrot, ...\nsomething in the kitchen: bowl, cup, fork, ..." });
+      ta.value = pasteText;
+      const saveB = el("button", { class: "btn gold", disabled: true, onclick: () => {
+        let set; try { set = parseStop(ta.value); } catch (e) { return; }
+        const now = Date.now(); set.id = "s" + now.toString(36) + Math.random().toString(36).slice(2, 6); set.updatedAt = now;
+        SETS.push(set); store.set(K_SETS, SETS); syncSets();
+        setId = set.id; store.set("fun.stopSet", setId); pasting = false; pasteText = ""; paint(); toast(`Saved: ${set.title}`);
+      } }, "Save set");
+      const check = () => {
+        pasteText = ta.value; status.className = "paste-status";
+        try { const s = parseStop(ta.value); status.classList.add("ok"); status.textContent = `${s.title}: ${s.cats.length} categories, ${s.cats.reduce((n, x) => n + x.w.length, 0)} words`; saveB.disabled = false; }
+        catch (e) { saveB.disabled = true; if (e) { status.classList.add("bad"); status.textContent = e; } else status.textContent = "Paste the AI answer here."; }
+      };
+      ta.addEventListener("input", check); check();
+      return el("div", { class: "paste-box" },
+        el("b", {}, "Make your own set"),
+        el("ol", { class: "paste-steps" },
+          el("li", {}, "Press ", el("b", {}, "Copy AI prompt"), " and paste it into ChatGPT (or any AI)."),
+          el("li", {}, "Change the topic line, then send it."),
+          el("li", {}, "Copy the AI's answer and paste it below.")),
+        el("div", { class: "actions" }, el("button", { class: "btn", onclick: async () => { try { await navigator.clipboard.writeText(STOP_PROMPT); toast("Prompt copied. Change the topic, then paste it into the AI."); } catch (e) { ta.value = STOP_PROMPT; check(); ta.select(); toast("Copy this prompt, then clear the box"); } } }, "Copy AI prompt")),
+        ta, status,
+        el("div", { class: "actions" }, saveB, el("button", { class: "btn", onclick: () => { pasting = false; paint(); } }, "Cancel")),
+        el("div", { class: "hint" }, "Format: one category per line, then a colon, then words with commas. A Title: line is optional."));
     }
     function paint() {
       const stage = stageOf("#E39B2B",
         phase === "start" ? el("div", { class: "rules" },
           el("div", {}, el("b", {}, "1. "), "Each team needs paper and a pen."),
-          el("div", {}, el("b", {}, "2. "), "You get one letter and five categories."),
+          el("div", {}, el("b", {}, "2. "), `You get one letter and ${many} categories.`),
           el("div", {}, el("b", {}, "3. "), "Write one English word for each category. It must start with the letter!"),
           el("div", {}, el("b", {}, "4. "), "Finished? Shout STOP! Then check the answers: +10 for each good word.")) : null,
+        phase === "start" ? (pasting ? pasteBox() : setPicker()) : null,
         phase === "start" ? null : el("div", { class: "stop-top" }, el("div", { class: "letter-box" + (phase === "spin" ? " spin" : "") }, letter || "?"), phase === "write" && rg ? rg.node : null),
-        phase === "start" || phase === "spin" ? null : el("ol", { class: "stop-cats" }, cats.map(c => el("li", {}, el("span", {}, c), el("i", {}, letter + "…")))),
+        phase === "start" || phase === "spin" ? null : el("ol", { class: "stop-cats" }, cats.map(x => {
+          const ex = examples(x);
+          return el("li", { class: showEx ? "open" : "" }, el("div", { class: "cat-row" }, el("span", {}, x.c), el("i", {}, letter + "…")),
+            showEx ? el("div", { class: "ex-words" }, ex.length ? ex.slice(0, 8).map(w => el("span", {}, w)) : el("em", {}, "No example here. Check together!")) : null);
+        })),
         phase === "write" ? el("div", { class: "actions" }, el("button", { class: "btn huge", style: "background:var(--red);border-color:var(--red);color:#fff", onclick: () => { if (rg) rg.stop(); phase = "score"; beep("end"); paint(); } }, "STOP!")) : null,
+        phase === "score" ? el("div", { class: "actions" }, el("button", { class: "btn big" + (showEx ? "" : " gold"), onclick: () => { showEx = !showEx; beep("pass"); paint(); } }, showEx ? "Hide example answers" : "Show example answers")) : null,
         phase === "score" ? el("div", { class: "stop-score" }, el("b", {}, "Check the answers. Give +10 for each good word:"),
           S.teams.map((tm, i) => el("div", { class: "team-line" }, el("span", { class: "dot", style: `background:${tm.color}` }), el("span", { class: "nm" }, tm.name),
             el("button", { class: "mini", "aria-label": `Take 10 from ${tm.name}`, onclick: () => award(i, -10) }, "−"),
             el("button", { class: "mini plus", "aria-label": `Give 10 to ${tm.name}`, onclick: () => award(i, 10) }, "+10")))) : null,
-        phase === "spin" ? null : el("button", { class: "btn gold huge", onclick: newRound }, phase === "start" ? "Get a letter" : "New letter"),
-        el("div", { class: "hint" }, phase === "score" ? "Same word as another team? Some teachers give only +5. You decide!" : "Easy letters only. No X, Y or Z!"));
+        phase === "spin" || (phase === "start" && pasting) ? null : el("div", { class: "actions" },
+          el("button", { class: "btn gold huge", onclick: newRound }, phase === "start" ? "Get a letter" : "New letter"),
+          phase === "start" ? null : el("button", { class: "btn big", onclick: () => { if (rg) rg.stop(); phase = "start"; paint(); } }, "Change set")),
+        el("div", { class: "hint" }, phase === "score" ? "Other good words are fine too! Same word as another team? You can give only +5." : phase === "start" ? `Set: ${cur().title}` : "The letter always has answers in these categories."));
       swap(stage, "Stop!", lens);
     }
-    keys = e => { if (e.key === "Enter" && phase !== "spin") newRound(); };
+    keys = e => { if (e.key === "Enter" && phase !== "spin" && phase !== "start") newRound(); };
     frame("Stop!", lens, stageOf("#E39B2B"));
-    paint();
+    paint(); syncSets();
   }
 
   /* ================= 8. spin & talk ================= */

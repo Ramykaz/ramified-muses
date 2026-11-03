@@ -6,6 +6,8 @@ import { db } from '../src/db/index.js'
 // shared game library, so every device sees the same games. The page sends all
 // its games on each sync; each game is last-write-wins on updatedAt, and
 // deletes are kept as tombstones so they spread to other devices.
+// body.library picks a separate shelf: "games" (the default, the Class Games
+// page) or "stop" (category sets for the Stop! game on /English/jeopardy/fun).
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +16,7 @@ const CORS = {
 }
 
 const OWNER = 'site'
+const LIBRARIES: Record<string, string> = { games: OWNER, stop: 'site:stop' }
 const MAX_GAMES = 300
 const MAX_GAME_BYTES = 100_000
 
@@ -31,7 +34,7 @@ function ensureSchema() {
     // games saved under the old per-code libraries join the shared one
     .then(() => db.execute(sql`
       INSERT INTO class_games (owner, id, data, updated_at, deleted)
-      SELECT ${OWNER}, id, data, updated_at, deleted FROM class_games WHERE owner <> ${OWNER}
+      SELECT ${OWNER}, id, data, updated_at, deleted FROM class_games WHERE owner <> ${OWNER} AND owner NOT LIKE 'site:%'
       ON CONFLICT (owner, id) DO NOTHING`))
     .catch(err => { schemaReady = null; throw err })
   return schemaReady
@@ -44,7 +47,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
 
-  const body = (req.body ?? {}) as { games?: unknown }
+  const body = (req.body ?? {}) as { games?: unknown; library?: unknown }
+  const owner = LIBRARIES[String(body.library ?? 'games')]
+  if (!owner) return res.status(400).json({ error: 'Unknown library.' })
   const incoming = Array.isArray(body.games) ? (body.games as IncomingGame[]) : []
   if (incoming.length > MAX_GAMES * 2) return res.status(400).json({ error: 'Too many games.' })
 
@@ -68,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (rows.length) {
       await db.execute(sql`
         INSERT INTO class_games (owner, id, data, updated_at, deleted)
-        SELECT ${OWNER}, x.id, x.data, x.updated_at, x.deleted
+        SELECT ${owner}, x.id, x.data, x.updated_at, x.deleted
         FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS x(id text, data jsonb, updated_at bigint, deleted boolean)
         ON CONFLICT (owner, id) DO UPDATE
           SET data = excluded.data, updated_at = excluded.updated_at, deleted = excluded.deleted
@@ -76,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const result = await db.execute(sql`
       SELECT id, data, updated_at, deleted FROM class_games
-      WHERE owner = ${OWNER} ORDER BY updated_at`)
+      WHERE owner = ${owner} ORDER BY updated_at`)
     const games = (result.rows as Array<{ id: string; data: unknown; updated_at: string | number; deleted: boolean }>)
       .map(r => ({ id: r.id, data: r.data, updatedAt: Number(r.updated_at), deleted: r.deleted }))
     return res.status(200).json({ games })
