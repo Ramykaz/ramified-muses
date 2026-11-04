@@ -123,12 +123,15 @@
 
 /* hangman */
 .hang-row { display: flex; gap: clamp(12px, 3vw, 36px); align-items: center; justify-content: center; flex-wrap: wrap; width: 100%; }
-.hang svg { width: clamp(150px, 22vw, 230px); height: auto; display: block; }
-.hang path, .hang circle { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
-.hang .gallows path { stroke: #A07850; stroke-width: 7; }
-.hang .hp.new > * { stroke-dasharray: 200; stroke-dashoffset: 200; animation: drawpart .5s ease-out forwards; }
+/* a little blackboard with chalk lines, like the game on the class board */
+.hang { background: #2F4A3C; border: 8px solid #A07850; border-radius: 14px; padding: 10px 14px 6px; box-shadow: inset 0 0 30px rgba(0,0,0,.35), 0 6px 0 #7a5a3a; }
+.hang svg { width: clamp(130px, 18vw, 190px); height: auto; display: block; }
+.hang path, .hang circle { fill: none; stroke: #F4F1EB; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 1px rgba(255,255,255,.5)); }
+.hang .wood path { stroke: #F2D49B; stroke-width: 7; }
+.hang .hp.new > * { stroke-dasharray: 260; stroke-dashoffset: 260; animation: drawpart .6s ease-out forwards; }
 @keyframes drawpart { to { stroke-dashoffset: 0; } }
-.hang.lost .man path, .hang.lost .man circle { stroke: var(--red); }
+.hang.lost .hp:not(.wood) path, .hang.lost .hp:not(.wood) circle, .hang.lost .face { stroke: #FF9B8F; }
+.hang .face { stroke-width: 3.5; }
 .hang-hint { display: grid; gap: 10px; justify-items: center; min-width: 0; }
 .hang-wrong { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; min-height: 30px; max-width: 220px; }
 .hang-wrong s { color: var(--red); font-weight: 800; font-size: 22px; }

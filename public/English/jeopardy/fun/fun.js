@@ -332,22 +332,28 @@
   }
 
   /* ================= 3. hangman ================= */
-  // the drawing: the gallows is there from the start, each wrong letter adds one part
+  // the classic drawing, one piece per wrong letter: first the gallows, then the stick man
   const HANG_PARTS = [
-    '<circle cx="140" cy="66" r="19"/>',
-    '<path d="M140 85v58"/>',
-    '<path d="M140 100l-26 24"/>',
-    '<path d="M140 100l26 24"/>',
-    '<path d="M140 143l-22 36"/>',
-    '<path d="M140 143l22 36"/>',
-    '<path d="M131 60l6 6m0-6l-6 6M143 60l6 6m0-6l-6 6M132 77q8-6 16 0"/>'
+    '<path d="M14 206h124"/>',              // ground
+    '<path d="M46 206V20"/>',               // pole
+    '<path d="M46 20h100"/>',               // top beam
+    '<path d="M46 56l36-36"/>',             // brace
+    '<path d="M146 20v26"/>',               // rope
+    '<circle cx="146" cy="65" r="19"/>',    // head
+    '<path d="M146 84v62"/>',               // body
+    '<path d="M146 99l-25 27"/>',           // left arm
+    '<path d="M146 99l25 27"/>',            // right arm
+    '<path d="M146 146l-21 40"/>',          // left leg
+    '<path d="M146 146l21 40"/>'            // right leg
   ];
+  const HANG_FACE = '<path class="face" d="M137 59l6 6m0-6l-6 6M149 59l6 6m0-6l-6 6M138 76q8-6 16 0"/>';
   const LENGTHS = { short: [4, 5], mid: [6, 7], long: [8, 40], all: [4, 40] };
   const letterCount = w => w.replace(/[^a-z]/gi, "").length;
   function hangSvg(wrong, lost) {
-    const parts = HANG_PARTS.slice(0, wrong).map((d, i) => d.replace("<", `<g class="hp${i === wrong - 1 ? " new" : ""}"><`).replace(/\/>$/, "/></g>")).join("");
+    const parts = HANG_PARTS.slice(0, wrong).map((d, i) => `<g class="hp${i < 5 ? " wood" : ""}${i === wrong - 1 ? " new" : ""}">${d}</g>`).join("");
     const box = el("div", { class: "hang" + (lost ? " lost" : "") });
-    box.innerHTML = `<svg viewBox="0 0 200 220" aria-hidden="true"><g class="gallows"><path d="M20 208h110M50 208V18h92M50 52l34-34M140 18v28"/></g><g class="man">${parts}</g></svg>`; // fixed markup only
+    // fixed markup only
+    box.innerHTML = `<svg viewBox="4 10 178 204" aria-hidden="true"><g class="man">${parts}${lost ? HANG_FACE : ""}</g></svg>`;
     return box;
   }
   function hangman() {
