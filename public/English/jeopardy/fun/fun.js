@@ -3,8 +3,10 @@
 (() => {
   "use strict";
   const F = window.FUN;
-  const PICS = F.pics.map(([c, w, e, say], i) => ({ c, w, e, say, i }));
-  const CAT = Object.fromEntries(F.cats.map(c => [c.id, c]));
+  // Every game reads its words from here: the built-in lists, or the game pack the teacher chose.
+  const BUILT = F.pics.map(([c, w, e, say], i) => ({ c, w, e, say, i }));
+  let CATS = F.cats, PICS = BUILT, CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
+  const R = { pack: null, words: F.words, movies: F.movies, rather: F.rather, talk: F.talk };
 
   /* ================= helpers ================= */
   const $ = s => document.querySelector(s);
@@ -45,21 +47,73 @@
 
   /* ================= state ================= */
   const KEY = "fun.state";
-  const S = Object.assign({ teams: NAMES.slice(0, 2).map((name, i) => ({ name, color: COLORS[i], score: 0 })), cats: F.cats.map(c => c.id), timer: 0, sound: true }, store.get(KEY, {}));
-  S.cats = S.cats.filter(id => CAT[id]); if (!S.cats.length) S.cats = F.cats.map(c => c.id);
+  const S = Object.assign({ teams: NAMES.slice(0, 2).map((name, i) => ({ name, color: COLORS[i], score: 0 })), cats: F.cats.map(c => c.id), timer: 0, sound: true, pack: "" }, store.get(KEY, {}));
   const save = () => store.set(KEY, S);
   const pool = () => PICS.filter(p => S.cats.includes(p.c));
+
+  /* ================= saved online ================= */
+  // A shelf of items kept in this browser and in the site's database (/api/class-games),
+  // so every device has the same game packs. Last change wins; deletes spread too.
+  function shelf(library, key) {
+    const K = "fun." + key, KD = K + ".del";
+    const me = { items: store.get(K, []), busy: false, again: false, onChange: null };
+    me.save = () => { store.set(K, me.items); me.sync(); };
+    me.remove = id => { me.items = me.items.filter(x => x.id !== id); const d = store.get(KD, {}); d[id] = Date.now(); store.set(KD, d); me.save(); };
+    me.sync = async () => {
+      if (me.busy) { me.again = true; return; }
+      me.busy = true;
+      const dels = store.get(KD, {}), sent = {};
+      const payload = me.items.map(x => { sent[x.id] = x.updatedAt; return { id: x.id, updatedAt: x.updatedAt, deleted: false, data: x }; })
+        .concat(Object.entries(dels).map(([id, t]) => { sent[id] = t; return { id, updatedAt: t, deleted: true }; }));
+      try {
+        const r = await fetch("/api/class-games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ library, games: payload }) });
+        const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "save failed");
+        const result = new Map(j.games.filter(x => !x.deleted && x.data).map(x => [x.id, { ...x.data, id: x.id, updatedAt: x.updatedAt }]));
+        // keep what changed here while the request was on its way
+        for (const x of me.items) if (!(x.id in sent) || x.updatedAt > sent[x.id]) { result.set(x.id, x); me.again = true; }
+        const nowDels = store.get(KD, {});
+        for (const [id, t] of Object.entries(nowDels)) { if (id in sent && t <= sent[id]) delete nowDels[id]; else { result.delete(id); me.again = true; } }
+        const before = JSON.stringify(me.items);
+        me.items = [...result.values()].sort((a, b) => a.updatedAt - b.updatedAt);
+        store.set(K, me.items); store.set(KD, nowDels);
+        if (JSON.stringify(me.items) !== before && me.onChange) me.onChange();
+      } catch (e) { /* kept on this device; saved online next time */ }
+      finally { me.busy = false; if (me.again) { me.again = false; setTimeout(me.sync, 300); } }
+    };
+    return me;
+  }
+  const PACKS = shelf("fun", "packs"), STOPS = shelf("stop", "stopSets");
+  const packById = id => PACKS.items.find(x => x.id === id) || null;
+  const GROUP_COLORS = ["#E2725B", "#1A8A8F", "#7C5CBF", "#E39B2B", "#5E8C4F", "#D6457A", "#4C5FD5", "#2E9E6B", "#C9A84C", "#9C5FC4", "#1a6b72"];
+  // a word from a pack: "They're grapes." for plurals, "It's an apple." otherwise
+  const sayOf = w => /^[A-Z]/.test(w) ? "n" : /[^su]s$/i.test(w) && !/(ss|us|is)$/i.test(w) ? "p" : "";
+  function applyPack() {
+    const pk = packById(S.pack);
+    R.pack = pk;
+    if (pk && pk.groups && pk.groups.some(g => g.items.length)) {
+      CATS = pk.groups.map((g, i) => ({ id: "g" + i, name: g.name, plural: g.name }));
+      PICS = pk.groups.flatMap((g, i) => g.items.map(x => ({ c: "g" + i, w: x.w, e: x.e || "", say: sayOf(x.w) }))).map((x, i) => ({ ...x, i }));
+    } else { CATS = F.cats; PICS = BUILT; }
+    CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
+    R.words = pk && pk.words && pk.words.length ? pk.words : pk && pk.movies && pk.movies.length ? [] : F.words;
+    R.movies = pk && pk.movies && pk.movies.length ? pk.movies : pk && pk.words && pk.words.length ? [] : F.movies;
+    R.rather = pk && pk.rather && pk.rather.length ? pk.rather : F.rather;
+    R.talk = pk && pk.talk && pk.talk.length >= 2 ? pk.talk.map((x, i) => ({ ...x, c: x.c || GROUP_COLORS[i % GROUP_COLORS.length] })) : F.talk;
+    S.cats = (S.cats || []).filter(id => CAT[id]); if (!S.cats.length) S.cats = CATS.map(c => c.id);
+  }
+  applyPack();
+  const packTag = () => R.pack ? R.pack.id : "built";
   // goes through every picture once before repeating
   const decks = {};
   function deck(name, filt) {
-    const sig = S.cats.join(",");
+    const sig = packTag() + ":" + S.cats.join(",");
     if (!decks[name] || decks[name].sig !== sig) { const p = pool(), f = filt ? p.filter(filt) : p; decks[name] = { sig, order: shuffle((f.length ? f : p).slice()), pos: 0 }; }
     const d = decks[name];
     return { take() { if (d.pos >= d.order.length) { d.order = shuffle(d.order); d.pos = 0; toast("All the pictures done! Starting again."); } return d.order[d.pos++]; }, get pos() { return d.pos; }, get size() { return d.order.length; } };
   }
   // a list that goes round without repeats
   function cycle(name, list) {
-    const d = decks[name] ??= { order: shuffle(list.slice()), pos: 0 };
+    const d = decks[name + ":" + packTag()] ??= { order: shuffle(list.slice()), pos: 0 };
     return () => { if (d.pos >= d.order.length) { d.order = shuffle(d.order); d.pos = 0; } return d.order[d.pos++]; };
   }
 
@@ -101,7 +155,7 @@
         el("button", { class: "btn big", "data-nobody": "1", onclick: () => go(-1) }, "Nobody, next")));
   }
   let stopAll = [], keys = null;
-  const cleanup = () => { stopAll.forEach(f => f()); stopAll = []; keys = null; onSets = null; };
+  const cleanup = () => { stopAll.forEach(f => f()); stopAll = []; keys = null; PACKS.onChange = STOPS.onChange = null; };
   function timer(secs, onEnd) {
     if (!secs) return { node: null, stop() {}, toggle() {} };
     let left = secs, last = 0, id = null, paused = false;
@@ -143,25 +197,45 @@
   const setCounter = t => { const c = $("#counter"); if (c) c.textContent = t; };
   const stageOf = (color, ...kids) => el("div", { class: "stage", style: `--cc:${color}` }, kids);
   const swap = (stage, title, controls, turnIdx) => { const old = $("#app .stage"); if (old) old.replaceWith(stage); else frame(title, controls, stage, turnIdx); };
-  const catColor = c => ["#E2725B", "#1A8A8F", "#7C5CBF", "#E39B2B", "#5E8C4F", "#D6457A", "#4C5FD5", "#2E9E6B", "#C9A84C", "#9C5FC4", "#1a6b72"][F.cats.findIndex(x => x.id === c) % 11];
+  const catColor = c => GROUP_COLORS[Math.max(0, CATS.findIndex(x => x.id === c)) % GROUP_COLORS.length];
   const seg = (opts, val, set) => el("div", { class: "seg" }, opts.map(([v, label]) => el("button", { class: val === v ? "on" : "", onclick: e => { set(v); [...e.currentTarget.parentNode.children].forEach(b => b.classList.toggle("on", b === e.currentTarget)); } }, label)));
 
   /* ================= hub ================= */
   const GAMES = [
     { id: "pics", name: "What's This?", art: "🐘", g: "linear-gradient(135deg,#1A8A8F,#3DB2A6)", p: "A big picture and three words. The easiest game: say the word, then the sentence.", tag: "Easiest" },
     { id: "odd", name: "Odd One Out", art: "🍎🚗", g: "linear-gradient(135deg,#E2725B,#E39B2B)", p: "Four pictures. One is different! Find it and say why.", tag: "Easy" },
-    { id: "balloon", name: "Balloon Pop", art: "🎈", g: "linear-gradient(135deg,#D6457A,#9C5FC4)", p: "Spell the word from the picture. Every wrong letter pops a balloon!", tag: "Spelling" },
-    { id: "riddles", name: "Emoji Riddles", art: "🦁👑", g: "linear-gradient(135deg,#4C5FD5,#5AA9E6)", p: "Sun + flower = ? Two pictures make one word, or guess the movie.", tag: "Puzzle" },
+    { id: "hangman", name: "Hangman", art: "🔤", g: "linear-gradient(135deg,#D6457A,#9C5FC4)", p: "Guess the word letter by letter. Every wrong letter adds a part to the drawing!", tag: "Spelling" },
+    { id: "riddles", name: "Emoji Riddles", art: "🦁👑", g: "linear-gradient(135deg,#4C5FD5,#5AA9E6)", p: "Sun + flower = ? Two pictures make one word, or guess what the pictures show.", tag: "Puzzle" },
     { id: "draw", name: "Draw It!", art: "✏️", g: "linear-gradient(135deg,#5E8C4F,#7FB069)", p: "One student draws on the board. The team shouts the word in English.", tag: "Drawing" },
     { id: "rather", name: "Would You Rather?", art: "🐱🐶", g: "linear-gradient(135deg,#7C5CBF,#D6457A)", p: "Fly or be invisible? Everyone votes, then says why.", tag: "Speaking" },
     { id: "stop", name: "Stop!", art: "A–Z", g: "linear-gradient(135deg,#C9A84C,#E39B2B)", p: "A letter and five categories. Write an answer for each one before time is up!", tag: "Writing" },
     { id: "spin", name: "Spin & Talk", art: "🎡", g: "linear-gradient(135deg,#2E4A6B,#1a6b72)", p: "Spin the wheel and talk about the question. Easy, fun questions.", tag: "Speaking" }
   ];
+  // which games use the chosen pack (the others use the built-in lists)
+  function packUse() {
+    const pk = R.pack; if (!pk) return null;
+    const pics = (pk.groups || []).reduce((n, g) => n + g.items.length, 0);
+    return { pics: pics > 0, odd: (pk.groups || []).filter(g => g.items.length).length >= 2, hangman: pics > 0, draw: pics > 0, riddles: !!((pk.words || []).length + (pk.movies || []).length), rather: !!(pk.rather || []).length, stop: !!pk.stop, spin: (pk.talk || []).length >= 2 };
+  }
+  function packPanel() {
+    const sel = el("select", { class: "set-sel", "aria-label": "Game pack", onchange: e => { S.pack = e.target.value; S.cats = []; applyPack(); save(); hub(); } },
+      el("option", { value: "" }, `Built-in: everyday English (${BUILT.length} words)`),
+      PACKS.items.map(x => el("option", { value: x.id, selected: x.id === S.pack }, x.title)));
+    const pk = R.pack;
+    return el("section", { class: "panel pack-panel" },
+      el("div", { class: "row" }, el("h2", { style: "font-size:28px" }, "Game pack"), el("span", { class: "spacer" }), el("a", { class: "btn gold", href: "#/make" }, "+ Make a game pack")),
+      el("p", { class: "muted", style: "margin:0" }, "A pack is your own words for one topic. Paste it from ChatGPT once, and all eight games use it."),
+      sel,
+      pk ? el("div", { class: "set-cats" }, packSummary(pk).map(t => el("span", {}, t))) : null,
+      pk ? el("div", { class: "row" }, el("a", { class: "btn", href: "#/make/" + pk.id }, "See or edit the text"),
+        el("button", { class: "btn danger-t", onclick: () => { if (!confirm(`Delete the pack "${pk.title}"?`)) return; PACKS.remove(pk.id); S.pack = ""; S.cats = []; applyPack(); save(); hub(); toast("Pack deleted"); } }, "Delete pack")) : null);
+  }
   function hub() {
     document.title = "Fun English Games";
-    const n = pool().length;
-    const chips = el("div", { class: "sec-chips" }, F.cats.map(c => el("button", { class: "chip" + (S.cats.includes(c.id) ? " on" : ""), style: `--cc:${catColor(c.id)}`, "aria-pressed": S.cats.includes(c.id) ? "true" : "false",
-      onclick: () => { const nx = S.cats.includes(c.id) ? S.cats.filter(x => x !== c.id) : S.cats.concat(c.id); if (!nx.length) { toast("Keep at least one group on"); return; } S.cats = F.cats.map(x => x.id).filter(id => nx.includes(id)); save(); hub(); } },
+    PACKS.onChange = () => { applyPack(); hub(); };
+    const n = pool().length, use = packUse();
+    const chips = el("div", { class: "sec-chips" }, CATS.map(c => el("button", { class: "chip" + (S.cats.includes(c.id) ? " on" : ""), style: `--cc:${catColor(c.id)}`, "aria-pressed": S.cats.includes(c.id) ? "true" : "false",
+      onclick: () => { const nx = S.cats.includes(c.id) ? S.cats.filter(x => x !== c.id) : S.cats.concat(c.id); if (!nx.length) { toast("Keep at least one group on"); return; } S.cats = CATS.map(x => x.id).filter(id => nx.includes(id)); save(); hub(); } },
       c.name, el("small", {}, String(PICS.filter(p => p.c === c.id).length)))));
     const teams = el("div", { class: "team-edit" }, S.teams.map((t, i) => el("div", { class: "team-line" },
       el("span", { class: "dot", style: `background:${t.color}` }),
@@ -172,11 +246,12 @@
     put($("#app"),
       el("div", { class: "hub-hero" },
         el("div", {}, el("div", { class: "eyebrow" }, "Easy English · Pictures and speaking"), el("h1", {}, "Fun English ", el("em", {}, "Games")),
-          el("p", { class: "lede" }, `Eight team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`)),
-        el("div", { class: "panel fun-pics", "aria-hidden": "true" }, shuffle(PICS.slice()).slice(0, 12).map(p => el("span", {}, p.e)))),
+          el("p", { class: "lede" }, R.pack ? `Playing with your pack "${R.pack.title}": ${PICS.length} words. Points add up across the games.` : `Eight team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`)),
+        el("div", { class: "panel fun-pics", "aria-hidden": "true" }, shuffle(PICS.filter(p => p.e)).slice(0, 12).map(p => el("span", {}, p.e)))),
+      packPanel(),
       el("div", { class: "games" }, GAMES.map(g => el("a", { class: "gcard", href: "#/" + g.id, style: `--g:${g.g};text-decoration:none` },
         el("span", { class: "art pic-art", "aria-hidden": "true" }, g.art),
-        el("div", {}, el("div", { class: "num" }, g.tag), el("h3", {}, g.name), el("p", {}, g.p)),
+        el("div", {}, el("div", { class: "num" }, g.tag, use ? (use[g.id] ? " · your pack" : " · built-in words") : ""), el("h3", {}, g.name), el("p", {}, g.p)),
         el("span", { class: "go" }, "Play →")))),
       el("div", { class: "panel-grid" },
         el("section", { class: "panel" }, el("div", { class: "row" }, el("h2", { style: "font-size:28px" }, "Teams"), el("span", { class: "spacer" }),
@@ -187,16 +262,16 @@
           el("div", { class: "row" }, el("button", { class: "btn gold", onclick: showWinner }, "Show the winner"), el("button", { class: "btn", onclick: () => { if (confirm("Set every team back to 0?")) { S.teams.forEach(t => t.score = 0); save(); hub(); } } }, "Reset scores"))),
         el("section", { class: "panel" }, el("h2", { style: "font-size:28px" }, "Settings"),
           el("div", {}, el("div", { class: "row", style: "margin-bottom:8px" }, el("b", {}, `Picture groups (${n} words)`), el("span", { class: "spacer" }),
-            el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.cats = F.cats.map(c => c.id); save(); hub(); } }, "All")), chips),
+            el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.cats = CATS.map(c => c.id); save(); hub(); } }, "All")), chips),
           el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Timer for each question"), seg([[0, "Off"], [15, "15 s"], [30, "30 s"], [45, "45 s"]], S.timer, v => { S.timer = v; save(); })))));
   }
 
   /* ================= 1. what's this? ================= */
   function pics() {
-    const d = deck("pics");
+    const d = deck("pics", x => !!x.e);
     let mode = store.get("fun.picmode", "word"), p, opts, tried, done, t;
     const modes = seg([["word", "Picture → word"], ["pic", "Word → picture"]], mode, v => { mode = v; store.set("fun.picmode", v); next(); });
-    function choose3() { const same = shuffle(pool().filter(x => x !== p && x.w !== p.w)); return shuffle([p, ...same.slice(0, mode === "pic" ? 3 : 2)]); }
+    function choose3() { const same = shuffle(pool().filter(x => x !== p && x.w !== p.w && x.e && x.e !== p.e)); return shuffle([p, ...same.slice(0, mode === "pic" ? 3 : 2)]); }
     function next() { if (t) t.stop(); p = d.take(); opts = choose3(); tried = []; done = false; draw(true); setCounter(`${CAT[p.c].name} · ${d.pos} of ${d.size}`); beep("open"); }
     function draw(fresh) {
       const color = catColor(p.c);
@@ -224,11 +299,13 @@
     let set, oddOne, tried, done, t, round = 0;
     function next() {
       if (t) t.stop();
-      const cats = shuffle(S.cats.filter(c => pool().filter(p => p.c === c).length >= 3));
-      if (!cats.length || F.cats.length < 2) { toast("Turn on more picture groups"); location.hash = "#/"; return; }
+      const cats = shuffle(S.cats.filter(c => PICS.filter(p => p.c === c).length >= 3));
+      const groups = CATS.map(c => c.id).filter(id => PICS.some(p => p.c === id));
+      if (!cats.length || groups.length < 2) { toast("Odd One Out needs at least two picture groups"); location.hash = "#/"; return; }
       // groups that share words (a beach is nature and a place) are never mixed
       const CLOSE = ["nature|places", "sports|home", "clothes|home", "food|nature", "jobs|feelings", "body|feelings"];
-      const main = cats[0], other = pick(F.cats.map(c => c.id).filter(id => id !== main && !CLOSE.includes(main + "|" + id) && !CLOSE.includes(id + "|" + main)));
+      const main = cats[0], others = groups.filter(id => id !== main && !CLOSE.includes(main + "|" + id) && !CLOSE.includes(id + "|" + main));
+      const other = pick(others.length ? others : groups.filter(id => id !== main));
       const three = shuffle(PICS.filter(p => p.c === main)).slice(0, 3);
       oddOne = pick(PICS.filter(p => p.c === other));
       set = shuffle([...three, oddOne]); tried = []; done = false; round++;
@@ -254,50 +331,77 @@
     next();
   }
 
-  /* ================= 3. balloon pop ================= */
-  function balloon() {
-    const BALLOONS = 7, d = deck("balloon", p => /^[a-z]{3,9}$/i.test(p.w));
-    let p, got, wrong, over, starter;
+  /* ================= 3. hangman ================= */
+  // the drawing: the gallows is there from the start, each wrong letter adds one part
+  const HANG_PARTS = [
+    '<circle cx="140" cy="66" r="19"/>',
+    '<path d="M140 85v58"/>',
+    '<path d="M140 100l-26 24"/>',
+    '<path d="M140 100l26 24"/>',
+    '<path d="M140 143l-22 36"/>',
+    '<path d="M140 143l22 36"/>',
+    '<path d="M131 60l6 6m0-6l-6 6M143 60l6 6m0-6l-6 6M132 77q8-6 16 0"/>'
+  ];
+  const LENGTHS = { short: [4, 5], mid: [6, 7], long: [8, 40], all: [4, 40] };
+  const letterCount = w => w.replace(/[^a-z]/gi, "").length;
+  function hangSvg(wrong, lost) {
+    const parts = HANG_PARTS.slice(0, wrong).map((d, i) => d.replace("<", `<g class="hp${i === wrong - 1 ? " new" : ""}"><`).replace(/\/>$/, "/></g>")).join("");
+    const box = el("div", { class: "hang" + (lost ? " lost" : "") });
+    box.innerHTML = `<svg viewBox="0 0 200 220" aria-hidden="true"><g class="gallows"><path d="M20 208h110M50 208V18h92M50 52l34-34M140 18v28"/></g><g class="man">${parts}</g></svg>`; // fixed markup only
+    return box;
+  }
+  function hangman() {
+    const LIVES = HANG_PARTS.length;
+    let len = store.get("fun.hlen", "short"), d, p, got, wrong, over, starter;
     turn = turn % S.teams.length;
-    const BCOL = ["#E2725B", "#E39B2B", "#5E8C4F", "#1A8A8F", "#4C5FD5", "#7C5CBF", "#D6457A"];
-    function next() { p = d.take(); got = new Set(); wrong = []; over = null; starter = turn; draw(); setCounter(`${CAT[p.c].name} · word ${d.pos} of ${d.size}`); beep("open"); }
-    const letters = () => [...p.w.toUpperCase()];
+    const makeDeck = () => {
+      const [a, b] = LENGTHS[len] || LENGTHS.short;
+      const ok = x => /^[a-z][a-z -]*[a-z]$/i.test(x.w) && letterCount(x.w) >= a && letterCount(x.w) <= b;
+      d = deck("hang-" + len, pool().some(ok) ? ok : x => /^[a-z][a-z -]*[a-z]$/i.test(x.w) && letterCount(x.w) >= 4);
+    };
+    const lens = seg([["short", "4–5 letters"], ["mid", "6–7 letters"], ["long", "8+ letters"], ["all", "All"]], len, v => { len = v; store.set("fun.hlen", v); makeDeck(); next(); });
+    function next() { p = d.take(); got = new Set(); wrong = []; over = null; starter = turn; paint(); setCounter(`${CAT[p.c].name} · word ${d.pos} of ${d.size}`); beep("open"); }
+    const letters = () => [...p.w.toUpperCase()].filter(ch => /[A-Z]/.test(ch));
     const solved = () => letters().every(ch => got.has(ch));
-    function draw() {
-      const tm = S.teams[turn], left = BALLOONS - wrong.length;
+    function paint() {
+      const tm = S.teams[turn], lost = over === "lost";
       const stage = stageOf(tm.color,
-        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, over ? el("b", { style: "font-size:20px" }, over === "won" ? "Well done!" : "Oh no! All the balloons popped.") : el("b", { style: `color:${tm.color};font-size:20px` }, `${tm.name}: pick a letter`), el("span", { class: "pos" }, CAT[p.c].name)),
-        el("div", { class: "balloons" }, Array.from({ length: BALLOONS }, (_, i) => el("span", { class: "bal" + (i >= left ? " popped" : ""), style: `--b:${BCOL[i]}` }))),
-        el("div", { class: "pic mid" }, p.e),
-        el("div", { class: "slots" }, letters().map(ch => el("div", { class: "slot" + (got.has(ch) || over ? " on" : "") + (over === "lost" && !got.has(ch) ? " miss" : "") }, got.has(ch) || over ? ch : ""))),
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, over ? el("b", { style: "font-size:20px" }, over === "won" ? "Well done!" : "Oh no! The drawing is finished.") : el("b", { style: `color:${tm.color};font-size:20px` }, `${tm.name}: pick a letter`), el("span", { class: "pos" }, `Mistakes: ${wrong.length} / ${LIVES}`)),
+        el("div", { class: "hang-row" }, hangSvg(wrong.length, lost),
+          el("div", { class: "hang-hint" }, p.e ? el("span", { class: "pic mid" }, p.e) : null, el("span", { class: "pos" }, CAT[p.c].name), el("div", { class: "hang-wrong" }, wrong.map(ch => el("s", {}, ch))))),
+        el("div", { class: "slots" }, [...p.w.toUpperCase()].map(ch => ch === " " ? el("div", { class: "slot gap" }) : !/[A-Z]/.test(ch) ? el("div", { class: "slot fixed" }, ch) :
+          el("div", { class: "slot" + (got.has(ch) || over ? " on" : "") + (lost && !got.has(ch) ? " miss" : "") }, got.has(ch) || over ? ch : ""))),
         over ? el("div", { class: "say" }, el("span", {}, sentence(p))) :
           el("div", { class: "keys" }, [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(ch => el("button", { class: "key" + (got.has(ch) ? " good" : "") + (wrong.includes(ch) ? " bad" : ""), disabled: got.has(ch) || wrong.includes(ch), onclick: () => guess(ch) }, ch))),
-        over ? el("button", { class: "btn gold huge", onclick: () => { turn = (starter + 1) % S.teams.length; next(); } }, "Next word") : el("div", { class: "actions" }, el("button", { class: "btn", onclick: () => { over = "lost"; beep("end"); draw(); } }, "Show the word")),
-        el("div", { class: "hint" }, over ? "Everyone: spell it out loud together!" : "Right letter = +20 and play again. Wrong letter = a balloon pops and the next team plays. The last letter wins +100!"));
-      swap(stage, "Balloon Pop", null, over ? -1 : turn);
+        over ? el("button", { class: "btn gold huge", onclick: () => { turn = (starter + 1) % S.teams.length; next(); } }, "Next word") : el("div", { class: "actions" }, el("button", { class: "btn", onclick: () => { over = "lost"; beep("end"); paint(); } }, "Show the word")),
+        el("div", { class: "hint" }, over ? "Everyone: spell it out loud together!" : "Right letter = +20 and play again. Wrong letter = one more part of the drawing, and the next team plays. The team that finishes the word wins +100!"));
+      swap(stage, "Hangman", lens, over ? -1 : turn);
       paintTurn(over ? -1 : turn);
     }
     function guess(ch) {
       if (over || got.has(ch) || wrong.includes(ch)) return;
       const n = letters().filter(x => x === ch).length;
       if (n) { got.add(ch); award(turn, 20 * n); if (solved()) { over = "won"; award(turn, 100); beep("win"); } }
-      else { wrong.push(ch); beep("pop"); if (wrong.length >= BALLOONS) { over = "lost"; beep("end"); } else turn = (turn + 1) % S.teams.length; }
-      draw();
+      else { wrong.push(ch); beep("no"); if (wrong.length >= LIVES) { over = "lost"; beep("end"); } else turn = (turn + 1) % S.teams.length; }
+      paint();
     }
     keys = e => { const k = e.key.toUpperCase(); if (over) { if (k === "ENTER" || k === " ") $(".btn.gold.huge").click(); return; } if (/^[A-Z]$/.test(k)) guess(k); };
-    frame("Balloon Pop", null, stageOf("var(--c6)"), turn);
-    next();
+    frame("Hangman", lens, stageOf("var(--c6)"), turn);
+    makeDeck(); next();
   }
 
   /* ================= 4. emoji riddles ================= */
   function riddles() {
-    let kind = store.get("fun.rkind", "words"), r, choices, done, t, worth;
-    const nextWord = cycle("words", F.words), nextMovie = cycle("movies", F.movies);
-    const kinds = seg([["words", "Two pictures, one word"], ["movies", "Guess the movie"]], kind, v => { kind = v; store.set("fun.rkind", v); next(); });
+    const have = { words: R.words.length > 0, movies: R.movies.length > 0 };
+    let kind = store.get("fun.rkind", "words"); if (!have[kind]) kind = have.words ? "words" : "movies";
+    let r, choices, done, t, worth;
+    const nextWord = have.words ? cycle("words", R.words) : null, nextMovie = have.movies ? cycle("movies", R.movies) : null;
+    const moviesLabel = R.pack ? "Picture puzzles" : "Guess the movie";
+    const kinds = have.words && have.movies ? seg([["words", "Two pictures, one word"], ["movies", moviesLabel]], kind, v => { kind = v; store.set("fun.rkind", v); next(); }) : null;
     function next() {
       if (t) t.stop();
       r = kind === "words" ? nextWord() : nextMovie();
-      const list = kind === "words" ? F.words : F.movies;
+      const list = kind === "words" ? R.words : R.movies;
       choices = null; done = false; worth = 200;
       r.opts = shuffle([r, ...shuffle(list.filter(x => x !== r)).slice(0, 2)]);
       draw(true); beep("open"); setCounter(kind === "words" ? "Words" : "Movies");
@@ -305,18 +409,18 @@
     function draw(fresh) {
       const color = kind === "words" ? "#4C5FD5" : "#D6457A";
       if (fresh) t = timer(S.timer);
-      const pics = kind === "words" ? el("div", { class: "riddle" }, el("span", { class: "pic mid" }, r.e[0]), el("b", { class: "plus" }, "+"), el("span", { class: "pic mid" }, r.e[1]), el("b", { class: "plus" }, "="), el("b", { class: "q" }, "?"))
+      const pics = kind === "words" ? el("div", { class: "riddle" }, r.e.map((x, i) => [i ? el("b", { class: "plus" }, "+") : null, el("span", { class: "pic mid" }, x)]), el("b", { class: "plus" }, "="), el("b", { class: "q" }, "?"))
         : el("div", { class: "riddle" }, el("span", { class: "pic mid movie" }, r.e));
       const stage = stageOf(color,
-        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, kind === "words" ? "Put the two words together" : "Which movie is it?"), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, kind === "words" ? "Put the words together" : R.pack ? "What is it?" : "Which movie is it?"), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
         pics,
-        done ? el("div", { class: "say" }, el("b", {}, r.a), kind === "words" ? el("span", {}, `${r.p[0]} + ${r.p[1]} = ${r.a}`) : null) : null,
+        done ? el("div", { class: "say" }, el("b", {}, r.a), kind === "words" && r.p && r.p.length ? el("span", {}, `${r.p.join(" + ")} = ${r.a}`) : null) : null,
         !done && choices ? el("div", { class: "opts4 g3" }, r.opts.map((o, i) => el("button", { class: "opt4" + (o.bad ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABC"[i]), o.a))) : null,
         done ? null : t.node,
         done ? awardRow(worth, next) : el("div", { class: "actions" },
           choices ? null : el("button", { class: "btn big", onclick: () => { choices = true; worth = 100; r.opts.forEach(o => o.bad = false); beep("pass"); draw(false); } }, "Show 3 choices (worth 100)"),
           el("button", { class: "btn gold big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); draw(false); } }, "Show the answer")),
-        el("div", { class: "hint" }, done ? "Click the team that got it, or press N." : kind === "words" ? "Say the two words in English, then join them. Space = show the answer." : "Shout the movie name in English! Space = show the answer."));
+        el("div", { class: "hint" }, done ? "Click the team that got it, or press N." : kind === "words" ? "Say each word in English, then join them. Space = show the answer." : R.pack ? "Shout the answer in English! Space = show the answer." : "Shout the movie name in English! Space = show the answer."));
       swap(stage, "Emoji Riddles", kinds);
     }
     function choose(o) { if (done || o.bad) return; if (o === r) { done = true; if (t) t.stop(); beep("ok"); } else { o.bad = true; beep("no"); } draw(false); }
@@ -382,7 +486,7 @@
 
   /* ================= 6. would you rather ================= */
   function rather() {
-    const nextQ = cycle("rather", F.rather);
+    const nextQ = cycle("rather", R.rather);
     let q, votes, asked, n = 0;
     function next() { q = nextQ(); votes = [0, 0]; asked = false; n++; paint(); setCounter(`Question ${n}`); beep("open"); }
     function paint() {
@@ -405,83 +509,34 @@
   }
 
   /* ================= 7. stop! ================= */
-  // Category sets: the built-in one plus sets pasted by the teacher. Pasted sets are
-  // saved online (/api/class-games, library "stop"), so every device has them.
-  const K_SETS = "fun.stopSets", K_SDEL = "fun.stopDel";
+  // Category sets: the built-in one, the [STOP] part of each game pack, and older pasted sets.
   const BUILTIN = { id: "builtin", title: F.stop.title, cats: F.stop.cats.map(x => ({ c: x.c, w: x.w.split(",").map(s => s.trim()).filter(Boolean) })) };
-  let SETS = store.get(K_SETS, []), setsBusy = false, setsAgain = false, onSets = null;
-  const allSets = () => [BUILTIN, ...SETS];
-  async function syncSets() {
-    if (setsBusy) { setsAgain = true; return; }
-    setsBusy = true;
-    const dels = store.get(K_SDEL, {}), sent = {};
-    const payload = SETS.map(x => { sent[x.id] = x.updatedAt; return { id: x.id, updatedAt: x.updatedAt, deleted: false, data: x }; })
-      .concat(Object.entries(dels).map(([id, t]) => { sent[id] = t; return { id, updatedAt: t, deleted: true }; }));
-    try {
-      const r = await fetch("/api/class-games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ library: "stop", games: payload }) });
-      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "save failed");
-      const result = new Map(j.games.filter(x => !x.deleted && x.data && Array.isArray(x.data.cats)).map(x => [x.id, { ...x.data, id: x.id, updatedAt: x.updatedAt }]));
-      // keep what changed here while the request was on its way
-      for (const x of SETS) if (!(x.id in sent) || x.updatedAt > sent[x.id]) { result.set(x.id, x); setsAgain = true; }
-      const nowDels = store.get(K_SDEL, {});
-      for (const [id, t] of Object.entries(nowDels)) { if (id in sent && t <= sent[id]) delete nowDels[id]; else { result.delete(id); setsAgain = true; } }
-      const before = JSON.stringify(SETS);
-      SETS = [...result.values()].sort((a, b) => a.updatedAt - b.updatedAt);
-      store.set(K_SETS, SETS); store.set(K_SDEL, nowDels);
-      if (JSON.stringify(SETS) !== before && onSets) onSets();
-    } catch (e) { /* kept on this device; saved online next time */ }
-    finally { setsBusy = false; if (setsAgain) { setsAgain = false; setTimeout(syncSets, 300); } }
-  }
-  const STOP_PROMPT = `Make a "Stop!" word game (like Scattergories) for my English class.
-Level: A2 (easy words)
-Topic: [WRITE THE TOPIC, for example: food and cooking]
-
-Write 8 categories for this topic. For each category, write 30 easy English words that fit it. Use many different first letters (A to W, no X, Y or Z).
-Answer in exactly this format, with no other text:
-
-Title: [a short name for the set]
-[category 1]: word, word, word, word, ...
-[category 2]: word, word, word, word, ...
-
-Example:
-Title: Animals and Food
-an animal: ant, bear, cat, dog, eagle, fox, goat, horse, ...
-a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
-  // "Title: ..." and "category: word, word" lines, or JSON { title, categories: [{ name, words }] }
+  const allSets = () => [BUILTIN, ...PACKS.items.filter(x => x.stop).map(x => ({ ...x.stop, id: "pack:" + x.id, title: x.title, pack: true })), ...STOPS.items.filter(x => Array.isArray(x.cats))];
+  // "category: word, word" lines
   function parseStop(text) {
-    text = String(text || "").trim(); if (!text) throw "";
     let title = "", letters = "", cats = [];
-    const fromJson = j => {
-      title = j.title || j.name || ""; letters = j.letters || "";
-      cats = (j.categories || j.cats || []).map(x => ({ c: String(x.name || x.category || x.c || "").trim(), w: (Array.isArray(x.words || x.w) ? (x.words || x.w) : String(x.words || x.w || "").split(/[,;]/)).map(s => String(s).trim()).filter(Boolean) }));
-    };
-    const json = text.replace(/^```(json)?|```$/g, "").trim();
-    if (/^[{[]/.test(json)) { try { const j = JSON.parse(json); fromJson(Array.isArray(j) ? { categories: j } : j); } catch (e) { throw "That JSON has a mistake. Try the simple text format."; } }
-    else for (let line of text.split(/\r?\n/)) {
+    for (let line of String(text || "").split(/\r?\n/)) {
       line = line.replace(/\*\*/g, "").replace(/^\s*(?:[-•*]|\d+[.)])\s*/, "").trim();
-      if (!line || line.startsWith("#") || /^example:?$/i.test(line)) continue;
+      if (!line || line.startsWith("#")) continue;
       const k = line.indexOf(":"); if (k < 1) continue;
       const head = line.slice(0, k).trim(), rest = line.slice(k + 1).trim();
       if (/^(title|name|topic)$/i.test(head)) { if (!title) title = rest; continue; }
       if (/^letters?$/i.test(head)) { letters = rest; continue; }
       if (/^level$/i.test(head)) continue;
-      cats.push({ c: head, w: rest.split(/[,;]/).map(s => s.replace(/\.\.\.|…/g, "").trim()).filter(Boolean) });
+      cats.push({ c: head.slice(0, 60), w: rest.split(/[,;]/).map(s => s.replace(/\.\.\.|…/g, "").trim().slice(0, 40)).filter(Boolean).slice(0, 120) });
     }
-    cats = cats.filter(x => x.c && x.w.length);
-    const seen = new Set(); cats = cats.filter(x => { const k = x.c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
-    if (cats.length < 3) throw "Write at least 3 categories, one per line: category: word, word, word";
-    const thin = cats.filter(x => x.w.length < 3);
-    if (thin.length) throw `Add more words to "${thin[0].c}" (at least 3).`;
-    letters = String(letters).toUpperCase().replace(/[^A-Z]/g, "");
-    return { title: (title || "My Stop! set").slice(0, 60), letters, cats: cats.slice(0, 30).map(x => ({ c: x.c.slice(0, 60), w: x.w.slice(0, 120).map(s => s.slice(0, 40)) })) };
+    const seen = new Set();
+    cats = cats.filter(x => x.c && x.w.length >= 3 && !seen.has(x.c.toLowerCase()) && seen.add(x.c.toLowerCase())).slice(0, 30);
+    return { title, letters: String(letters).toUpperCase().replace(/[^A-Z]/g, ""), cats };
   }
   const first = w => (String(w).normalize("NFKD").replace(/[^\p{L}]/gu, "")[0] || "").toUpperCase();
   function stop() {
     let secs = store.get("fun.stop", 60), many = store.get("fun.stopN", 5), setId = store.get("fun.stopSet", "builtin");
-    let letter = "", cats = [], rg = null, phase = "start", spinId = null, showEx = false, pasting = false, pasteText = "";
+    let letter = "", cats = [], rg = null, phase = "start", spinId = null, showEx = false;
+    if (R.pack && R.pack.stop && !store.get("fun.stopPicked." + R.pack.id, false)) { setId = "pack:" + R.pack.id; store.set("fun.stopPicked." + R.pack.id, true); store.set("fun.stopSet", setId); }
     const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set("fun.stop", v); });
     const cur = () => allSets().find(x => x.id === setId) || BUILTIN;
-    onSets = () => { if (phase === "start" && !pasting) paint(); };
+    PACKS.onChange = STOPS.onChange = () => { if (phase === "start") paint(); };
     function newRound() {
       const set = cur();
       phase = "spin"; showEx = false; if (rg) rg.stop();
@@ -511,39 +566,11 @@ a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
         el("div", { class: "set-row" }, el("b", {}, "Categories each round"), seg([[4, "4"], [5, "5"], [6, "6"]], many, v => { many = v; store.set("fun.stopN", v); paint(); })),
         el("div", { class: "set-cats" }, set.cats.map(x => el("span", {}, x.c))),
         el("div", { class: "actions" },
-          el("button", { class: "btn", onclick: () => { pasting = true; paint(); } }, "Paste a new set"),
-          set.id === "builtin" ? null : el("button", { class: "btn danger-t", onclick: () => {
+          el("a", { class: "btn", href: "#/make" }, "Make a new set (game pack)"),
+          set.id === "builtin" || set.pack ? null : el("button", { class: "btn danger-t", onclick: () => {
             if (!confirm(`Delete "${set.title}"?`)) return;
-            SETS = SETS.filter(x => x.id !== set.id); store.set(K_SETS, SETS);
-            const d = store.get(K_SDEL, {}); d[set.id] = Date.now(); store.set(K_SDEL, d);
-            setId = "builtin"; store.set("fun.stopSet", setId); syncSets(); paint(); toast("Set deleted");
+            STOPS.remove(set.id); setId = "builtin"; store.set("fun.stopSet", setId); paint(); toast("Set deleted");
           } }, "Delete this set")));
-    }
-    function pasteBox() {
-      const status = el("div", { class: "paste-status" }), ta = el("textarea", { class: "paste-ta", rows: 9, spellcheck: "false", placeholder: "Title: Food and Cooking\na fruit: apple, banana, cherry, ...\na vegetable: bean, carrot, ...\nsomething in the kitchen: bowl, cup, fork, ..." });
-      ta.value = pasteText;
-      const saveB = el("button", { class: "btn gold", disabled: true, onclick: () => {
-        let set; try { set = parseStop(ta.value); } catch (e) { return; }
-        const now = Date.now(); set.id = "s" + now.toString(36) + Math.random().toString(36).slice(2, 6); set.updatedAt = now;
-        SETS.push(set); store.set(K_SETS, SETS); syncSets();
-        setId = set.id; store.set("fun.stopSet", setId); pasting = false; pasteText = ""; paint(); toast(`Saved: ${set.title}`);
-      } }, "Save set");
-      const check = () => {
-        pasteText = ta.value; status.className = "paste-status";
-        try { const s = parseStop(ta.value); status.classList.add("ok"); status.textContent = `${s.title}: ${s.cats.length} categories, ${s.cats.reduce((n, x) => n + x.w.length, 0)} words`; saveB.disabled = false; }
-        catch (e) { saveB.disabled = true; if (e) { status.classList.add("bad"); status.textContent = e; } else status.textContent = "Paste the AI answer here."; }
-      };
-      ta.addEventListener("input", check); check();
-      return el("div", { class: "paste-box" },
-        el("b", {}, "Make your own set"),
-        el("ol", { class: "paste-steps" },
-          el("li", {}, "Press ", el("b", {}, "Copy AI prompt"), " and paste it into ChatGPT (or any AI)."),
-          el("li", {}, "Change the topic line, then send it."),
-          el("li", {}, "Copy the AI's answer and paste it below.")),
-        el("div", { class: "actions" }, el("button", { class: "btn", onclick: async () => { try { await navigator.clipboard.writeText(STOP_PROMPT); toast("Prompt copied. Change the topic, then paste it into the AI."); } catch (e) { ta.value = STOP_PROMPT; check(); ta.select(); toast("Copy this prompt, then clear the box"); } } }, "Copy AI prompt")),
-        ta, status,
-        el("div", { class: "actions" }, saveB, el("button", { class: "btn", onclick: () => { pasting = false; paint(); } }, "Cancel")),
-        el("div", { class: "hint" }, "Format: one category per line, then a colon, then words with commas. A Title: line is optional."));
     }
     function paint() {
       const stage = stageOf("#E39B2B",
@@ -552,7 +579,7 @@ a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
           el("div", {}, el("b", {}, "2. "), `You get one letter and ${many} categories.`),
           el("div", {}, el("b", {}, "3. "), "Write one English word for each category. It must start with the letter!"),
           el("div", {}, el("b", {}, "4. "), "Finished? Shout STOP! Then check the answers: +10 for each good word.")) : null,
-        phase === "start" ? (pasting ? pasteBox() : setPicker()) : null,
+        phase === "start" ? setPicker() : null,
         phase === "start" ? null : el("div", { class: "stop-top" }, el("div", { class: "letter-box" + (phase === "spin" ? " spin" : "") }, letter || "?"), phase === "write" && rg ? rg.node : null),
         phase === "start" || phase === "spin" ? null : el("ol", { class: "stop-cats" }, cats.map(x => {
           const ex = examples(x);
@@ -565,7 +592,7 @@ a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
           S.teams.map((tm, i) => el("div", { class: "team-line" }, el("span", { class: "dot", style: `background:${tm.color}` }), el("span", { class: "nm" }, tm.name),
             el("button", { class: "mini", "aria-label": `Take 10 from ${tm.name}`, onclick: () => award(i, -10) }, "−"),
             el("button", { class: "mini plus", "aria-label": `Give 10 to ${tm.name}`, onclick: () => award(i, 10) }, "+10")))) : null,
-        phase === "spin" || (phase === "start" && pasting) ? null : el("div", { class: "actions" },
+        phase === "spin" ? null : el("div", { class: "actions" },
           el("button", { class: "btn gold huge", onclick: newRound }, phase === "start" ? "Get a letter" : "New letter"),
           phase === "start" ? null : el("button", { class: "btn big", onclick: () => { if (rg) rg.stop(); phase = "start"; paint(); } }, "Change set")),
         el("div", { class: "hint" }, phase === "score" ? "Other good words are fine too! Same word as another team? You can give only +5." : phase === "start" ? `Set: ${cur().title}` : "The letter always has answers in these categories."));
@@ -573,12 +600,12 @@ a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
     }
     keys = e => { if (e.key === "Enter" && phase !== "spin" && phase !== "start") newRound(); };
     frame("Stop!", lens, stageOf("#E39B2B"));
-    paint(); syncSets();
+    paint(); PACKS.sync(); STOPS.sync();
   }
 
   /* ================= 8. spin & talk ================= */
   function spin() {
-    const T = F.talk, N = T.length, step = 360 / N;
+    const T = R.talk, N = T.length, step = 360 / N;
     let angle = store.get("fun.wheel", 0) % 360, shown = angle, spinning = false, topic = null, question = "", rg = null, talkSecs = store.get("fun.talk", 30);
     turn = turn % S.teams.length;
     const used = {};
@@ -624,6 +651,156 @@ a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
     paint();
   }
 
+  /* ================= make a game pack ================= */
+  const PACK_PROMPT = `Make a game pack for my English class.
+Level: A2 (easy, everyday words)
+Topic: [WRITE THE TOPIC HERE, for example: food and cooking]
+
+Answer in exactly the format below and nothing else. Keep the lines in [BRACKETS].
+- PICTURES: 4 to 6 groups about the topic, 8 to 12 easy words in each group. Put one emoji after each word.
+- RIDDLES: 8 riddles. Two emoji that make one English word (like sun + flower = sunflower), or a few emoji that show a thing, a place or a film.
+- WOULD YOU RATHER: 8 fun questions about the topic. Two choices, one emoji after each choice.
+- STOP: 6 categories about the topic, 25 easy words each, with many different first letters (A to W).
+- TALK: 4 small topics, 4 easy speaking questions each.
+
+Title: Food and Cooking
+
+[PICTURES]
+fruit: apple 🍎, banana 🍌, grapes 🍇, lemon 🍋
+drinks: milk 🥛, tea 🍵, coffee ☕, water 💧
+
+[RIDDLES]
+🍳 + 🎂 = pancake
+☕ + 🎂 = cupcake
+🍕🇮🇹 = pizza from Italy
+
+[WOULD YOU RATHER]
+eat pizza every day 🍕 | eat burgers every day 🍔
+
+[STOP]
+a fruit: apple, apricot, banana, cherry, date, fig, grape, kiwi, lemon, mango
+a drink: ayran, coffee, juice, lemonade, milk, smoothie, tea, water
+
+[TALK]
+Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who makes breakfast at home? | What is the best breakfast?
+
+(This example only shows the format. Write new content about my topic.)`;
+  const EMOJI_RE = /(?:\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}])(?:[\u{1F3FB}-\u{1F3FF}️⃣]|‍(?:\p{Extended_Pictographic}|[♀♂]))*/u;
+  const EMOJI_ALL = new RegExp(EMOJI_RE.source, "gu");
+  const SECTIONS = [["pics", /^(pictures?|words|vocabulary|groups?)$/], ["riddles", /^(emoji )?riddles?$/], ["rather", /^would you rather\??$/], ["stop", /^(stop!?|categories)$/], ["talk", /^(talk|spin|speaking|questions?|spin (and|&) talk)$/]];
+  // the text from the AI -> a pack. Every section is optional; plain "category: words" lines with no sections are a Stop! set.
+  function parsePack(text) {
+    text = String(text || "").replace(/\r/g, "");
+    if (!text.trim()) throw "";
+    let title = "", sec = null, any = false;
+    const pk = { groups: [], words: [], movies: [], rather: [], talk: [], stopText: "" };
+    let loose = "";
+    for (let raw of text.split("\n")) {
+      let line = raw.replace(/\*\*|__|`/g, "").trim();
+      if (!line) continue;
+      const h = line.replace(/^#+\s*/, "").replace(/^\[|\]$/g, "").replace(/:$/, "").trim().toLowerCase();
+      const found = SECTIONS.find(([, re]) => re.test(h));
+      if (found && (line.startsWith("[") || line.startsWith("#") || line === line.toUpperCase() || /:$/.test(line))) { sec = found[0]; any = true; continue; }
+      line = line.replace(/^\s*(?:[-•*]|\d+[.)])\s+/, "");
+      const t = line.match(/^(title|name)\s*:\s*(.+)$/i);
+      if (t) { if (!title) title = t[2].trim(); continue; }
+      if (/^\(.*\)$/.test(line) || /^(level|topic)\s*:/i.test(line)) continue;
+      if (sec === "pics") {
+        const k = line.indexOf(":"); if (k < 1) continue;
+        const items = line.slice(k + 1).split(/[,;]/).map(x => {
+          const e = (x.match(EMOJI_ALL) || []).join("");
+          const w = x.replace(EMOJI_ALL, "").replace(/[()"]/g, "").replace(/\s+/g, " ").trim();
+          return { w: w.slice(0, 30), e };
+        }).filter(x => /\p{L}/u.test(x.w));
+        if (items.length) pk.groups.push({ name: line.slice(0, k).replace(EMOJI_ALL, "").trim().slice(0, 40), items: items.slice(0, 60) });
+      } else if (sec === "riddles") {
+        const k = line.lastIndexOf("="); if (k < 1) continue;
+        const left = line.slice(0, k).trim(), ans = line.slice(k + 1).replace(/\(.*\)\s*$/, "").trim();
+        const partsTxt = (line.slice(k + 1).match(/\(([^)]*\+[^)]*)\)/) || [])[1];
+        if (!ans || !EMOJI_RE.test(left)) continue;
+        if (left.includes("+")) {
+          const e = left.split("+").map(x => (x.match(EMOJI_ALL) || []).join("")).filter(Boolean);
+          if (e.length >= 2) pk.words.push({ e: e.slice(0, 4), a: ans.slice(0, 60), p: partsTxt ? partsTxt.split("+").map(x => x.trim()) : null });
+        } else pk.movies.push({ e: (left.match(EMOJI_ALL) || []).join("").slice(0, 40), a: ans.slice(0, 60) });
+      } else if (sec === "rather") {
+        const q = line.replace(/^would you rather\s*/i, "").replace(/\?$/, "");
+        const sides = (q.includes("|") ? q.split("|") : q.split(/\s+or\s+/i)).map(x => x.trim()).filter(Boolean);
+        if (sides.length < 2) continue;
+        const side = x => [x.replace(EMOJI_ALL, "").replace(/\s+/g, " ").trim().slice(0, 60), (x.match(EMOJI_ALL) || []).join("").slice(0, 12) || "❓"];
+        const [a, b] = [side(sides[0]), side(sides[1])];
+        if (a[0] && b[0]) pk.rather.push([a[0], a[1], b[0], b[1]]);
+      } else if (sec === "talk") {
+        const k = line.indexOf(":"); if (k < 1) continue;
+        const q = line.slice(k + 1).split("|").map(x => x.trim()).filter(x => x.length > 3);
+        if (q.length) pk.talk.push({ t: line.slice(0, k).trim().slice(0, 18), q: q.slice(0, 12) });
+      } else if (sec === "stop") pk.stopText += line + "\n";
+      else if (!sec) loose += line + "\n";
+    }
+    // no [SECTIONS] at all: plain "category: words" lines are a Stop! set
+    if (!any) pk.stopText = loose;
+    const st = parseStop(pk.stopText); delete pk.stopText;
+    pk.stop = st.cats.length >= 3 ? { title: st.title || title, letters: st.letters, cats: st.cats } : null;
+    pk.title = (title || st.title || "My game pack").slice(0, 60);
+    pk.talk = pk.talk.slice(0, 12); pk.rather = pk.rather.slice(0, 60); pk.words = pk.words.slice(0, 80); pk.movies = pk.movies.slice(0, 80); pk.groups = pk.groups.slice(0, 12);
+    if (!pk.groups.length && !pk.words.length && !pk.movies.length && !pk.rather.length && !pk.stop && !pk.talk.length) throw "No game parts found yet. Keep the [PICTURES], [RIDDLES], [WOULD YOU RATHER], [STOP] and [TALK] lines.";
+    return pk;
+  }
+  function packSummary(pk) {
+    const n = (pk.groups || []).reduce((a, g) => a + g.items.length, 0), out = [];
+    if (n) out.push(`${n} pictures in ${pk.groups.length} groups`);
+    const r = (pk.words || []).length + (pk.movies || []).length; if (r) out.push(`${r} riddles`);
+    if ((pk.rather || []).length) out.push(`${pk.rather.length} would you rather`);
+    if (pk.stop) out.push(`${pk.stop.cats.length} Stop! categories`);
+    if ((pk.talk || []).length) out.push(`${pk.talk.length} talk topics`);
+    return out;
+  }
+  function make(id) {
+    document.title = "Make a game pack · Fun English";
+    const old = id ? packById(id) : null;
+    const status = el("div", { class: "paste-status" }), parts = el("div", { class: "set-cats" });
+    const ta = el("textarea", { class: "paste-ta", rows: 14, spellcheck: "false", placeholder: "Paste the AI answer here.\n\nTitle: Food and Cooking\n\n[PICTURES]\nfruit: apple 🍎, banana 🍌, grapes 🍇\n\n[RIDDLES]\n🍳 + 🎂 = pancake\n\n[WOULD YOU RATHER]\neat pizza 🍕 | eat burgers 🍔\n\n[STOP]\na fruit: apple, banana, cherry, ...\n\n[TALK]\nBreakfast: What do you eat? | Do you like tea?" });
+    ta.value = old ? old.text || "" : store.get("fun.packDraft", "");
+    let parsed = null;
+    const saveB = el("button", { class: "btn gold big", disabled: true, onclick: () => {
+      if (!parsed) return;
+      const now = Date.now(), pk = { ...parsed, text: ta.value.slice(0, 60000), id: old ? old.id : "p" + now.toString(36) + Math.random().toString(36).slice(2, 6), updatedAt: now };
+      if (JSON.stringify(pk).length > 95000) { toast("This pack is too big. Make it a little shorter."); return; }
+      PACKS.items = PACKS.items.filter(x => x.id !== pk.id).concat(pk); PACKS.save();
+      store.set("fun.packDraft", ""); S.pack = pk.id; S.cats = []; applyPack(); save();
+      toast(`Saved: ${pk.title}. All the games use it now.`); location.hash = "#/";
+    } }, old ? "Save changes" : "Save the pack and play");
+    const check = () => {
+      if (!old) store.set("fun.packDraft", ta.value);
+      status.className = "paste-status"; put(parts);
+      try {
+        parsed = parsePack(ta.value); saveB.disabled = false;
+        status.classList.add("ok"); status.textContent = `"${parsed.title}" is ready:`;
+        put(parts, packSummary(parsed).map(t => el("span", {}, t)));
+      } catch (e) { parsed = null; saveB.disabled = true; if (e) { status.classList.add("bad"); status.textContent = e; } else status.textContent = "Paste the AI answer here."; }
+    };
+    ta.addEventListener("input", check);
+    const copy = async () => { try { await navigator.clipboard.writeText(PACK_PROMPT); toast("Prompt copied. Change the topic, then paste it into the AI."); } catch (e) { ta.value = PACK_PROMPT; check(); ta.select(); toast("Copy this prompt from the box, then clear the box"); } };
+    put($("#app"),
+      el("div", { class: "game-head" }, el("a", { class: "btn", href: "#/" }, "← All games"), el("h2", {}, old ? "Edit game pack" : "Make a game pack")),
+      el("div", { class: "stage make", style: "--cc:var(--gold);align-content:start" },
+        el("ol", { class: "paste-steps big" },
+          el("li", {}, "Press ", el("b", {}, "Copy AI prompt"), " and paste it into ChatGPT, Gemini or any AI."),
+          el("li", {}, "Change the topic line (for example: animals, my town, holidays, sports), then send it."),
+          el("li", {}, "Copy the AI's whole answer and paste it in the box below. Then press Save.")),
+        el("div", { class: "actions" }, el("button", { class: "btn big", onclick: copy }, "Copy AI prompt")),
+        ta, status, parts,
+        el("div", { class: "actions" }, saveB, el("a", { class: "btn big", href: "#/" }, "Cancel")),
+        el("details", { class: "fmt" }, el("summary", {}, "What can a pack have? (you can also type it yourself)"),
+          el("ul", {},
+            el("li", {}, el("b", {}, "[PICTURES]"), " group: word emoji, word emoji … for What's This?, Odd One Out, Hangman and Draw It!"),
+            el("li", {}, el("b", {}, "[RIDDLES]"), " emoji + emoji = word, or emoji emoji = answer, for Emoji Riddles"),
+            el("li", {}, el("b", {}, "[WOULD YOU RATHER]"), " choice emoji | choice emoji"),
+            el("li", {}, el("b", {}, "[STOP]"), " category: word, word, word … (the example answers)"),
+            el("li", {}, el("b", {}, "[TALK]"), " topic: question | question | question, for Spin & Talk")),
+          el("p", { class: "muted" }, "Every part is optional. A game with no part in your pack uses the built-in words."))));
+    check();
+  }
+
   /* ================= winner ================= */
   function showWinner() {
     const ranked = [...S.teams].sort((a, b) => b.score - a.score), best = ranked[0].score, winners = ranked.filter(t => t.score === best).map(t => t.name);
@@ -646,10 +823,11 @@ a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
   }
 
   /* ================= routing ================= */
-  const ROUTES = { "": hub, pics, odd, balloon, riddles, draw, rather, stop, spin };
+  const ROUTES = { "": hub, pics, odd, hangman, balloon: hangman, riddles, draw, rather, stop, spin };
   function route() {
     cleanup();
     const id = location.hash.replace(/^#\/?/, "");
+    if (id === "make" || id.startsWith("make/")) { make(id.slice(5)); window.scrollTo(0, 0); return; }
     const g = GAMES.find(x => x.id === id); document.title = g ? `${g.name} · Fun English` : "Fun English Games";
     (ROUTES[id] || hub)(); window.scrollTo(0, 0);
   }
@@ -664,4 +842,5 @@ a fruit: apple, banana, cherry, date, fig, grape, kiwi, lemon, ...`;
   $("#soundBtn").onclick = () => { S.sound = !S.sound; save(); paintSound(); beep("ok"); };
   $("#fsBtn").onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (e) { toast("Full screen isn't available here"); } };
   paintSound(); route();
+  PACKS.sync(); STOPS.sync();
 })();

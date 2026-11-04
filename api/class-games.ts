@@ -7,7 +7,8 @@ import { db } from '../src/db/index.js'
 // its games on each sync; each game is last-write-wins on updatedAt, and
 // deletes are kept as tombstones so they spread to other devices.
 // body.library picks a separate shelf: "games" (the default, the Class Games
-// page) or "stop" (category sets for the Stop! game on /English/jeopardy/fun).
+// page), "stop" (older Stop! category sets) or "fun" (game packs) for the games
+// on /English/jeopardy/fun.
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +17,7 @@ const CORS = {
 }
 
 const OWNER = 'site'
-const LIBRARIES: Record<string, string> = { games: OWNER, stop: 'site:stop' }
+const LIBRARIES: Record<string, string> = { games: OWNER, stop: 'site:stop', fun: 'site:fun' }
 const MAX_GAMES = 300
 const MAX_GAME_BYTES = 100_000
 

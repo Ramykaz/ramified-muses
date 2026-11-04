@@ -120,3 +120,26 @@
 .stage { grid-template-columns: minmax(0, 1fr); }
 .set-box, .paste-box { min-width: 0; }
 .set-sel { width: 100%; flex: 1 1 200px; }
+
+/* hangman */
+.hang-row { display: flex; gap: clamp(12px, 3vw, 36px); align-items: center; justify-content: center; flex-wrap: wrap; width: 100%; }
+.hang svg { width: clamp(150px, 22vw, 230px); height: auto; display: block; }
+.hang path, .hang circle { fill: none; stroke: var(--ink); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.hang .gallows path { stroke: #A07850; stroke-width: 7; }
+.hang .hp.new > * { stroke-dasharray: 200; stroke-dashoffset: 200; animation: drawpart .5s ease-out forwards; }
+@keyframes drawpart { to { stroke-dashoffset: 0; } }
+.hang.lost .man path, .hang.lost .man circle { stroke: var(--red); }
+.hang-hint { display: grid; gap: 10px; justify-items: center; min-width: 0; }
+.hang-wrong { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; min-height: 30px; max-width: 220px; }
+.hang-wrong s { color: var(--red); font-weight: 800; font-size: 22px; }
+
+/* game packs */
+.pack-panel { display: grid; gap: 12px; margin: 0 0 22px; }
+.pack-panel .row { flex-wrap: wrap; gap: 10px; }
+.stage.make { min-height: 0; }
+.stage.make .paste-ta { width: min(900px, 100%); justify-self: center; }
+.paste-steps.big { font-size: clamp(16px, 1.7vw, 19px); font-weight: 600; text-align: left; width: min(760px, 100%); justify-self: center; }
+.fmt { width: min(900px, 100%); text-align: left; background: var(--cream); border-radius: 16px; padding: 12px 16px; }
+.fmt summary { font-weight: 800; cursor: pointer; }
+.fmt ul { padding-left: 20px; display: grid; gap: 6px; }
+.fmt li { overflow-wrap: anywhere; }
