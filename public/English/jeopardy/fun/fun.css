@@ -123,16 +123,25 @@
 
 /* hangman */
 .hang-row { display: flex; gap: clamp(12px, 3vw, 36px); align-items: center; justify-content: center; flex-wrap: wrap; width: 100%; }
-/* a little blackboard with chalk lines, like the game on the class board */
-.hang { background: #2F4A3C; border: 8px solid #A07850; border-radius: 14px; padding: 10px 14px 6px; box-shadow: inset 0 0 30px rgba(0,0,0,.35), 0 6px 0 #7a5a3a; }
-.hang svg { width: clamp(130px, 18vw, 190px); height: auto; display: block; }
-.hang path, .hang circle { fill: none; stroke: #F4F1EB; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 1px rgba(255,255,255,.5)); }
-.hang .wood path { stroke: #F2D49B; stroke-width: 7; }
-.hang .hp.new > * { stroke-dasharray: 260; stroke-dashoffset: 260; animation: drawpart .6s ease-out forwards; }
-@keyframes drawpart { to { stroke-dashoffset: 0; } }
-.hang.lost .hp:not(.wood) path, .hang.lost .hp:not(.wood) circle, .hang.lost .face { stroke: #FF9B8F; }
-.hang .face { stroke-width: 3.5; }
-.hang-hint { display: grid; gap: 10px; justify-items: center; min-width: 0; }
+/* the board game figure: orange wooden gallows, white figure with a cowboy hat */
+.hang svg { width: clamp(170px, 24vw, 250px); height: auto; display: block; overflow: visible; }
+.stage-wood rect, .stage-wood path { fill: #E8873A; stroke: #A9561A; stroke-width: 2.5; stroke-linejoin: round; }
+.stage-wood .dk { fill: #C96A24; }
+.stage-wood .ln { fill: none; stroke: #B9611F; stroke-width: 2; }
+.hang .hook { fill: none; stroke: #5B4636; stroke-width: 3; stroke-linecap: round; }
+.hang .head ellipse, .hang .white, .hang .white > * { fill: #FBFAF7; stroke: #C9C1B4; stroke-width: 2; }
+.hang .eye { fill: #333; }
+.hang .mouth, .hang .xeye { fill: none; stroke: #333; stroke-width: 2.4; stroke-linecap: round; }
+.hang .hat path, .hang .hat ellipse { fill: #8B5A2B; stroke: #5E3B1A; stroke-width: 2; }
+.hang .hat .band { fill: #5E3B1A; }
+.hang .scarf { fill: #D64545; stroke: #9E2F2F; stroke-width: 2; stroke-linejoin: round; }
+.hang .hp.new { animation: piecein .5s cubic-bezier(.2,1.4,.4,1); transform-box: fill-box; transform-origin: center; }
+@keyframes piecein { from { transform: translateY(-18px) scale(.5); opacity: 0; } }
+.hang.lost .man { animation: sway 1.4s ease-in-out infinite alternate; transform-box: view-box; transform-origin: 150px 45px; }
+@keyframes sway { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+.hang-side { display: grid; gap: 12px; justify-items: center; max-width: 340px; min-width: 0; }
+.clue-box { background: var(--cream); border-left: 5px solid var(--cc); border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: clamp(16px, 1.8vw, 20px); text-align: left; animation: picpop .35s; }
+.hint-b { border-color: var(--gold); }
 .hang-wrong { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; min-height: 30px; max-width: 220px; }
 .hang-wrong s { color: var(--red); font-weight: 800; font-size: 22px; }
 

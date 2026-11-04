@@ -215,7 +215,7 @@
   function packUse() {
     const pk = R.pack; if (!pk) return null;
     const pics = (pk.groups || []).reduce((n, g) => n + g.items.length, 0);
-    return { pics: pics > 0, odd: (pk.groups || []).filter(g => g.items.length).length >= 2, hangman: pics > 0, draw: pics > 0, riddles: !!((pk.words || []).length + (pk.movies || []).length), rather: !!(pk.rather || []).length, stop: !!pk.stop, spin: (pk.talk || []).length >= 2 };
+    return { pics: pics > 0, odd: (pk.groups || []).filter(g => g.items.length).length >= 2, hangman: pics > 0 || !!(pk.hang || []).length, draw: pics > 0, riddles: !!((pk.words || []).length + (pk.movies || []).length), rather: !!(pk.rather || []).length, stop: !!pk.stop, spin: (pk.talk || []).length >= 2 };
   }
   function packPanel() {
     const sel = el("select", { class: "set-sel", "aria-label": "Game pack", onchange: e => { S.pack = e.target.value; S.cats = []; applyPack(); save(); hub(); } },
@@ -332,66 +332,111 @@
   }
 
   /* ================= 3. hangman ================= */
-  // the classic drawing, one piece per wrong letter: first the gallows, then the stick man
+  // The board game figure: an orange wooden gallows on a little stage, and a white
+  // figure with a cowboy hat. Each wrong letter adds one piece of the figure.
+  const STAGE = `<g class="stage-wood">
+      <path class="dk" d="M10 222h18v8H10zM14 214h14v8H14z"/>
+      <rect x="26" y="200" width="160" height="16" rx="3"/>
+      <rect class="dk" x="30" y="216" width="152" height="16" rx="2"/>
+      <path class="ln" d="M58 200v16M90 200v16M122 200v16M154 200v16"/>
+      <rect class="dk" x="34" y="232" width="12" height="8" rx="2"/><rect class="dk" x="166" y="232" width="12" height="8" rx="2"/>
+      <rect x="42" y="24" width="15" height="178" rx="3"/>
+      <rect x="42" y="16" width="120" height="15" rx="3"/>
+      <path d="M57 58l30-27h12L57 70z"/>
+      <path class="ln" d="M49 40v150"/>
+    </g>
+    <path class="hook" d="M150 31v9"/><circle class="hook" cx="150" cy="45" r="5"/>`;
+  // [z-order, svg]: the order a piece is added is its place in this list; z keeps the hat on top
   const HANG_PARTS = [
-    '<path d="M14 206h124"/>',              // ground
-    '<path d="M46 206V20"/>',               // pole
-    '<path d="M46 20h100"/>',               // top beam
-    '<path d="M46 56l36-36"/>',             // brace
-    '<path d="M146 20v26"/>',               // rope
-    '<circle cx="146" cy="65" r="19"/>',    // head
-    '<path d="M146 84v62"/>',               // body
-    '<path d="M146 99l-25 27"/>',           // left arm
-    '<path d="M146 99l25 27"/>',            // right arm
-    '<path d="M146 146l-21 40"/>',          // left leg
-    '<path d="M146 146l21 40"/>'            // right leg
+    [5, `<g class="head"><ellipse cx="150" cy="84" rx="22" ry="24"/><circle class="eye" cx="142" cy="84" r="2.6"/><circle class="eye" cx="158" cy="84" r="2.6"/><path class="mouth" d="M144 95q6 4 12 0"/></g>`],
+    [6, `<g class="hat"><path d="M131 64c0-18 6-24 19-24s19 6 19 24z"/><path class="band" d="M131 58h38v6h-38z"/><ellipse cx="150" cy="65" rx="34" ry="7"/></g>`],
+    [4, `<path class="scarf" d="M136 106h28l-14 14z"/>`],
+    [3, `<rect class="white" x="135" y="108" width="30" height="42" rx="13"/>`],
+    [2, `<ellipse class="white" cx="128" cy="126" rx="6.5" ry="15" transform="rotate(32 128 126)"/>`],
+    [2, `<ellipse class="white" cx="172" cy="126" rx="6.5" ry="15" transform="rotate(-32 172 126)"/>`],
+    [1, `<g class="white"><rect x="137" y="146" width="11" height="34" rx="5"/><ellipse cx="140" cy="182" rx="9" ry="6"/></g>`],
+    [1, `<g class="white"><rect x="152" y="146" width="11" height="34" rx="5"/><ellipse cx="160" cy="182" rx="9" ry="6"/></g>`]
   ];
-  const HANG_FACE = '<path class="face" d="M137 59l6 6m0-6l-6 6M149 59l6 6m0-6l-6 6M138 76q8-6 16 0"/>';
   const LENGTHS = { short: [4, 5], mid: [6, 7], long: [8, 40], all: [4, 40] };
   const letterCount = w => w.replace(/[^a-z]/gi, "").length;
   function hangSvg(wrong, lost) {
-    const parts = HANG_PARTS.slice(0, wrong).map((d, i) => `<g class="hp${i < 5 ? " wood" : ""}${i === wrong - 1 ? " new" : ""}">${d}</g>`).join("");
+    const shown = HANG_PARTS.map(([z, svg], i) => ({ z, svg, i })).filter(x => x.i < wrong).sort((a, b) => a.z - b.z);
+    let man = shown.map(x => `<g class="hp${x.i === wrong - 1 ? " new" : ""}">${x.svg}</g>`).join("");
+    if (lost) man = man.replace(/<circle class="eye"[^>]*\/><circle class="eye"[^>]*\/><path class="mouth"[^>]*\/>/, '<path class="xeye" d="M138 80l7 7m0-7l-7 7M154 80l7 7m0-7l-7 7"/><path class="mouth" d="M143 99q7-5 14 0"/>');
     const box = el("div", { class: "hang" + (lost ? " lost" : "") });
     // fixed markup only
-    box.innerHTML = `<svg viewBox="4 10 178 204" aria-hidden="true"><g class="man">${parts}${lost ? HANG_FACE : ""}</g></svg>`;
+    box.innerHTML = `<svg viewBox="0 0 200 244" aria-hidden="true">${STAGE}<g class="man">${man}</g></svg>`;
     return box;
+  }
+  // the words Hangman uses: the pack's [HANGMAN] list, or the pictures, or the built-in words
+  function hangWords() {
+    const pk = R.pack;
+    if (pk && pk.hang && pk.hang.length) return pk.hang.map((x, i) => ({ c: "hang", w: x.w, clue: x.clue, i }));
+    const clues = pk ? Object.fromEntries((pk.hang || []).map(x => [x.w.toLowerCase(), x.clue])) : F.clues || {};
+    return pool().map(p => ({ ...p, clue: clues[p.w] || clues[p.w.toLowerCase()] || "" }));
   }
   function hangman() {
     const LIVES = HANG_PARTS.length;
-    let len = store.get("fun.hlen", "short"), d, p, got, wrong, over, starter;
+    let len = store.get("fun.hlen", "short"), order = [], pos = 0, p, got, wrong, over, starter, hints;
     turn = turn % S.teams.length;
+    const okWord = w => /^[a-z][a-z -]*[a-z]$/i.test(w);
     const makeDeck = () => {
-      const [a, b] = LENGTHS[len] || LENGTHS.short;
-      const ok = x => /^[a-z][a-z -]*[a-z]$/i.test(x.w) && letterCount(x.w) >= a && letterCount(x.w) <= b;
-      d = deck("hang-" + len, pool().some(ok) ? ok : x => /^[a-z][a-z -]*[a-z]$/i.test(x.w) && letterCount(x.w) >= 4);
+      const [a, b] = LENGTHS[len] || LENGTHS.short, all = hangWords().filter(x => okWord(x.w) && letterCount(x.w) >= 4);
+      const fit = all.filter(x => letterCount(x.w) >= a && letterCount(x.w) <= b);
+      order = shuffle((fit.length ? fit : all).slice()); pos = 0;
     };
     const lens = seg([["short", "4–5 letters"], ["mid", "6–7 letters"], ["long", "8+ letters"], ["all", "All"]], len, v => { len = v; store.set("fun.hlen", v); makeDeck(); next(); });
-    function next() { p = d.take(); got = new Set(); wrong = []; over = null; starter = turn; paint(); setCounter(`${CAT[p.c].name} · word ${d.pos} of ${d.size}`); beep("open"); }
+    function next() {
+      if (!order.length) { toast("No words of 4 letters or more here"); location.hash = "#/"; return; }
+      if (pos >= order.length) { order = shuffle(order); pos = 0; toast("All the words done! Starting again."); }
+      p = order[pos++]; got = new Set(); wrong = []; over = null; starter = turn; hints = 0;
+      paint(); setCounter(`Word ${pos} of ${order.length}`); beep("open");
+    }
     const letters = () => [...p.w.toUpperCase()].filter(ch => /[A-Z]/.test(ch));
     const solved = () => letters().every(ch => got.has(ch));
+    const bonus = () => Math.max(40, 100 - hints * 30);
+    const groupName = () => p.c === "hang" ? "" : (CAT[p.c] || {}).name || "";
+    function hint() {
+      if (over) return;
+      hints++; beep("pass");
+      if (hints >= 2 || !p.clue && hints === 1 && !groupName()) {
+        // show one letter
+        const miss = letters().filter(ch => !got.has(ch));
+        if (miss.length > 1) got.add(pick(miss));
+      }
+      paint();
+    }
     function paint() {
       const tm = S.teams[turn], lost = over === "lost";
+      const clue = p.clue || (groupName() ? `It's in the group "${groupName()}".` : "");
       const stage = stageOf(tm.color,
-        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, over ? el("b", { style: "font-size:20px" }, over === "won" ? "Well done!" : "Oh no! The drawing is finished.") : el("b", { style: `color:${tm.color};font-size:20px` }, `${tm.name}: pick a letter`), el("span", { class: "pos" }, `Mistakes: ${wrong.length} / ${LIVES}`)),
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, over ? el("b", { style: "font-size:20px" }, over === "won" ? "Well done!" : "Oh no! The figure is finished.") : el("b", { style: `color:${tm.color};font-size:20px` }, `${tm.name}: pick a letter`), el("span", { class: "pos" }, `Mistakes: ${wrong.length} / ${LIVES}`)),
         el("div", { class: "hang-row" }, hangSvg(wrong.length, lost),
-          el("div", { class: "hang-hint" }, p.e ? el("span", { class: "pic mid" }, p.e) : null, el("span", { class: "pos" }, CAT[p.c].name), el("div", { class: "hang-wrong" }, wrong.map(ch => el("s", {}, ch))))),
+          el("div", { class: "hang-side" },
+            over && p.e ? el("span", { class: "pic mid pop" }, p.e) : null,
+            !over && hints && clue ? el("div", { class: "clue-box" }, el("b", {}, "Hint: "), clue) : null,
+            over && p.clue ? el("div", { class: "clue-box" }, p.clue) : null,
+            el("div", { class: "hang-wrong" }, wrong.map(ch => el("s", {}, ch))))),
         el("div", { class: "slots" }, [...p.w.toUpperCase()].map(ch => ch === " " ? el("div", { class: "slot gap" }) : !/[A-Z]/.test(ch) ? el("div", { class: "slot fixed" }, ch) :
           el("div", { class: "slot" + (got.has(ch) || over ? " on" : "") + (lost && !got.has(ch) ? " miss" : "") }, got.has(ch) || over ? ch : ""))),
-        over ? el("div", { class: "say" }, el("span", {}, sentence(p))) :
+        over ? el("div", { class: "say" }, el("span", {}, p.c === "hang" ? p.w : sentence(p))) :
           el("div", { class: "keys" }, [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(ch => el("button", { class: "key" + (got.has(ch) ? " good" : "") + (wrong.includes(ch) ? " bad" : ""), disabled: got.has(ch) || wrong.includes(ch), onclick: () => guess(ch) }, ch))),
-        over ? el("button", { class: "btn gold huge", onclick: () => { turn = (starter + 1) % S.teams.length; next(); } }, "Next word") : el("div", { class: "actions" }, el("button", { class: "btn", onclick: () => { over = "lost"; beep("end"); paint(); } }, "Show the word")),
-        el("div", { class: "hint" }, over ? "Everyone: spell it out loud together!" : "Right letter = +20 and play again. Wrong letter = one more part of the drawing, and the next team plays. The team that finishes the word wins +100!"));
+        over ? el("button", { class: "btn gold huge", onclick: () => { turn = (starter + 1) % S.teams.length; next(); } }, "Next word") :
+          el("div", { class: "actions" },
+            el("button", { class: "btn big hint-b", onclick: hint, disabled: hints >= 2 || (!clue && hints >= 1) }, hints === 0 ? (clue ? "Hint" : "Hint: show a letter") : hints === 1 && clue ? "One more hint: a letter" : "No more hints"),
+            el("button", { class: "btn", onclick: () => { over = "lost"; beep("end"); paint(); } }, "Show the word")),
+        el("div", { class: "hint" }, over ? "Everyone: spell it out loud together!" : `Right letter = +20 and play again. Wrong letter = one more piece of the figure, and the next team plays. Finish the word = +${bonus()}${hints ? " (hints used)" : ""}.`));
       swap(stage, "Hangman", lens, over ? -1 : turn);
       paintTurn(over ? -1 : turn);
     }
     function guess(ch) {
       if (over || got.has(ch) || wrong.includes(ch)) return;
       const n = letters().filter(x => x === ch).length;
-      if (n) { got.add(ch); award(turn, 20 * n); if (solved()) { over = "won"; award(turn, 100); beep("win"); } }
+      if (n) { got.add(ch); award(turn, 20 * n); if (solved()) { over = "won"; award(turn, bonus()); beep("win"); } }
       else { wrong.push(ch); beep("no"); if (wrong.length >= LIVES) { over = "lost"; beep("end"); } else turn = (turn + 1) % S.teams.length; }
       paint();
     }
-    keys = e => { const k = e.key.toUpperCase(); if (over) { if (k === "ENTER" || k === " ") $(".btn.gold.huge").click(); return; } if (/^[A-Z]$/.test(k)) guess(k); };
+    keys = e => { const k = e.key.toUpperCase(); if (over) { if (k === "ENTER" || k === " ") $(".btn.gold.huge").click(); return; } if (/^[A-Z]$/.test(k)) guess(k); else if (k === "?") hint(); };
     frame("Hangman", lens, stageOf("var(--c6)"), turn);
     makeDeck(); next();
   }
@@ -664,6 +709,7 @@ Topic: [WRITE THE TOPIC HERE, for example: food and cooking]
 
 Answer in exactly the format below and nothing else. Keep the lines in [BRACKETS].
 - PICTURES: 4 to 6 groups about the topic, 8 to 12 easy words in each group. Put one emoji after each word.
+- HANGMAN: 20 words about the topic (4 to 8 letters). After each word, a short clue in easy English that does not say the word and is not too easy.
 - RIDDLES: 8 riddles. Two emoji that make one English word (like sun + flower = sunflower), or a few emoji that show a thing, a place or a film.
 - WOULD YOU RATHER: 8 fun questions about the topic. Two choices, one emoji after each choice.
 - STOP: 6 categories about the topic, 25 easy words each, with many different first letters (A to W).
@@ -674,6 +720,10 @@ Title: Food and Cooking
 [PICTURES]
 fruit: apple 🍎, banana 🍌, grapes 🍇, lemon 🍋
 drinks: milk 🥛, tea 🍵, coffee ☕, water 💧
+
+[HANGMAN]
+lemon: A yellow fruit. It is very sour.
+bread: We buy it at the bakery and make sandwiches with it.
 
 [RIDDLES]
 🍳 + 🎂 = pancake
@@ -693,13 +743,13 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
 (This example only shows the format. Write new content about my topic.)`;
   const EMOJI_RE = /(?:\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}])(?:[\u{1F3FB}-\u{1F3FF}️⃣]|‍(?:\p{Extended_Pictographic}|[♀♂]))*/u;
   const EMOJI_ALL = new RegExp(EMOJI_RE.source, "gu");
-  const SECTIONS = [["pics", /^(pictures?|words|vocabulary|groups?)$/], ["riddles", /^(emoji )?riddles?$/], ["rather", /^would you rather\??$/], ["stop", /^(stop!?|categories)$/], ["talk", /^(talk|spin|speaking|questions?|spin (and|&) talk)$/]];
+  const SECTIONS = [["hang", /^hang ?man$/], ["pics", /^(pictures?|words|vocabulary|groups?)$/], ["riddles", /^(emoji )?riddles?$/], ["rather", /^would you rather\??$/], ["stop", /^(stop!?|categories)$/], ["talk", /^(talk|spin|speaking|questions?|spin (and|&) talk)$/]];
   // the text from the AI -> a pack. Every section is optional; plain "category: words" lines with no sections are a Stop! set.
   function parsePack(text) {
     text = String(text || "").replace(/\r/g, "");
     if (!text.trim()) throw "";
     let title = "", sec = null, any = false;
-    const pk = { groups: [], words: [], movies: [], rather: [], talk: [], stopText: "" };
+    const pk = { groups: [], words: [], movies: [], rather: [], talk: [], hang: [], stopText: "" };
     let loose = "";
     for (let raw of text.split("\n")) {
       let line = raw.replace(/\*\*|__|`/g, "").trim();
@@ -739,6 +789,9 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
         const k = line.indexOf(":"); if (k < 1) continue;
         const q = line.slice(k + 1).split("|").map(x => x.trim()).filter(x => x.length > 3);
         if (q.length) pk.talk.push({ t: line.slice(0, k).trim().slice(0, 18), q: q.slice(0, 12) });
+      } else if (sec === "hang") {
+        const m = line.match(/^([A-Za-z][A-Za-z '-]{2,30}?)\s*(?::|=|–|—| - )\s*(.+)$/);
+        if (m) pk.hang.push({ w: m[1].trim(), clue: m[2].trim().slice(0, 140) });
       } else if (sec === "stop") pk.stopText += line + "\n";
       else if (!sec) loose += line + "\n";
     }
@@ -747,13 +800,14 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
     const st = parseStop(pk.stopText); delete pk.stopText;
     pk.stop = st.cats.length >= 3 ? { title: st.title || title, letters: st.letters, cats: st.cats } : null;
     pk.title = (title || st.title || "My game pack").slice(0, 60);
-    pk.talk = pk.talk.slice(0, 12); pk.rather = pk.rather.slice(0, 60); pk.words = pk.words.slice(0, 80); pk.movies = pk.movies.slice(0, 80); pk.groups = pk.groups.slice(0, 12);
-    if (!pk.groups.length && !pk.words.length && !pk.movies.length && !pk.rather.length && !pk.stop && !pk.talk.length) throw "No game parts found yet. Keep the [PICTURES], [RIDDLES], [WOULD YOU RATHER], [STOP] and [TALK] lines.";
+    pk.talk = pk.talk.slice(0, 12); pk.rather = pk.rather.slice(0, 60); pk.words = pk.words.slice(0, 80); pk.movies = pk.movies.slice(0, 80); pk.groups = pk.groups.slice(0, 12); pk.hang = pk.hang.slice(0, 100);
+    if (!pk.groups.length && !pk.hang.length && !pk.words.length && !pk.movies.length && !pk.rather.length && !pk.stop && !pk.talk.length) throw "No game parts found yet. Keep the [PICTURES], [HANGMAN], [RIDDLES], [WOULD YOU RATHER], [STOP] and [TALK] lines.";
     return pk;
   }
   function packSummary(pk) {
     const n = (pk.groups || []).reduce((a, g) => a + g.items.length, 0), out = [];
     if (n) out.push(`${n} pictures in ${pk.groups.length} groups`);
+    if ((pk.hang || []).length) out.push(`${pk.hang.length} hangman words with hints`);
     const r = (pk.words || []).length + (pk.movies || []).length; if (r) out.push(`${r} riddles`);
     if ((pk.rather || []).length) out.push(`${pk.rather.length} would you rather`);
     if (pk.stop) out.push(`${pk.stop.cats.length} Stop! categories`);
@@ -764,7 +818,7 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
     document.title = "Make a game pack · Fun English";
     const old = id ? packById(id) : null;
     const status = el("div", { class: "paste-status" }), parts = el("div", { class: "set-cats" });
-    const ta = el("textarea", { class: "paste-ta", rows: 14, spellcheck: "false", placeholder: "Paste the AI answer here.\n\nTitle: Food and Cooking\n\n[PICTURES]\nfruit: apple 🍎, banana 🍌, grapes 🍇\n\n[RIDDLES]\n🍳 + 🎂 = pancake\n\n[WOULD YOU RATHER]\neat pizza 🍕 | eat burgers 🍔\n\n[STOP]\na fruit: apple, banana, cherry, ...\n\n[TALK]\nBreakfast: What do you eat? | Do you like tea?" });
+    const ta = el("textarea", { class: "paste-ta", rows: 14, spellcheck: "false", placeholder: "Paste the AI answer here.\n\nTitle: Food and Cooking\n\n[PICTURES]\nfruit: apple 🍎, banana 🍌, grapes 🍇\n\n[HANGMAN]\nlemon: A yellow fruit. It is very sour.\n\n[RIDDLES]\n🍳 + 🎂 = pancake\n\n[WOULD YOU RATHER]\neat pizza 🍕 | eat burgers 🍔\n\n[STOP]\na fruit: apple, banana, cherry, ...\n\n[TALK]\nBreakfast: What do you eat? | Do you like tea?" });
     ta.value = old ? old.text || "" : store.get("fun.packDraft", "");
     let parsed = null;
     const saveB = el("button", { class: "btn gold big", disabled: true, onclick: () => {
@@ -799,6 +853,7 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
         el("details", { class: "fmt" }, el("summary", {}, "What can a pack have? (you can also type it yourself)"),
           el("ul", {},
             el("li", {}, el("b", {}, "[PICTURES]"), " group: word emoji, word emoji … for What's This?, Odd One Out, Hangman and Draw It!"),
+            el("li", {}, el("b", {}, "[HANGMAN]"), " word: a clue … the words and hints for Hangman"),
             el("li", {}, el("b", {}, "[RIDDLES]"), " emoji + emoji = word, or emoji emoji = answer, for Emoji Riddles"),
             el("li", {}, el("b", {}, "[WOULD YOU RATHER]"), " choice emoji | choice emoji"),
             el("li", {}, el("b", {}, "[STOP]"), " category: word, word, word … (the example answers)"),
