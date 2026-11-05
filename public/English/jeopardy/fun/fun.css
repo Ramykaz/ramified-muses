@@ -155,3 +155,6 @@
 .fmt summary { font-weight: 800; cursor: pointer; }
 .fmt ul { padding-left: 20px; display: grid; gap: 6px; }
 .fmt li { overflow-wrap: anywhere; }
+.cat-tag { display: grid; gap: 2px; justify-items: center; background: color-mix(in srgb, var(--cc) 14%, var(--card)); border: 2px solid var(--cc); border-radius: 16px; padding: 8px 18px; }
+.cat-tag small { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.cat-tag b { font: 400 clamp(24px, 3vw, 34px)/1.1 var(--serif); color: var(--cc); }

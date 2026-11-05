@@ -371,7 +371,10 @@
   // the words Hangman uses: the pack's [HANGMAN] list, or the pictures, or the built-in words
   function hangWords() {
     const pk = R.pack;
-    if (pk && pk.hang && pk.hang.length) return pk.hang.map((x, i) => ({ c: "hang", w: x.w, clue: x.clue, i }));
+    if (pk && pk.hang && pk.hang.length) {
+      const groupOf = w => { const g = (pk.groups || []).find(g => g.items.some(x => x.w.toLowerCase() === w.toLowerCase())); return g ? g.name : ""; };
+      return pk.hang.map((x, i) => ({ c: "hang", w: x.w, clue: x.clue, cat: x.cat || groupOf(x.w) || pk.title, i }));
+    }
     const clues = pk ? Object.fromEntries((pk.hang || []).map(x => [x.w.toLowerCase(), x.clue])) : F.clues || {};
     return pool().map(p => ({ ...p, clue: clues[p.w] || clues[p.w.toLowerCase()] || "" }));
   }
@@ -395,11 +398,12 @@
     const letters = () => [...p.w.toUpperCase()].filter(ch => /[A-Z]/.test(ch));
     const solved = () => letters().every(ch => got.has(ch));
     const bonus = () => Math.max(40, 100 - hints * 30);
-    const groupName = () => p.c === "hang" ? "" : (CAT[p.c] || {}).name || "";
+    // the category is always on screen: Animals, Things, Places...
+    const groupName = () => p.cat || (CAT[p.c] || {}).name || "";
     function hint() {
       if (over) return;
       hints++; beep("pass");
-      if (hints >= 2 || !p.clue && hints === 1 && !groupName()) {
+      if (hints >= 2 || !p.clue) {
         // show one letter
         const miss = letters().filter(ch => !got.has(ch));
         if (miss.length > 1) got.add(pick(miss));
@@ -408,11 +412,12 @@
     }
     function paint() {
       const tm = S.teams[turn], lost = over === "lost";
-      const clue = p.clue || (groupName() ? `It's in the group "${groupName()}".` : "");
+      const clue = p.clue || "";
       const stage = stageOf(tm.color,
         el("div", { class: "row", style: "width:100%;justify-content:space-between" }, over ? el("b", { style: "font-size:20px" }, over === "won" ? "Well done!" : "Oh no! The figure is finished.") : el("b", { style: `color:${tm.color};font-size:20px` }, `${tm.name}: pick a letter`), el("span", { class: "pos" }, `Mistakes: ${wrong.length} / ${LIVES}`)),
         el("div", { class: "hang-row" }, hangSvg(wrong.length, lost),
           el("div", { class: "hang-side" },
+            groupName() ? el("div", { class: "cat-tag" }, el("small", {}, "Category"), el("b", {}, groupName())) : null,
             over && p.e ? el("span", { class: "pic mid pop" }, p.e) : null,
             !over && hints && clue ? el("div", { class: "clue-box" }, el("b", {}, "Hint: "), clue) : null,
             over && p.clue ? el("div", { class: "clue-box" }, p.clue) : null,
@@ -709,7 +714,7 @@ Topic: [WRITE THE TOPIC HERE, for example: food and cooking]
 
 Answer in exactly the format below and nothing else. Keep the lines in [BRACKETS].
 - PICTURES: 4 to 6 groups about the topic, 8 to 12 easy words in each group. Put one emoji after each word.
-- HANGMAN: 20 words about the topic (4 to 8 letters). After each word, a short clue in easy English that does not say the word and is not too easy.
+- HANGMAN: 20 words about the topic (4 to 8 letters). After each word, its category in brackets (like animal, thing, place, food, job), then a short clue in easy English that does not say the word and is not too easy.
 - RIDDLES: 8 riddles. Two emoji that make one English word (like sun + flower = sunflower), or a few emoji that show a thing, a place or a film.
 - WOULD YOU RATHER: 8 fun questions about the topic. Two choices, one emoji after each choice.
 - STOP: 6 categories about the topic, 25 easy words each, with many different first letters (A to W).
@@ -722,8 +727,8 @@ fruit: apple 🍎, banana 🍌, grapes 🍇, lemon 🍋
 drinks: milk 🥛, tea 🍵, coffee ☕, water 💧
 
 [HANGMAN]
-lemon: A yellow fruit. It is very sour.
-bread: We buy it at the bakery and make sandwiches with it.
+lemon (fruit): It is yellow and very sour.
+bread (food): We buy it at the bakery and make sandwiches with it.
 
 [RIDDLES]
 🍳 + 🎂 = pancake
@@ -790,8 +795,8 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
         const q = line.slice(k + 1).split("|").map(x => x.trim()).filter(x => x.length > 3);
         if (q.length) pk.talk.push({ t: line.slice(0, k).trim().slice(0, 18), q: q.slice(0, 12) });
       } else if (sec === "hang") {
-        const m = line.match(/^([A-Za-z][A-Za-z '-]{2,30}?)\s*(?::|=|–|—| - )\s*(.+)$/);
-        if (m) pk.hang.push({ w: m[1].trim(), clue: m[2].trim().slice(0, 140) });
+        const m = line.match(/^([A-Za-z][A-Za-z '-]{2,30}?)\s*(?:[([]([^)\]]{1,30})[)\]])?\s*(?::|=|–|—| - )\s*(.+)$/);
+        if (m) pk.hang.push({ w: m[1].trim(), cat: (m[2] || "").trim().slice(0, 30), clue: m[3].trim().slice(0, 140) });
       } else if (sec === "stop") pk.stopText += line + "\n";
       else if (!sec) loose += line + "\n";
     }
@@ -818,7 +823,7 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
     document.title = "Make a game pack · Fun English";
     const old = id ? packById(id) : null;
     const status = el("div", { class: "paste-status" }), parts = el("div", { class: "set-cats" });
-    const ta = el("textarea", { class: "paste-ta", rows: 14, spellcheck: "false", placeholder: "Paste the AI answer here.\n\nTitle: Food and Cooking\n\n[PICTURES]\nfruit: apple 🍎, banana 🍌, grapes 🍇\n\n[HANGMAN]\nlemon: A yellow fruit. It is very sour.\n\n[RIDDLES]\n🍳 + 🎂 = pancake\n\n[WOULD YOU RATHER]\neat pizza 🍕 | eat burgers 🍔\n\n[STOP]\na fruit: apple, banana, cherry, ...\n\n[TALK]\nBreakfast: What do you eat? | Do you like tea?" });
+    const ta = el("textarea", { class: "paste-ta", rows: 14, spellcheck: "false", placeholder: "Paste the AI answer here.\n\nTitle: Food and Cooking\n\n[PICTURES]\nfruit: apple 🍎, banana 🍌, grapes 🍇\n\n[HANGMAN]\nlemon (fruit): It is yellow and very sour.\n\n[RIDDLES]\n🍳 + 🎂 = pancake\n\n[WOULD YOU RATHER]\neat pizza 🍕 | eat burgers 🍔\n\n[STOP]\na fruit: apple, banana, cherry, ...\n\n[TALK]\nBreakfast: What do you eat? | Do you like tea?" });
     ta.value = old ? old.text || "" : store.get("fun.packDraft", "");
     let parsed = null;
     const saveB = el("button", { class: "btn gold big", disabled: true, onclick: () => {
@@ -853,7 +858,7 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
         el("details", { class: "fmt" }, el("summary", {}, "What can a pack have? (you can also type it yourself)"),
           el("ul", {},
             el("li", {}, el("b", {}, "[PICTURES]"), " group: word emoji, word emoji … for What's This?, Odd One Out, Hangman and Draw It!"),
-            el("li", {}, el("b", {}, "[HANGMAN]"), " word: a clue … the words and hints for Hangman"),
+            el("li", {}, el("b", {}, "[HANGMAN]"), " word (category): a clue … the words, categories and hints for Hangman"),
             el("li", {}, el("b", {}, "[RIDDLES]"), " emoji + emoji = word, or emoji emoji = answer, for Emoji Riddles"),
             el("li", {}, el("b", {}, "[WOULD YOU RATHER]"), " choice emoji | choice emoji"),
             el("li", {}, el("b", {}, "[STOP]"), " category: word, word, word … (the example answers)"),
