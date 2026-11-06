@@ -158,3 +158,33 @@
 .cat-tag { display: grid; gap: 2px; justify-items: center; background: color-mix(in srgb, var(--cc) 14%, var(--card)); border: 2px solid var(--cc); border-radius: 16px; padding: 8px 18px; }
 .cat-tag small { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .cat-tag b { font: 400 clamp(24px, 3vw, 34px)/1.1 var(--serif); color: var(--cc); }
+
+/* link to the other word set */
+.other-set { margin-top: 14px; border-color: var(--teal); color: var(--teal); text-decoration: none; }
+
+/* fact or fake? */
+.fact-q { font: 400 clamp(28px, 4vw, 52px)/1.2 var(--serif); text-wrap: balance; max-width: 26ch; overflow-wrap: anywhere; }
+.fact-votes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px; width: min(900px, 100%); }
+.fv { display: grid; gap: 8px; padding: 12px; border-radius: 18px; border: 2px solid var(--line); border-top: 6px solid var(--c); background: var(--card); min-width: 0; }
+.fv-b { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fvb { padding: 12px 8px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font-weight: 800; font-size: 18px; }
+.fvb.on { background: var(--c); border-color: var(--c); color: #fff; }
+.fvb.right { box-shadow: 0 0 0 4px var(--green); }
+.fvb.wrong { box-shadow: 0 0 0 4px var(--red); opacity: .85; }
+.fvb:disabled { cursor: default; }
+
+/* clue countdown */
+.clue-list { display: grid; gap: 10px; width: min(760px, 100%); }
+.clue-card { text-align: left; border-radius: 16px; padding: 12px 16px; background: color-mix(in srgb, var(--cc) 10%, var(--card)); border-left: 6px solid var(--cc); font-weight: 700; font-size: clamp(18px, 2.2vw, 26px); overflow-wrap: anywhere; }
+.clue-card small { display: block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.clue-card.new { animation: picpop .4s; }
+
+/* taboo */
+.peek.taboo-card .secret { gap: 8px; }
+.peek.taboo-card .secret b { font: 400 clamp(40px, 6vw, 72px)/1.05 var(--serif); overflow-wrap: anywhere; }
+.no-words { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.no-words i { font-style: normal; background: color-mix(in srgb, var(--red) 14%, var(--card)); color: var(--red); font-weight: 800; padding: 4px 12px; border-radius: 999px; font-size: 18px; }
+/* long words stay on one line on a phone: each box is a share of the width */
+.slots.long { container-type: inline-size; width: 100%; flex-wrap: nowrap; gap: 3px; }
+.slots.long .slot { width: min(50px, calc((100cqw - (var(--n) - 1) * 3px) / var(--n))); font-size: min(42px, calc(100cqw / var(--n) * .78)); border-bottom-width: 4px; }
+.slots.long .slot.gap { width: min(20px, calc(100cqw / var(--n) * .6)); }

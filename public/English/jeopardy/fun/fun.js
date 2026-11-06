@@ -6,7 +6,7 @@
   // Every game reads its words from here: the built-in lists, or the game pack the teacher chose.
   const BUILT = F.pics.map(([c, w, e, say], i) => ({ c, w, e, say, i }));
   let CATS = F.cats, PICS = BUILT, CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
-  const R = { pack: null, words: F.words, movies: F.movies, rather: F.rather, talk: F.talk };
+  const R = { pack: null, words: F.words, movies: F.movies, rather: F.rather, talk: F.talk, taboo: F.taboo || [], facts: F.facts || [] };
 
   /* ================= helpers ================= */
   const $ = s => document.querySelector(s);
@@ -39,14 +39,15 @@
     if (p.say === "p") return `They're ${p.w}.`;
     if (p.say === "n") return `It's ${p.w}.`;
     if (p.say === "the") return `It's the ${p.w}.`;
-    if (p.c === "jobs") return `This is ${art(p.w)} ${p.w}.`;
+    if (p.c === "jobs" || p.c === "people") return `This is ${art(p.w)} ${p.w}.`;
     if (p.c === "feelings") return `They're ${p.w}.`;
     if (p.c === "body") return `It's ${art(p.w)} ${p.w}.`;
     return `It's ${art(p.w)} ${p.w}.`;
   }
 
   /* ================= state ================= */
-  const KEY = "fun.state";
+  const PFX = F.key || "fun"; // "fun" = Fun English 1, "fun2" = the harder set; packs are shared
+  const KEY = PFX + ".state";
   const S = Object.assign({ teams: NAMES.slice(0, 2).map((name, i) => ({ name, color: COLORS[i], score: 0 })), cats: F.cats.map(c => c.id), timer: 0, sound: true, pack: "" }, store.get(KEY, {}));
   const save = () => store.set(KEY, S);
   const pool = () => PICS.filter(p => S.cats.includes(p.c));
@@ -98,6 +99,8 @@
     R.words = pk && pk.words && pk.words.length ? pk.words : pk && pk.movies && pk.movies.length ? [] : F.words;
     R.movies = pk && pk.movies && pk.movies.length ? pk.movies : pk && pk.words && pk.words.length ? [] : F.movies;
     R.rather = pk && pk.rather && pk.rather.length ? pk.rather : F.rather;
+    R.taboo = pk && pk.taboo && pk.taboo.length ? pk.taboo : F.taboo || [];
+    R.facts = pk && pk.facts && pk.facts.length ? pk.facts : F.facts || [];
     R.talk = pk && pk.talk && pk.talk.length >= 2 ? pk.talk.map((x, i) => ({ ...x, c: x.c || GROUP_COLORS[i % GROUP_COLORS.length] })) : F.talk;
     S.cats = (S.cats || []).filter(id => CAT[id]); if (!S.cats.length) S.cats = CATS.map(c => c.id);
   }
@@ -205,7 +208,11 @@
     { id: "pics", name: "What's This?", art: "🐘", g: "linear-gradient(135deg,#1A8A8F,#3DB2A6)", p: "A big picture and three words. The easiest game: say the word, then the sentence.", tag: "Easiest" },
     { id: "odd", name: "Odd One Out", art: "🍎🚗", g: "linear-gradient(135deg,#E2725B,#E39B2B)", p: "Four pictures. One is different! Find it and say why.", tag: "Easy" },
     { id: "hangman", name: "Hangman", art: "🔤", g: "linear-gradient(135deg,#D6457A,#9C5FC4)", p: "Guess the word letter by letter. Every wrong letter adds a part to the drawing!", tag: "Spelling" },
+    { id: "mixed", name: "Mixed Letters", art: "🔀", g: "linear-gradient(135deg,#9C5FC4,#4C5FD5)", p: "The letters are all mixed up. Which team can find the word first?", tag: "Spelling" },
+    { id: "countdown", name: "Clue Countdown", art: "⏳", g: "linear-gradient(135deg,#1a6b72,#2E9E6B)", p: "Clues one by one. Guess early for 400 points, or wait for more clues and get less!", tag: "Thinking" },
     { id: "riddles", name: "Emoji Riddles", art: "🦁👑", g: "linear-gradient(135deg,#4C5FD5,#5AA9E6)", p: "Sun + flower = ? Two pictures make one word, or guess what the pictures show.", tag: "Puzzle" },
+    { id: "facts", name: "Fact or Fake?", art: "🤔", g: "linear-gradient(135deg,#2E9E6B,#5E8C4F)", p: "Surprising sentences. Every team votes: is it true or not? The answer is often a surprise!", tag: "Reading" },
+    { id: "taboo", name: "Taboo", art: "🤐", g: "linear-gradient(135deg,#D64545,#E2725B)", p: "Describe the word, but you can't say the words in red! How many can your team get?", tag: "Speaking" },
     { id: "draw", name: "Draw It!", art: "✏️", g: "linear-gradient(135deg,#5E8C4F,#7FB069)", p: "One student draws on the board. The team shouts the word in English.", tag: "Drawing" },
     { id: "rather", name: "Would You Rather?", art: "🐱🐶", g: "linear-gradient(135deg,#7C5CBF,#D6457A)", p: "Fly or be invisible? Everyone votes, then says why.", tag: "Speaking" },
     { id: "stop", name: "Stop!", art: "A–Z", g: "linear-gradient(135deg,#C9A84C,#E39B2B)", p: "A letter and five categories. Write an answer for each one before time is up!", tag: "Writing" },
@@ -215,7 +222,8 @@
   function packUse() {
     const pk = R.pack; if (!pk) return null;
     const pics = (pk.groups || []).reduce((n, g) => n + g.items.length, 0);
-    return { pics: pics > 0, odd: (pk.groups || []).filter(g => g.items.length).length >= 2, hangman: pics > 0 || !!(pk.hang || []).length, draw: pics > 0, riddles: !!((pk.words || []).length + (pk.movies || []).length), rather: !!(pk.rather || []).length, stop: !!pk.stop, spin: (pk.talk || []).length >= 2 };
+    return { pics: pics > 0, odd: (pk.groups || []).filter(g => g.items.length).length >= 2, hangman: pics > 0 || !!(pk.hang || []).length, draw: pics > 0, riddles: !!((pk.words || []).length + (pk.movies || []).length), rather: !!(pk.rather || []).length, stop: !!pk.stop, spin: (pk.talk || []).length >= 2,
+      mixed: pics > 0 || !!(pk.hang || []).length, countdown: !!(pk.hang || []).length, taboo: !!(pk.taboo || []).length, facts: !!(pk.facts || []).length };
   }
   function packPanel() {
     const sel = el("select", { class: "set-sel", "aria-label": "Game pack", onchange: e => { S.pack = e.target.value; S.cats = []; applyPack(); save(); hub(); } },
@@ -224,14 +232,14 @@
     const pk = R.pack;
     return el("section", { class: "panel pack-panel" },
       el("div", { class: "row" }, el("h2", { style: "font-size:28px" }, "Game pack"), el("span", { class: "spacer" }), el("a", { class: "btn gold", href: "#/make" }, "+ Make a game pack")),
-      el("p", { class: "muted", style: "margin:0" }, "A pack is your own words for one topic. Paste it from ChatGPT once, and all eight games use it."),
+      el("p", { class: "muted", style: "margin:0" }, "A pack is your own words for one topic. Paste it from ChatGPT once, and all the games use it."),
       sel,
       pk ? el("div", { class: "set-cats" }, packSummary(pk).map(t => el("span", {}, t))) : null,
       pk ? el("div", { class: "row" }, el("a", { class: "btn", href: "#/make/" + pk.id }, "See or edit the text"),
         el("button", { class: "btn danger-t", onclick: () => { if (!confirm(`Delete the pack "${pk.title}"?`)) return; PACKS.remove(pk.id); S.pack = ""; S.cats = []; applyPack(); save(); hub(); toast("Pack deleted"); } }, "Delete pack")) : null);
   }
   function hub() {
-    document.title = "Fun English Games";
+    document.title = F.title || "Fun English Games";
     PACKS.onChange = () => { applyPack(); hub(); };
     const n = pool().length, use = packUse();
     const chips = el("div", { class: "sec-chips" }, CATS.map(c => el("button", { class: "chip" + (S.cats.includes(c.id) ? " on" : ""), style: `--cc:${catColor(c.id)}`, "aria-pressed": S.cats.includes(c.id) ? "true" : "false",
@@ -245,8 +253,9 @@
       el("b", {}, String(t.score)))));
     put($("#app"),
       el("div", { class: "hub-hero" },
-        el("div", {}, el("div", { class: "eyebrow" }, "Easy English · Pictures and speaking"), el("h1", {}, "Fun English ", el("em", {}, "Games")),
-          el("p", { class: "lede" }, R.pack ? `Playing with your pack "${R.pack.title}": ${PICS.length} words. Points add up across the games.` : `Eight team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`)),
+        el("div", {}, el("div", { class: "eyebrow" }, F.eyebrow || "Easy English · Pictures and speaking"), el("h1", {}, PFX === "fun2" ? ["Fun English ", el("em", {}, "2")] : ["Fun English ", el("em", {}, "Games")]),
+          el("p", { class: "lede" }, R.pack ? `Playing with your pack "${R.pack.title}": ${PICS.length} words. Points add up across the games.` : F.lede ? `${F.lede} ${GAMES.length} games, ${PICS.length} words.` : `${GAMES.length} team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`),
+          F.other ? el("a", { class: "btn other-set", href: F.other.href }, F.other.label + " →") : null),
         el("div", { class: "panel fun-pics", "aria-hidden": "true" }, shuffle(PICS.filter(p => p.e)).slice(0, 12).map(p => el("span", {}, p.e)))),
       packPanel(),
       el("div", { class: "games" }, GAMES.map(g => el("a", { class: "gcard", href: "#/" + g.id, style: `--g:${g.g};text-decoration:none` },
@@ -269,8 +278,8 @@
   /* ================= 1. what's this? ================= */
   function pics() {
     const d = deck("pics", x => !!x.e);
-    let mode = store.get("fun.picmode", "word"), p, opts, tried, done, t;
-    const modes = seg([["word", "Picture → word"], ["pic", "Word → picture"]], mode, v => { mode = v; store.set("fun.picmode", v); next(); });
+    let mode = store.get(PFX + ".picmode", "word"), p, opts, tried, done, t;
+    const modes = seg([["word", "Picture → word"], ["pic", "Word → picture"]], mode, v => { mode = v; store.set(PFX + ".picmode", v); next(); });
     function choose3() { const same = shuffle(pool().filter(x => x !== p && x.w !== p.w && x.e && x.e !== p.e)); return shuffle([p, ...same.slice(0, mode === "pic" ? 3 : 2)]); }
     function next() { if (t) t.stop(); p = d.take(); opts = choose3(); tried = []; done = false; draw(true); setCounter(`${CAT[p.c].name} · ${d.pos} of ${d.size}`); beep("open"); }
     function draw(fresh) {
@@ -380,7 +389,7 @@
   }
   function hangman() {
     const LIVES = HANG_PARTS.length;
-    let len = store.get("fun.hlen", "short"), order = [], pos = 0, p, got, wrong, over, starter, hints;
+    let len = store.get(PFX + ".hlen", F.hangLen || "short"), order = [], pos = 0, p, got, wrong, over, starter, hints;
     turn = turn % S.teams.length;
     const okWord = w => /^[a-z][a-z -]*[a-z]$/i.test(w);
     const makeDeck = () => {
@@ -388,7 +397,7 @@
       const fit = all.filter(x => letterCount(x.w) >= a && letterCount(x.w) <= b);
       order = shuffle((fit.length ? fit : all).slice()); pos = 0;
     };
-    const lens = seg([["short", "4–5 letters"], ["mid", "6–7 letters"], ["long", "8+ letters"], ["all", "All"]], len, v => { len = v; store.set("fun.hlen", v); makeDeck(); next(); });
+    const lens = seg([["short", "4–5 letters"], ["mid", "6–7 letters"], ["long", "8+ letters"], ["all", "All"]], len, v => { len = v; store.set(PFX + ".hlen", v); makeDeck(); next(); });
     function next() {
       if (!order.length) { toast("No words of 4 letters or more here"); location.hash = "#/"; return; }
       if (pos >= order.length) { order = shuffle(order); pos = 0; toast("All the words done! Starting again."); }
@@ -422,7 +431,7 @@
             !over && hints && clue ? el("div", { class: "clue-box" }, el("b", {}, "Hint: "), clue) : null,
             over && p.clue ? el("div", { class: "clue-box" }, p.clue) : null,
             el("div", { class: "hang-wrong" }, wrong.map(ch => el("s", {}, ch))))),
-        el("div", { class: "slots" }, [...p.w.toUpperCase()].map(ch => ch === " " ? el("div", { class: "slot gap" }) : !/[A-Z]/.test(ch) ? el("div", { class: "slot fixed" }, ch) :
+        el("div", { class: "slots" + (letterCount(p.w) > 8 ? " long" : ""), style: `--n:${p.w.length}` }, [...p.w.toUpperCase()].map(ch => ch === " " ? el("div", { class: "slot gap" }) : !/[A-Z]/.test(ch) ? el("div", { class: "slot fixed" }, ch) :
           el("div", { class: "slot" + (got.has(ch) || over ? " on" : "") + (lost && !got.has(ch) ? " miss" : "") }, got.has(ch) || over ? ch : ""))),
         over ? el("div", { class: "say" }, el("span", {}, p.c === "hang" ? p.w : sentence(p))) :
           el("div", { class: "keys" }, [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(ch => el("button", { class: "key" + (got.has(ch) ? " good" : "") + (wrong.includes(ch) ? " bad" : ""), disabled: got.has(ch) || wrong.includes(ch), onclick: () => guess(ch) }, ch))),
@@ -446,14 +455,164 @@
     makeDeck(); next();
   }
 
+
+  /* ================= mixed letters ================= */
+  function mixed() {
+    const ok = x => /^[a-z][a-z -]*[a-z]$/i.test(x.w) && letterCount(x.w) >= 4 && letterCount(x.w) <= 12;
+    const list = shuffle(hangWords().filter(ok));
+    if (!list.length) { toast("No words for this game here"); location.hash = "#/"; return; }
+    const nextW = cycle("mixed" + list.length, list);
+    let p, tiles, hints, done, t, n = 0;
+    const L = () => [...p.w.toUpperCase()].filter(ch => /[A-Z]/.test(ch));
+    const mix = () => { let m; for (let k = 0; k < 20; k++) { m = shuffle(L()); if (m.join("") !== L().join("")) break; } return m; };
+    const worth = () => Math.max(50, 200 - hints * 50);
+    function next() { if (t) t.stop(); p = nextW(); tiles = mix(); hints = 0; done = false; n++; paint(true); setCounter(`Word ${n}`); beep("open"); }
+    function paint(fresh) {
+      const color = catColor(p.c);
+      if (fresh) t = timer(S.timer);
+      let k = 0;
+      const cat = p.cat || (CAT[p.c] || {}).name || "";
+      const stage = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, cat ? el("div", { class: "cat-tag" }, el("small", {}, "Category"), el("b", {}, cat)) : el("span"), el("b", { style: "color:var(--gold)" }, `Worth ${worth()}`)),
+        el("div", { class: "slots" + (letterCount(p.w) > 8 ? " long" : ""), style: `--n:${p.w.length}` }, [...p.w.toUpperCase()].map(ch => ch === " " ? el("div", { class: "slot gap" }) : !/[A-Z]/.test(ch) ? el("div", { class: "slot fixed" }, ch) : (done || k++ < hints ? el("div", { class: "slot on" }, ch) : el("div", { class: "slot" })))),
+        done ? null : el("div", { class: "ltiles" }, tiles.map((ch, i) => el("div", { class: "ltile", style: `--i:${i};--r:${((i * 37) % 13) - 6}deg;--cc:${color}` }, ch))),
+        done ? el("div", { class: "say" }, p.e ? el("span", { class: "pic mid pop" }, p.e) : null, el("span", {}, p.c === "hang" ? p.w : sentence(p))) : null,
+        done ? null : t.node,
+        done ? awardRow(worth(), next) : el("div", { class: "actions" },
+          el("button", { class: "btn gold big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); paint(false); } }, "Show the word"),
+          el("button", { class: "btn big", onclick: () => { tiles = mix(); beep("flip"); paint(false); } }, "Mix again"),
+          el("button", { class: "btn big", disabled: hints >= L().length - 1, onclick: () => { hints++; beep("pass"); paint(false); } }, "Hint: a letter (−50)")),
+        el("div", { class: "hint" }, done ? "Click the team that found it, or press N." : "Teams shout the word. Space = show the word · M = mix again · H = hint"));
+      swap(stage, "Mixed Letters", null);
+    }
+    keys = e => { const k = e.key.toLowerCase(); if (done) { if (k === "n" || k === "enter") $("[data-nobody]").click(); return; } if (k === " " || k === "enter") { done = true; if (t) t.stop(); beep("ok"); paint(false); } else if (k === "m") { tiles = mix(); paint(false); } else if (k === "h" && hints < L().length - 1) { hints++; paint(false); } else if (k === "p" && t) t.toggle(); };
+    frame("Mixed Letters", null, stageOf("#9C5FC4"));
+    next();
+  }
+
+  /* ================= clue countdown ================= */
+  // clue 1 = the category (400), clue 2 = the hint (300), clue 3 = first letter and length (200), clue 4 = the picture (100)
+  function countdown() {
+    const list = shuffle(hangWords().filter(x => x.clue));
+    if (!list.length) { toast("This game needs words with clues"); location.hash = "#/"; return; }
+    const nextW = cycle("countdown" + list.length, list);
+    let p, step, done, n = 0;
+    const steps = () => {
+      const cat = p.cat || (CAT[p.c] || {}).name || "";
+      const out = [];
+      if (cat) out.push(["Category", cat]);
+      out.push(["Clue", p.clue]);
+      out.push(["Letters", `It starts with ${p.w[0].toUpperCase()} and has ${letterCount(p.w)} letters${/ /.test(p.w) ? " (two words)" : ""}.`]);
+      if (p.e) out.push(["Picture", el("span", { class: "pic mid" }, p.e)]);
+      return out;
+    };
+    const worth = () => [400, 300, 200, 100, 50][step] || 50;
+    function next() { p = nextW(); step = 0; done = false; n++; paint(); setCounter(`Word ${n}`); beep("open"); }
+    function paint() {
+      const st = steps(), color = catColor(p.c);
+      const stage = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, `Clue ${Math.min(step + 1, st.length)} of ${st.length}`), el("b", { style: "color:var(--gold);font-size:20px" }, done ? "" : `Worth ${worth()}`)),
+        el("div", { class: "clue-list" }, st.slice(0, done ? st.length : step + 1).map(([h, v], i) => el("div", { class: "clue-card" + (i === step && !done ? " new" : "") }, el("small", {}, h), el("div", {}, v)))),
+        done ? el("div", { class: "say" }, el("b", {}, p.w)) : null,
+        done ? awardRow(worth(), next) : el("div", { class: "actions" },
+          step < st.length - 1 ? el("button", { class: "btn big", onclick: () => { step++; beep("pass"); paint(); } }, `Next clue (worth ${[400, 300, 200, 100, 50][step + 1]})`) : null,
+          el("button", { class: "btn gold big", onclick: () => { done = true; beep("ok"); paint(); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Click the team that guessed it first." : "Teams can guess at any time, but only one guess per clue! Space = next clue · Enter = show the answer"));
+      swap(stage, "Clue Countdown", null);
+    }
+    keys = e => { const k = e.key.toLowerCase(); if (done) { if (k === "n" || k === "enter") $("[data-nobody]").click(); return; } if (k === " " && step < steps().length - 1) { step++; paint(); } else if (k === "enter") { done = true; paint(); } };
+    frame("Clue Countdown", null, stageOf("#1a6b72"));
+    next();
+  }
+
+  /* ================= fact or fake? ================= */
+  function facts() {
+    if (!R.facts.length) { toast("No facts here yet"); location.hash = "#/"; return; }
+    const nextF = cycle("facts", R.facts);
+    let f, votes, shown, n = 0;
+    function newQ() { f = nextF(); votes = S.teams.map(() => null); shown = false; n++; paint(); setCounter(`Sentence ${n}`); beep("open"); }
+    function paint() {
+      const stage = stageOf("#2E9E6B",
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, "Fact or fake?"), el("b", { style: "color:var(--gold)" }, "Worth 100")),
+        el("div", { class: "fact-q" }, f.s),
+        shown ? el("div", { class: "verdict " + (f.t ? "yes" : "no") }, f.t ? "FACT!" : "FAKE!") : null,
+        shown && f.why ? el("div", { class: "why", style: `--cc:${f.t ? "var(--green)" : "var(--red)"}` }, f.why) : null,
+        el("div", { class: "fact-votes" }, S.teams.map((tm, i) => el("div", { class: "fv", style: `--c:${tm.color}` }, el("b", {}, tm.name),
+          el("div", { class: "fv-b" }, [true, false].map(v => el("button", { class: "fvb" + (votes[i] === v ? " on" : "") + (shown && votes[i] === v ? (v === f.t ? " right" : " wrong") : ""), disabled: shown, onclick: () => { votes[i] = v; beep("flip"); paint(); } }, v ? "Fact" : "Fake")))))),
+        shown ? el("button", { class: "btn gold huge", onclick: newQ }, "Next sentence") : el("button", { class: "btn gold huge", disabled: votes.every(v => v === null), onclick: reveal }, "Show the answer"),
+        el("div", { class: "hint" }, shown ? "Ask a student: say it again in your own words." : "Each team talks for 20 seconds, then chooses. Every right team gets +100."));
+      swap(stage, "Fact or Fake?", null);
+    }
+    function reveal() { shown = true; let any = false; votes.forEach((v, i) => { if (v === f.t) { award(i, 100); any = true; } }); if (!any) beep("no"); paint(); }
+    keys = e => { if (e.key === "Enter" || e.key === " ") { if (shown) newQ(); else if (!votes.every(v => v === null)) reveal(); } };
+    frame("Fact or Fake?", null, stageOf("#2E9E6B"));
+    newQ();
+  }
+
+  /* ================= taboo ================= */
+  function taboo() {
+    if (!R.taboo.length) { toast("No Taboo cards here yet"); location.hash = "#/"; return; }
+    const nextC = cycle("taboo", R.taboo);
+    let secs = store.get(PFX + ".taboo", 60), card, live = false, rg, got = [];
+    turn = turn % S.teams.length;
+    const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set(PFX + ".taboo", v); });
+    function intro() {
+      live = false; if (rg) rg.stop();
+      const tm = S.teams[turn];
+      const stage = stageOf(tm.color,
+        el("div", { class: "eyebrow" }, "Next to describe"), el("div", { class: "hs-word", style: `color:${tm.color}` }, tm.name),
+        el("div", { class: "rules" },
+          el("div", {}, el("b", {}, "1. "), "One student comes to the screen (or takes the phone) and holds the card."),
+          el("div", {}, el("b", {}, "2. "), "Describe the word in English. Don't say the word or the words in red!"),
+          el("div", {}, el("b", {}, "3. "), `The team guesses: correct = +100. Said a red word? Oops = −50. You have ${secs} seconds: get as many as you can!`)),
+        el("button", { class: "btn gold huge", onclick: start }, "Start"));
+      swap(stage, "Taboo", lens, turn); paintTurn(turn);
+    }
+    function start() { live = true; got = []; card = nextC(); rg = ring(secs, end); paint(); beep("open"); }
+    function paint() {
+      const tm = S.teams[turn];
+      const peek = el("button", { class: "peek taboo-card", "aria-label": "Hold to see the card",
+        onpointerdown: e => { e.preventDefault(); peek.classList.add("open"); }, onpointerup: () => peek.classList.remove("open"), onpointerleave: () => peek.classList.remove("open"), onpointercancel: () => peek.classList.remove("open"), oncontextmenu: e => e.preventDefault() },
+        el("span", { class: "cover" }, el("b", {}, "Describer only"), el("small", {}, "Hold here to see the card")),
+        el("span", { class: "secret" }, el("b", {}, card.w), el("small", {}, "Don't say:"), el("span", { class: "no-words" }, card.no.map(x => el("i", {}, x)))));
+      const stage = stageOf(tm.color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${tm.color};font-size:20px` }, tm.name), rg.node, el("b", { style: "font-size:20px" }, `Correct: ${got.filter(x => x.k === "ok").length}`)),
+        peek,
+        el("div", { class: "actions" },
+          el("button", { class: "btn huge", style: "background:var(--green);border-color:var(--green);color:#fff", onclick: () => mark("ok") }, "Got it"),
+          el("button", { class: "btn big", onclick: () => mark("skip") }, "Skip"),
+          el("button", { class: "btn big", style: "border-color:var(--red);color:var(--red)", onclick: () => mark("oops") }, "Oops! (−50)"),
+          el("button", { class: "btn big", "data-pause": "1", onclick: e => { e.currentTarget.textContent = rg.toggle() ? "Resume" : "Pause"; } }, "Pause")),
+        el("div", { class: "hint" }, "Space = got it · S = skip · O = oops · W = peek on a laptop"));
+      swap(stage, "Taboo", lens, turn);
+    }
+    function mark(k) { if (!live) return; got.push({ w: card.w, k }); if (k === "ok") award(turn, 100); else if (k === "oops") award(turn, -50); else beep("pass"); card = nextC(); paint(); }
+    function end() {
+      live = false; const tm = S.teams[turn], n = got.filter(x => x.k === "ok").length, o = got.filter(x => x.k === "oops").length;
+      const stage = stageOf(tm.color,
+        el("div", { class: "eyebrow" }, "Time's up!"), el("div", { class: "hs-word", style: `color:${tm.color}` }, `${tm.name}: ${n * 100 - o * 50 >= 0 ? "+" : ""}${n * 100 - o * 50}`),
+        el("div", { class: "got" }, got.map(x => el("span", { class: x.k === "ok" ? "" : "skip" }, x.w))),
+        el("button", { class: "btn gold huge", onclick: () => { turn = (turn + 1) % S.teams.length; intro(); } }, `Next: ${S.teams[(turn + 1) % S.teams.length].name}`));
+      swap(stage, "Taboo", lens, turn);
+    }
+    keys = e => {
+      const k = e.key.toLowerCase();
+      if (!live) { if (k === "enter") { const b = $(".stage .btn.gold.huge"); if (b) b.click(); } return; }
+      if (k === " " || k === "enter") mark("ok"); else if (k === "s") mark("skip"); else if (k === "o") mark("oops"); else if (k === "p") $("[data-pause]").click();
+      else if (k === "w") { const q = $(".peek"); if (q) { q.classList.add("open"); setTimeout(() => q.classList.remove("open"), 1500); } }
+    };
+    frame("Taboo", lens, stageOf("#D64545"), turn);
+    intro();
+  }
+
   /* ================= 4. emoji riddles ================= */
   function riddles() {
     const have = { words: R.words.length > 0, movies: R.movies.length > 0 };
-    let kind = store.get("fun.rkind", "words"); if (!have[kind]) kind = have.words ? "words" : "movies";
+    let kind = store.get(PFX + ".rkind", "words"); if (!have[kind]) kind = have.words ? "words" : "movies";
     let r, choices, done, t, worth;
     const nextWord = have.words ? cycle("words", R.words) : null, nextMovie = have.movies ? cycle("movies", R.movies) : null;
     const moviesLabel = R.pack ? "Picture puzzles" : "Guess the movie";
-    const kinds = have.words && have.movies ? seg([["words", "Two pictures, one word"], ["movies", moviesLabel]], kind, v => { kind = v; store.set("fun.rkind", v); next(); }) : null;
+    const kinds = have.words && have.movies ? seg([["words", "Two pictures, one word"], ["movies", moviesLabel]], kind, v => { kind = v; store.set(PFX + ".rkind", v); next(); }) : null;
     function next() {
       if (t) t.stop();
       r = kind === "words" ? nextWord() : nextMovie();
@@ -488,9 +647,9 @@
   /* ================= 5. draw it! ================= */
   function draw() {
     const d = deck("draw", p => p.c !== "feelings");
-    let secs = store.get("fun.draw", 60), p, live = false, shown = false, rg;
+    let secs = store.get(PFX + ".draw", 60), p, live = false, shown = false, rg;
     turn = turn % S.teams.length;
-    const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set("fun.draw", v); });
+    const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set(PFX + ".draw", v); });
     function intro() {
       live = false; shown = false; if (rg) rg.stop();
       const tm = S.teams[turn];
@@ -587,10 +746,10 @@
   }
   const first = w => (String(w).normalize("NFKD").replace(/[^\p{L}]/gu, "")[0] || "").toUpperCase();
   function stop() {
-    let secs = store.get("fun.stop", 60), many = store.get("fun.stopN", 5), setId = store.get("fun.stopSet", "builtin");
+    let secs = store.get(PFX + ".stop", 60), many = store.get(PFX + ".stopN", 5), setId = store.get(PFX + ".stopSet", "builtin");
     let letter = "", cats = [], rg = null, phase = "start", spinId = null, showEx = false;
-    if (R.pack && R.pack.stop && !store.get("fun.stopPicked." + R.pack.id, false)) { setId = "pack:" + R.pack.id; store.set("fun.stopPicked." + R.pack.id, true); store.set("fun.stopSet", setId); }
-    const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set("fun.stop", v); });
+    if (R.pack && R.pack.stop && !store.get(PFX + ".stopPicked." + R.pack.id, false)) { setId = "pack:" + R.pack.id; store.set(PFX + ".stopPicked." + R.pack.id, true); store.set(PFX + ".stopSet", setId); }
+    const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set(PFX + ".stop", v); });
     const cur = () => allSets().find(x => x.id === setId) || BUILTIN;
     PACKS.onChange = STOPS.onChange = () => { if (phase === "start") paint(); };
     function newRound() {
@@ -614,18 +773,18 @@
     }
     const examples = x => x.w.filter(w => first(w) === letter);
     function setPicker() {
-      const sel = el("select", { class: "set-sel", "aria-label": "Category set", onchange: e => { setId = e.target.value; store.set("fun.stopSet", setId); paint(); } },
+      const sel = el("select", { class: "set-sel", "aria-label": "Category set", onchange: e => { setId = e.target.value; store.set(PFX + ".stopSet", setId); paint(); } },
         allSets().map(x => el("option", { value: x.id, selected: x.id === cur().id }, `${x.title} (${x.cats.length} categories)`)));
       const set = cur();
       return el("div", { class: "set-box" },
         el("div", { class: "set-row" }, el("b", {}, "Category set"), sel),
-        el("div", { class: "set-row" }, el("b", {}, "Categories each round"), seg([[4, "4"], [5, "5"], [6, "6"]], many, v => { many = v; store.set("fun.stopN", v); paint(); })),
+        el("div", { class: "set-row" }, el("b", {}, "Categories each round"), seg([[4, "4"], [5, "5"], [6, "6"]], many, v => { many = v; store.set(PFX + ".stopN", v); paint(); })),
         el("div", { class: "set-cats" }, set.cats.map(x => el("span", {}, x.c))),
         el("div", { class: "actions" },
           el("a", { class: "btn", href: "#/make" }, "Make a new set (game pack)"),
           set.id === "builtin" || set.pack ? null : el("button", { class: "btn danger-t", onclick: () => {
             if (!confirm(`Delete "${set.title}"?`)) return;
-            STOPS.remove(set.id); setId = "builtin"; store.set("fun.stopSet", setId); paint(); toast("Set deleted");
+            STOPS.remove(set.id); setId = "builtin"; store.set(PFX + ".stopSet", setId); paint(); toast("Set deleted");
           } }, "Delete this set")));
     }
     function paint() {
@@ -662,10 +821,10 @@
   /* ================= 8. spin & talk ================= */
   function spin() {
     const T = R.talk, N = T.length, step = 360 / N;
-    let angle = store.get("fun.wheel", 0) % 360, shown = angle, spinning = false, topic = null, question = "", rg = null, talkSecs = store.get("fun.talk", 30);
+    let angle = store.get(PFX + ".wheel", 0) % 360, shown = angle, spinning = false, topic = null, question = "", rg = null, talkSecs = store.get(PFX + ".talk", 30);
     turn = turn % S.teams.length;
     const used = {};
-    const lens = seg([[20, "20 s"], [30, "30 s"], [45, "45 s"]], talkSecs, v => { talkSecs = v; store.set("fun.talk", v); });
+    const lens = seg([[20, "20 s"], [30, "30 s"], [45, "45 s"]], talkSecs, v => { talkSecs = v; store.set(PFX + ".talk", v); });
     const grad = `conic-gradient(${T.map((x, i) => `${x.c} ${i * step}deg ${(i + 1) * step}deg`).join(",")})`;
     function wheelNode() {
       return el("div", { class: "wheel-wrap" }, el("div", { class: "pointer" }),
@@ -695,7 +854,7 @@
       // the pointer is at the top: segment k is under it when the wheel is turned by -(k*step + step/2)
       const target = 360 - (k * step + step / 2) + (Math.random() - .5) * step * .6;
       angle = angle + 360 * 5 + ((target - angle % 360) + 360) % 360;
-      store.set("fun.wheel", angle % 360);
+      store.set(PFX + ".wheel", angle % 360);
       paint();
       const w = $(".wheel"); void w.offsetWidth;
       w.style.transition = "transform 3.6s cubic-bezier(.15,.85,.2,1)"; w.style.transform = `rotate(${angle}deg)`; shown = angle;
@@ -718,6 +877,8 @@ Answer in exactly the format below and nothing else. Keep the lines in [BRACKETS
 - RIDDLES: 8 riddles. Two emoji that make one English word (like sun + flower = sunflower), or a few emoji that show a thing, a place or a film.
 - WOULD YOU RATHER: 8 fun questions about the topic. Two choices, one emoji after each choice.
 - STOP: 6 categories about the topic, 25 easy words each, with many different first letters (A to W).
+- FACTS: 10 surprising sentences about the topic. Some are true (= fact) and some are false (= fake). Add a short explanation after |.
+- TABOO: 10 words about the topic. After each word, 4 words that the student can't say when they describe it.
 - TALK: 4 small topics, 4 easy speaking questions each.
 
 Title: Food and Cooking
@@ -735,6 +896,13 @@ bread (food): We buy it at the bakery and make sandwiches with it.
 ☕ + 🎂 = cupcake
 🍕🇮🇹 = pizza from Italy
 
+[FACTS]
+Honey can stay good for thousands of years. = fact | People found good honey in very old tombs.
+Tomatoes are vegetables. = fake | They have seeds, so they are fruits.
+
+[TABOO]
+pizza: Italy, cheese, round, slice
+
 [WOULD YOU RATHER]
 eat pizza every day 🍕 | eat burgers every day 🍔
 
@@ -748,13 +916,13 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
 (This example only shows the format. Write new content about my topic.)`;
   const EMOJI_RE = /(?:\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}])(?:[\u{1F3FB}-\u{1F3FF}️⃣]|‍(?:\p{Extended_Pictographic}|[♀♂]))*/u;
   const EMOJI_ALL = new RegExp(EMOJI_RE.source, "gu");
-  const SECTIONS = [["hang", /^hang ?man$/], ["pics", /^(pictures?|words|vocabulary|groups?)$/], ["riddles", /^(emoji )?riddles?$/], ["rather", /^would you rather\??$/], ["stop", /^(stop!?|categories)$/], ["talk", /^(talk|spin|speaking|questions?|spin (and|&) talk)$/]];
+  const SECTIONS = [["hang", /^hang ?man$/], ["pics", /^(pictures?|words|vocabulary|groups?)$/], ["riddles", /^(emoji )?riddles?$/], ["rather", /^would you rather\??$/], ["stop", /^(stop!?|categories)$/], ["talk", /^(talk|spin|speaking|questions?|spin (and|&) talk)$/], ["taboo", /^taboo$/], ["facts", /^(facts?|fact or fake\??|true or false\??)$/]];
   // the text from the AI -> a pack. Every section is optional; plain "category: words" lines with no sections are a Stop! set.
   function parsePack(text) {
     text = String(text || "").replace(/\r/g, "");
     if (!text.trim()) throw "";
     let title = "", sec = null, any = false;
-    const pk = { groups: [], words: [], movies: [], rather: [], talk: [], hang: [], stopText: "" };
+    const pk = { groups: [], words: [], movies: [], rather: [], talk: [], hang: [], taboo: [], facts: [], stopText: "" };
     let loose = "";
     for (let raw of text.split("\n")) {
       let line = raw.replace(/\*\*|__|`/g, "").trim();
@@ -794,6 +962,13 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
         const k = line.indexOf(":"); if (k < 1) continue;
         const q = line.slice(k + 1).split("|").map(x => x.trim()).filter(x => x.length > 3);
         if (q.length) pk.talk.push({ t: line.slice(0, k).trim().slice(0, 18), q: q.slice(0, 12) });
+      } else if (sec === "taboo") {
+        const k = line.indexOf(":"); if (k < 1) continue;
+        const no = line.slice(k + 1).split(/[,;]/).map(x => x.trim()).filter(Boolean).slice(0, 6);
+        if (no.length) pk.taboo.push({ w: line.slice(0, k).trim().slice(0, 40), no: no.map(x => x.slice(0, 30)) });
+      } else if (sec === "facts") {
+        const m = line.match(/^(.*?)\s*=\s*(fact|fake|true|false)\b\s*(?:[|:–—-]\s*(.*))?$/i);
+        if (m && m[1].length > 5) pk.facts.push({ s: m[1].trim().slice(0, 200), t: /^(fact|true)$/i.test(m[2]), why: (m[3] || "").trim().slice(0, 200) });
       } else if (sec === "hang") {
         const m = line.match(/^([A-Za-z][A-Za-z '-]{2,30}?)\s*(?:[([]([^)\]]{1,30})[)\]])?\s*(?::|=|–|—| - )\s*(.+)$/);
         if (m) pk.hang.push({ w: m[1].trim(), cat: (m[2] || "").trim().slice(0, 30), clue: m[3].trim().slice(0, 140) });
@@ -805,8 +980,8 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
     const st = parseStop(pk.stopText); delete pk.stopText;
     pk.stop = st.cats.length >= 3 ? { title: st.title || title, letters: st.letters, cats: st.cats } : null;
     pk.title = (title || st.title || "My game pack").slice(0, 60);
-    pk.talk = pk.talk.slice(0, 12); pk.rather = pk.rather.slice(0, 60); pk.words = pk.words.slice(0, 80); pk.movies = pk.movies.slice(0, 80); pk.groups = pk.groups.slice(0, 12); pk.hang = pk.hang.slice(0, 100);
-    if (!pk.groups.length && !pk.hang.length && !pk.words.length && !pk.movies.length && !pk.rather.length && !pk.stop && !pk.talk.length) throw "No game parts found yet. Keep the [PICTURES], [HANGMAN], [RIDDLES], [WOULD YOU RATHER], [STOP] and [TALK] lines.";
+    pk.talk = pk.talk.slice(0, 12); pk.rather = pk.rather.slice(0, 60); pk.words = pk.words.slice(0, 80); pk.movies = pk.movies.slice(0, 80); pk.groups = pk.groups.slice(0, 12); pk.hang = pk.hang.slice(0, 100); pk.taboo = pk.taboo.slice(0, 80); pk.facts = pk.facts.slice(0, 80);
+    if (!pk.groups.length && !pk.hang.length && !pk.taboo.length && !pk.facts.length && !pk.words.length && !pk.movies.length && !pk.rather.length && !pk.stop && !pk.talk.length) throw "No game parts found yet. Keep the [PICTURES], [HANGMAN], [RIDDLES], [FACTS], [TABOO], [WOULD YOU RATHER], [STOP] and [TALK] lines.";
     return pk;
   }
   function packSummary(pk) {
@@ -816,6 +991,8 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
     const r = (pk.words || []).length + (pk.movies || []).length; if (r) out.push(`${r} riddles`);
     if ((pk.rather || []).length) out.push(`${pk.rather.length} would you rather`);
     if (pk.stop) out.push(`${pk.stop.cats.length} Stop! categories`);
+    if ((pk.facts || []).length) out.push(`${pk.facts.length} facts or fakes`);
+    if ((pk.taboo || []).length) out.push(`${pk.taboo.length} Taboo cards`);
     if ((pk.talk || []).length) out.push(`${pk.talk.length} talk topics`);
     return out;
   }
@@ -824,18 +1001,18 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
     const old = id ? packById(id) : null;
     const status = el("div", { class: "paste-status" }), parts = el("div", { class: "set-cats" });
     const ta = el("textarea", { class: "paste-ta", rows: 14, spellcheck: "false", placeholder: "Paste the AI answer here.\n\nTitle: Food and Cooking\n\n[PICTURES]\nfruit: apple 🍎, banana 🍌, grapes 🍇\n\n[HANGMAN]\nlemon (fruit): It is yellow and very sour.\n\n[RIDDLES]\n🍳 + 🎂 = pancake\n\n[WOULD YOU RATHER]\neat pizza 🍕 | eat burgers 🍔\n\n[STOP]\na fruit: apple, banana, cherry, ...\n\n[TALK]\nBreakfast: What do you eat? | Do you like tea?" });
-    ta.value = old ? old.text || "" : store.get("fun.packDraft", "");
+    ta.value = old ? old.text || "" : store.get(PFX + ".packDraft", "");
     let parsed = null;
     const saveB = el("button", { class: "btn gold big", disabled: true, onclick: () => {
       if (!parsed) return;
       const now = Date.now(), pk = { ...parsed, text: ta.value.slice(0, 60000), id: old ? old.id : "p" + now.toString(36) + Math.random().toString(36).slice(2, 6), updatedAt: now };
       if (JSON.stringify(pk).length > 95000) { toast("This pack is too big. Make it a little shorter."); return; }
       PACKS.items = PACKS.items.filter(x => x.id !== pk.id).concat(pk); PACKS.save();
-      store.set("fun.packDraft", ""); S.pack = pk.id; S.cats = []; applyPack(); save();
+      store.set(PFX + ".packDraft", ""); S.pack = pk.id; S.cats = []; applyPack(); save();
       toast(`Saved: ${pk.title}. All the games use it now.`); location.hash = "#/";
     } }, old ? "Save changes" : "Save the pack and play");
     const check = () => {
-      if (!old) store.set("fun.packDraft", ta.value);
+      if (!old) store.set(PFX + ".packDraft", ta.value);
       status.className = "paste-status"; put(parts);
       try {
         parsed = parsePack(ta.value); saveB.disabled = false;
@@ -862,6 +1039,8 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
             el("li", {}, el("b", {}, "[RIDDLES]"), " emoji + emoji = word, or emoji emoji = answer, for Emoji Riddles"),
             el("li", {}, el("b", {}, "[WOULD YOU RATHER]"), " choice emoji | choice emoji"),
             el("li", {}, el("b", {}, "[STOP]"), " category: word, word, word … (the example answers)"),
+            el("li", {}, el("b", {}, "[FACTS]"), " sentence = fact | why, or sentence = fake | why, for Fact or Fake?"),
+            el("li", {}, el("b", {}, "[TABOO]"), " word: forbidden, forbidden, forbidden, forbidden"),
             el("li", {}, el("b", {}, "[TALK]"), " topic: question | question | question, for Spin & Talk")),
           el("p", { class: "muted" }, "Every part is optional. A game with no part in your pack uses the built-in words."))));
     check();
@@ -870,7 +1049,7 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
   /* ================= winner ================= */
   function showWinner() {
     const ranked = [...S.teams].sort((a, b) => b.score - a.score), best = ranked[0].score, winners = ranked.filter(t => t.score === best).map(t => t.name);
-    put($("#winBox"), el("div", { class: "eyebrow" }, "Fun English champion"),
+    put($("#winBox"), el("div", { class: "eyebrow" }, (F.title || "Fun English") + " champion"),
       el("h3", {}, winners.length > 1 ? `It's a tie: ${winners.join(" & ")}!` : `${ranked[0].name} win!`),
       el("div", { class: "rank" }, ranked.map((t, i) => el("div", { style: `border-left:7px solid ${t.color}` }, el("span", {}, `${i + 1}. ${t.name}`), el("span", {}, String(t.score))))),
       el("div", { class: "actions" }, el("button", { class: "btn gold big", onclick: hideWinner }, "Keep playing"),
@@ -889,12 +1068,12 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
   }
 
   /* ================= routing ================= */
-  const ROUTES = { "": hub, pics, odd, hangman, balloon: hangman, riddles, draw, rather, stop, spin };
+  const ROUTES = { "": hub, pics, odd, hangman, balloon: hangman, mixed, countdown, riddles, facts, taboo, draw, rather, stop, spin };
   function route() {
     cleanup();
     const id = location.hash.replace(/^#\/?/, "");
     if (id === "make" || id.startsWith("make/")) { make(id.slice(5)); window.scrollTo(0, 0); return; }
-    const g = GAMES.find(x => x.id === id); document.title = g ? `${g.name} · Fun English` : "Fun English Games";
+    const g = GAMES.find(x => x.id === id); document.title = g ? `${g.name} · ${F.title || "Fun English"}` : F.title || "Fun English Games";
     (ROUTES[id] || hub)(); window.scrollTo(0, 0);
   }
   addEventListener("hashchange", route);

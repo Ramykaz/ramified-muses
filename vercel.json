@@ -19,6 +19,8 @@
     { "source": "/English/jeopardy/a2-unit1/", "destination": "/English/jeopardy/a2-unit1/index.html" },
     { "source": "/English/jeopardy/fun",  "destination": "/English/jeopardy/fun/index.html" },
     { "source": "/English/jeopardy/fun/", "destination": "/English/jeopardy/fun/index.html" },
+    { "source": "/English/jeopardy/fun2",  "destination": "/English/jeopardy/fun2/index.html" },
+    { "source": "/English/jeopardy/fun2/", "destination": "/English/jeopardy/fun2/index.html" },
     { "source": "/(.*)",      "destination": "/index.html" }
   ]
 }
