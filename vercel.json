@@ -21,6 +21,8 @@
     { "source": "/English/jeopardy/fun/", "destination": "/English/jeopardy/fun/index.html" },
     { "source": "/English/jeopardy/fun2",  "destination": "/English/jeopardy/fun2/index.html" },
     { "source": "/English/jeopardy/fun2/", "destination": "/English/jeopardy/fun2/index.html" },
+    { "source": "/English/jeopardy/unit1-revision",  "destination": "/English/jeopardy/unit1-revision/index.html" },
+    { "source": "/English/jeopardy/unit1-revision/", "destination": "/English/jeopardy/unit1-revision/index.html" },
     { "source": "/(.*)",      "destination": "/index.html" }
   ]
 }

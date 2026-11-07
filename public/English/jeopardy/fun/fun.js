@@ -35,6 +35,7 @@
   const art = w => /^[aeiou]/i.test(w) ? "an" : "a";
   // "It's a cat." / "They're jeans." / "This is a doctor."
   function sentence(p) {
+    if (p.say === "-") return F.clues && F.clues[p.w] && !R.pack ? `${p.w}: ${F.clues[p.w][0].toLowerCase()}${F.clues[p.w].slice(1)}` : p.w;
     if (p.say && p.say.length > 3) return p.say;
     if (p.say === "p") return `They're ${p.w}.`;
     if (p.say === "n") return `It's ${p.w}.`;
@@ -50,7 +51,9 @@
   const KEY = PFX + ".state";
   const S = Object.assign({ teams: NAMES.slice(0, 2).map((name, i) => ({ name, color: COLORS[i], score: 0 })), cats: F.cats.map(c => c.id), timer: 0, sound: true, pack: "" }, store.get(KEY, {}));
   const save = () => store.set(KEY, S);
-  const pool = () => PICS.filter(p => S.cats.includes(p.c));
+  const LV = () => F.levels ? (S.level || "both") : "both";
+  const lvlOk = l => LV() === "both" || !l || l === "both" || l === LV();
+  const pool = () => PICS.filter(p => S.cats.includes(p.c) && (R.pack || !F.lvl || lvlOk(F.lvl[p.w])));
 
   /* ================= saved online ================= */
   // A shelf of items kept in this browser and in the site's database (/api/class-games),
@@ -109,7 +112,7 @@
   // goes through every picture once before repeating
   const decks = {};
   function deck(name, filt) {
-    const sig = packTag() + ":" + S.cats.join(",");
+    const sig = packTag() + ":" + LV() + ":" + S.cats.join(",");
     if (!decks[name] || decks[name].sig !== sig) { const p = pool(), f = filt ? p.filter(filt) : p; decks[name] = { sig, order: shuffle((f.length ? f : p).slice()), pos: 0 }; }
     const d = decks[name];
     return { take() { if (d.pos >= d.order.length) { d.order = shuffle(d.order); d.pos = 0; toast("All the pictures done! Starting again."); } return d.order[d.pos++]; }, get pos() { return d.pos; }, get size() { return d.order.length; } };
@@ -205,19 +208,27 @@
 
   /* ================= hub ================= */
   const GAMES = [
+    { id: "reading", name: "Reading Race", art: "📖", g: "linear-gradient(135deg,#4C5FD5,#7C5CBF)", p: "Read a story at your level (A1.2 or A2.2), then race to answer the questions.", tag: "Reading", need: () => !!(F.readings || []).length },
+    { id: "grammar", name: "Grammar Battle", art: "A / B", g: "linear-gradient(135deg,#C9A84C,#E39B2B 55%,#E2725B)", p: "Choose the right grammar. Every answer shows the rule.", tag: "Grammar", need: () => lvItems(F.grammar).length > 0 },
+    { id: "halves", name: "Sentence Match", art: "½ + ½", g: "linear-gradient(135deg,#2E9E6B,#1A8A8F)", p: "The first half of a sentence and three endings. Which one is right?", tag: "Grammar", need: () => lvItems(F.halves).length > 2 },
+    { id: "say", name: "What Do You Say?", art: "💬", g: "linear-gradient(135deg,#D6457A,#9C5FC4)", p: "A situation and three things to say. Choose, then act it out!", tag: "Speaking", need: () => lvItems(F.say).length > 0 },
+    { id: "map", name: "City Map", art: "🗺️", g: "linear-gradient(135deg,#E39B2B,#E2725B)", p: "Opposite, next to, between: find the places on the map.", tag: "Prepositions", need: () => !!F.map },
+    { id: "clock", name: "What Time Is It?", art: "🕘", g: "linear-gradient(135deg,#1A8A8F,#4C5FD5)", p: "Read the clock: quarter past, half past, quarter to.", tag: "Telling the time", need: () => !!F.clock },
+    { id: "wordle", name: "Wordle", art: "🟩", g: "linear-gradient(135deg,#5E8C4F,#2E9E6B)", p: "Teams take turns to guess the word. Green, yellow, grey: six tries!", tag: "Spelling", need: () => !!F.wordle },
     { id: "pics", name: "What's This?", art: "🐘", g: "linear-gradient(135deg,#1A8A8F,#3DB2A6)", p: "A big picture and three words. The easiest game: say the word, then the sentence.", tag: "Easiest" },
     { id: "odd", name: "Odd One Out", art: "🍎🚗", g: "linear-gradient(135deg,#E2725B,#E39B2B)", p: "Four pictures. One is different! Find it and say why.", tag: "Easy" },
     { id: "hangman", name: "Hangman", art: "🔤", g: "linear-gradient(135deg,#D6457A,#9C5FC4)", p: "Guess the word letter by letter. Every wrong letter adds a part to the drawing!", tag: "Spelling" },
     { id: "mixed", name: "Mixed Letters", art: "🔀", g: "linear-gradient(135deg,#9C5FC4,#4C5FD5)", p: "The letters are all mixed up. Which team can find the word first?", tag: "Spelling" },
     { id: "countdown", name: "Clue Countdown", art: "⏳", g: "linear-gradient(135deg,#1a6b72,#2E9E6B)", p: "Clues one by one. Guess early for 400 points, or wait for more clues and get less!", tag: "Thinking" },
-    { id: "riddles", name: "Emoji Riddles", art: "🦁👑", g: "linear-gradient(135deg,#4C5FD5,#5AA9E6)", p: "Sun + flower = ? Two pictures make one word, or guess what the pictures show.", tag: "Puzzle" },
-    { id: "facts", name: "Fact or Fake?", art: "🤔", g: "linear-gradient(135deg,#2E9E6B,#5E8C4F)", p: "Surprising sentences. Every team votes: is it true or not? The answer is often a surprise!", tag: "Reading" },
-    { id: "taboo", name: "Taboo", art: "🤐", g: "linear-gradient(135deg,#D64545,#E2725B)", p: "Describe the word, but you can't say the words in red! How many can your team get?", tag: "Speaking" },
-    { id: "draw", name: "Draw It!", art: "✏️", g: "linear-gradient(135deg,#5E8C4F,#7FB069)", p: "One student draws on the board. The team shouts the word in English.", tag: "Drawing" },
+    { id: "riddles", need: () => R.words.length + R.movies.length > 0, name: "Emoji Riddles", art: "🦁👑", g: "linear-gradient(135deg,#4C5FD5,#5AA9E6)", p: "Sun + flower = ? Two pictures make one word, or guess what the pictures show.", tag: "Puzzle" },
+    { id: "facts", need: () => R.facts.length > 0, name: "Fact or Fake?", art: "🤔", g: "linear-gradient(135deg,#2E9E6B,#5E8C4F)", p: "Surprising sentences. Every team votes: is it true or not? The answer is often a surprise!", tag: "Reading" },
+    { id: "taboo", need: () => R.taboo.length > 0, name: "Taboo", art: "🤐", g: "linear-gradient(135deg,#D64545,#E2725B)", p: "Describe the word, but you can't say the words in red! How many can your team get?", tag: "Speaking" },
+    { id: "draw", name: F.mime ? "Draw It! / Act It Out" : "Draw It!", art: "✏️", g: "linear-gradient(135deg,#5E8C4F,#7FB069)", p: "One student draws on the board. The team shouts the word in English.", tag: "Drawing" },
     { id: "rather", name: "Would You Rather?", art: "🐱🐶", g: "linear-gradient(135deg,#7C5CBF,#D6457A)", p: "Fly or be invisible? Everyone votes, then says why.", tag: "Speaking" },
     { id: "stop", name: "Stop!", art: "A–Z", g: "linear-gradient(135deg,#C9A84C,#E39B2B)", p: "A letter and five categories. Write an answer for each one before time is up!", tag: "Writing" },
     { id: "spin", name: "Spin & Talk", art: "🎡", g: "linear-gradient(135deg,#2E4A6B,#1a6b72)", p: "Spin the wheel and talk about the question. Easy, fun questions.", tag: "Speaking" }
   ];
+  const LIST = () => GAMES.filter(g => !g.need || g.need());
   // which games use the chosen pack (the others use the built-in lists)
   function packUse() {
     const pk = R.pack; if (!pk) return null;
@@ -254,11 +265,11 @@
     put($("#app"),
       el("div", { class: "hub-hero" },
         el("div", {}, el("div", { class: "eyebrow" }, F.eyebrow || "Easy English · Pictures and speaking"), el("h1", {}, PFX === "fun2" ? ["Fun English ", el("em", {}, "2")] : ["Fun English ", el("em", {}, "Games")]),
-          el("p", { class: "lede" }, R.pack ? `Playing with your pack "${R.pack.title}": ${PICS.length} words. Points add up across the games.` : F.lede ? `${F.lede} ${GAMES.length} games, ${PICS.length} words.` : `${GAMES.length} team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`),
+          el("p", { class: "lede" }, R.pack ? `Playing with your pack "${R.pack.title}": ${PICS.length} words. Points add up across the games.` : F.lede ? `${F.lede} ${LIST().length} games, ${PICS.length} words.` : `${LIST().length} team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`),
           F.other ? el("a", { class: "btn other-set", href: F.other.href }, F.other.label + " →") : null),
         el("div", { class: "panel fun-pics", "aria-hidden": "true" }, shuffle(PICS.filter(p => p.e)).slice(0, 12).map(p => el("span", {}, p.e)))),
       packPanel(),
-      el("div", { class: "games" }, GAMES.map(g => el("a", { class: "gcard", href: "#/" + g.id, style: `--g:${g.g};text-decoration:none` },
+      el("div", { class: "games" }, LIST().map(g => el("a", { class: "gcard", href: "#/" + g.id, style: `--g:${g.g};text-decoration:none` },
         el("span", { class: "art pic-art", "aria-hidden": "true" }, g.art),
         el("div", {}, el("div", { class: "num" }, g.tag, use ? (use[g.id] ? " · your pack" : " · built-in words") : ""), el("h3", {}, g.name), el("p", {}, g.p)),
         el("span", { class: "go" }, "Play →")))),
@@ -272,6 +283,7 @@
         el("section", { class: "panel" }, el("h2", { style: "font-size:28px" }, "Settings"),
           el("div", {}, el("div", { class: "row", style: "margin-bottom:8px" }, el("b", {}, `Picture groups (${n} words)`), el("span", { class: "spacer" }),
             el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.cats = CATS.map(c => c.id); save(); hub(); } }, "All")), chips),
+          F.levels ? el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Level"), seg([["a1", "A1.2"], ["a2", "A2.2"], ["both", "Both (mixed class)"]], LV(), v => { S.level = v; save(); hub(); })) : null,
           el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Timer for each question"), seg([[0, "Off"], [15, "15 s"], [30, "30 s"], [45, "45 s"]], S.timer, v => { S.timer = v; save(); })))));
   }
 
@@ -289,7 +301,7 @@
       const stage = stageOf(color,
         el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, CAT[p.c].name), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
         mode === "word" || done ? el("div", { class: "pic big" + (done ? " pop" : "") }, p.e) : el("div", { class: "hs-word" }, p.w),
-        done ? el("div", { class: "say" }, el("b", {}, p.w), el("span", {}, sentence(p))) :
+        done ? el("div", { class: "say" }, el("b", {}, p.w), el("span", {}, sentence(p)), F.tr && F.tr[p.w] && !R.pack ? el("span", { class: "tr-line" }, "Türkçe: " + F.tr[p.w]) : null) :
           mode === "word" ? el("div", { class: "opts4 g3" }, opts.map((o, i) => el("button", { class: "opt4" + (tried.includes(o) ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABC"[i]), o.w)))
             : el("div", { class: "picopts" }, opts.map((o, i) => el("button", { class: "picopt" + (tried.includes(o) ? " wrong" : ""), "aria-label": `Picture ${"ABCD"[i]}`, onclick: () => choose(o) }, el("span", { class: "k" }, "ABCD"[i]), el("span", { class: "e" }, o.e)))),
         done ? null : t.node,
@@ -605,6 +617,283 @@
     intro();
   }
 
+
+  /* ================= class games (shown when the word set has their data) ================= */
+  const lvItems = list => (list || []).filter(x => lvlOk(x.lv));
+  const optRow = (opts, tried, done, right, pick, keysOn = true) => el("div", { class: "opts4" + (opts.length === 3 ? " g3" : opts.length === 2 ? " g2" : "") }, opts.map((o, i) => el("button", { class: "opt4" + (tried.includes(o) ? " wrong" : "") + (done && o === right ? " right" : ""), disabled: done, onclick: () => pick(o) }, keysOn ? el("span", { class: "k" }, "ABCD"[i]) : null, o)));
+  const pickKeys = (opts, pick) => e => { const i = "abcd".indexOf(e.key.toLowerCase()); if (i >= 0 && opts[i]) pick(opts[i]); };
+
+  /* ----- reading race: the four stories, at A1.2 or A2.2 ----- */
+  function reading() {
+    const RD = F.readings;
+    let story = null, ver = LV() === "a2" ? "a2" : "a1", qi = 0, opts = [], tried = [], done = false, phase = "pick", showText = true;
+    const V = () => story.versions[ver];
+    function paint() {
+      if (phase === "pick") {
+        const stage = stageOf("#4C5FD5",
+          el("div", { class: "eyebrow" }, "Choose a story"),
+          el("div", { class: "row", style: "justify-content:center" }, el("b", {}, "Level:"), seg([["a1", "A1.2"], ["a2", "A2.2"]], ver, v => { ver = v; })),
+          el("div", { class: "story-list" }, RD.map((r, i) => el("button", { class: "story-card", style: `--cc:${GROUP_COLORS[i]}`, onclick: () => { story = r; phase = "read"; qi = 0; paint(); beep("open"); } },
+            el("small", {}, `Story ${i + 1} · ${r.kind}`), el("b", {}, r.title), el("span", {}, `${r.versions.a1.qs.length} questions (A1.2) · ${r.versions.a2.qs.length} questions (A2.2)`)))),
+          el("div", { class: "hint" }, "Both versions tell the same story with the same people, so the two groups can read it at their own level."));
+        swap(stage, "Reading Race", null); setCounter(""); return;
+      }
+      const v = V(), color = ver === "a1" ? "#2E9E6B" : "#7C5CBF";
+      const text = el("div", { class: "reading" + (phase === "quiz" && !showText ? " closed" : "") }, el("div", { class: "reading-h" }, el("span", { class: "lvl-tag " + ver }, ver === "a1" ? "A1.2" : "A2.2"), el("b", {}, v.title)), v.text.split(/\n\n+/).map(par => el("p", {}, par)));
+      if (phase === "read") {
+        const stage = stageOf(color, text,
+          el("div", { class: "actions" }, el("button", { class: "btn gold big", onclick: () => { phase = "quiz"; qi = 0; showText = false; newQ(); } }, `Start the questions (${v.qs.length})`),
+            el("button", { class: "btn big", onclick: () => { ver = ver === "a1" ? "a2" : "a1"; paint(); } }, ver === "a1" ? "Read the A2.2 version" : "Read the A1.2 version"),
+            el("button", { class: "btn big", onclick: () => { phase = "pick"; paint(); } }, "Other stories")),
+          el("div", { class: "hint" }, "Read together, or give the class 3 minutes to read alone. Then start the questions."));
+        swap(stage, "Reading Race", null); setCounter(story.title); return;
+      }
+      if (phase === "end") {
+        const stage = stageOf(color, el("div", { class: "hs-word", style: `color:${color}` }, "Well done!"), el("p", { class: "muted" }, `You finished the ${ver === "a1" ? "A1.2" : "A2.2"} questions for "${story.title}".`),
+          el("div", { class: "actions" }, el("button", { class: "btn gold big", onclick: () => { ver = ver === "a1" ? "a2" : "a1"; phase = "read"; paint(); } }, ver === "a1" ? "Now the A2.2 version" : "Now the A1.2 version"), el("button", { class: "btn big", onclick: () => { phase = "pick"; paint(); } }, "Other stories")));
+        swap(stage, "Reading Race", null); return;
+      }
+      const q = v.qs[qi], worth = tried.length ? 50 : 100;
+      const stage = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, `Question ${qi + 1} of ${v.qs.length}`), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "fact-q" }, q.q),
+        optRow(opts, tried, done, q.a, choose, true),
+        done ? awardRow(worth, () => { qi++; if (qi >= v.qs.length) { phase = "end"; paint(); } else newQ(); }) : el("div", { class: "actions" },
+          el("button", { class: "btn big", onclick: () => { showText = !showText; paint(); } }, showText ? "Hide the text" : "Read the text again"),
+          el("button", { class: "btn big", onclick: () => { done = true; beep("ok"); paint(); } }, "Show the answer")),
+        text,
+        el("div", { class: "hint" }, done ? "Ask: where is the answer in the text?" : "Teams find the answer in the text. Tap it (or press A–C). Wrong = red, the next team tries for 50."));
+      swap(stage, "Reading Race", null); setCounter(story.title);
+    }
+    function newQ() { const q = V().qs[qi]; opts = shuffle(q.o.slice()); tried = []; done = false; paint(); beep("open"); }
+    function choose(o) { const q = V().qs[qi]; if (done || tried.includes(o)) return; if (o === q.a) { done = true; beep("ok"); } else { tried.push(o); beep("no"); } paint(); }
+    keys = e => { if (phase !== "quiz") return; if (done) { if (e.key === "n" || e.key === "Enter") $("[data-nobody]").click(); return; } pickKeys(opts, choose)(e); };
+    frame("Reading Race", null, stageOf("#4C5FD5"));
+    paint();
+  }
+
+  /* ----- grammar battle ----- */
+  function grammar() {
+    const TOP = F.grammarTopics || [], ALL = lvItems(F.grammar);
+    const have = TOP.map((_, i) => ALL.some(g => g.t === i));
+    let on = store.get(PFX + ".gtop", TOP.map((_, i) => i)).filter(i => have[i]); if (!on.length) on = TOP.map((_, i) => i).filter(i => have[i]);
+    let order, pos, q, opts, tried, done, t;
+    const chips = el("div", { class: "sec-chips gtops" });
+    function paintChips() {
+      put(chips, TOP.map((name, i) => have[i] ? el("button", { class: "chip" + (on.includes(i) ? " on" : ""), style: `--cc:${GROUP_COLORS[i % GROUP_COLORS.length]}`, onclick: () => { const nx = on.includes(i) ? on.filter(x => x !== i) : on.concat(i).sort((a, b) => a - b); if (!nx.length) { toast("Keep at least one topic on"); return; } on = nx; store.set(PFX + ".gtop", on); paintChips(); restart(); } }, name, el("small", {}, String(ALL.filter(g => g.t === i).length))) : null));
+    }
+    function restart() { order = shuffle(ALL.filter(g => on.includes(g.t))); pos = 0; next(); }
+    function next() { if (t) t.stop(); if (pos >= order.length) { order = shuffle(order); pos = 0; toast("All the questions done! Starting again."); } q = order[pos++]; opts = shuffle(q.o.slice()); tried = []; done = false; paint(true); setCounter(`Question ${pos} of ${order.length}`); beep("open"); }
+    const filled = () => { const [a, b] = q.q.split("___"); return [q.a[0] === "'" ? a.trimEnd() : a, el("mark", {}, q.a), b]; };
+    const blanked = () => { const [a, b] = q.q.split("___"); return [a, el("span", { class: "blank" }, " "), b]; };
+    function paint(fresh) {
+      const color = GROUP_COLORS[q.t % GROUP_COLORS.length];
+      if (fresh) t = timer(S.timer);
+      const worth = tried.length ? 100 : 200;
+      const stage = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, TOP[q.t] + (F.levels && q.lv !== "both" ? ` · ${q.lv === "a1" ? "A1.2" : "A2.2"}` : "")), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "sentence" }, done ? filled() : blanked()),
+        done ? null : optRow(opts, tried, done, q.a, choose),
+        done ? null : t.node,
+        done ? el("div", { class: "why", style: `--cc:${color}` }, el("b", {}, "Why? "), q.why) : null,
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); paint(false); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Click the team that got it, or press N." : "Tap the answer a team says (or press A–C). A wrong answer turns red and the next team can steal it for 100."));
+      swap(stage, "Grammar Battle", null, -1);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === q.a) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(o); beep("no"); } paint(false); }
+    keys = e => { if (done) { if (e.key === "n" || e.key === "Enter") $("[data-nobody]").click(); return; } pickKeys(opts, choose)(e); };
+    put($("#app"), el("div", { class: "game-head" }, el("a", { class: "btn", href: "#/" }, "← All games"), el("h2", {}, "Grammar Battle"), el("span", { class: "counter", id: "counter" }, "")), el("div", { class: "gwrap" }, chips, stageOf("#C9A84C")), scorebar());
+    paintChips(); restart();
+  }
+
+  /* ----- sentence match: join the two halves ----- */
+  function halves() {
+    const list = lvItems(F.halves);
+    const nextH = cycle("halves" + LV(), list);
+    let h, opts, tried, done, t, n = 0;
+    function next() {
+      if (t) t.stop(); h = nextH(); n++;
+      const others = shuffle(list.filter(x => x !== h && x.lv === h.lv)).slice(0, 2).map(x => x.b);
+      opts = shuffle([h.b, ...others]); tried = []; done = false; paint(true); setCounter(`Sentence ${n}`); beep("open");
+    }
+    function paint(fresh) {
+      if (fresh) t = timer(S.timer);
+      const worth = tried.length ? 50 : 100, color = h.lv === "a1" ? "#2E9E6B" : "#7C5CBF";
+      const stage = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, F.levels ? (h.lv === "a1" ? "A1.2" : "A2.2") : "Finish the sentence"), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "sentence" }, h.a, " ", done ? el("mark", {}, h.b) : el("span", { class: "blank" }, " ")),
+        done ? null : optRow(opts, tried, done, h.b, choose),
+        done ? null : t.node,
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); paint(false); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Everyone: read the whole sentence together!" : "Which ending is right? Tap it (or press A–C). Wrong = red, the next team tries for 50."));
+      swap(stage, "Sentence Match", null);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === h.b) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(o); beep("no"); } paint(false); }
+    keys = e => { if (done) { if (e.key === "n" || e.key === "Enter") $("[data-nobody]").click(); return; } pickKeys(opts, choose)(e); };
+    frame("Sentence Match", null, stageOf("#2E9E6B"));
+    next();
+  }
+
+  /* ----- what do you say? everyday expressions ----- */
+  function sayIt() {
+    const list = lvItems(F.say);
+    const nextS = cycle("say" + LV(), list);
+    let s, opts, tried, done, n = 0;
+    function next() { s = nextS(); opts = shuffle(s.o.slice()); tried = []; done = false; n++; paint(); setCounter(`Situation ${n}`); beep("open"); }
+    function paint() {
+      const worth = tried.length ? 50 : 100, color = s.lv === "a1" ? "#2E9E6B" : "#7C5CBF";
+      const stage = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, "What do you say?" + (F.levels ? ` · ${s.lv === "a1" ? "A1.2" : "A2.2"}` : "")), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "fact-q" }, s.s),
+        optRow(opts, tried, done, s.a, choose),
+        done ? el("div", { class: "why", style: `--cc:${color}` }, el("b", {}, "Act it! "), "Two students say it as a short dialogue. Can you add one more line?") : null,
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; beep("ok"); paint(); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Click the team that got it, or press N." : "Which is the best thing to say? Tap it (or press A–C)."));
+      swap(stage, "What Do You Say?", null);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === s.a) { done = true; beep("ok"); } else { tried.push(o); beep("no"); } paint(); }
+    keys = e => { if (done) { if (e.key === "n" || e.key === "Enter") $("[data-nobody]").click(); return; } pickKeys(opts, choose)(e); };
+    frame("What Do You Say?", null, stageOf("#D6457A"));
+    next();
+  }
+
+  /* ----- city map: prepositions of place ----- */
+  const MAP_PLACES = [["museum", "🏛️"], ["bank", "🏦"], ["park", "🌳"], ["library", "📚"], ["hospital", "🏥"], ["post office", "🏣"], ["café", "☕"], ["mosque", "🕌"], ["hotel", "🏨"], ["school", "🏫"], ["cinema", "🎬"], ["supermarket", "🛒"]];
+  function cityMap() {
+    let grid, q, opts, tried, done, n = 0;
+    const cell = (r, c) => grid[r * 4 + c];
+    function newMap() { grid = shuffle(MAP_PLACES.slice()).slice(0, 8); next(); }
+    function next() {
+      n++;
+      const kinds = ["opposite", "between", "rel", "where"], k = pick(kinds), r = Math.floor(Math.random() * 2);
+      const nm = x => `the ${x[0]}`;
+      if (k === "opposite") { const c = Math.floor(Math.random() * 4); q = { text: `What is opposite ${nm(cell(r, c))}?`, a: cell(1 - r, c)[0], hl: [cell(r, c)] }; }
+      else if (k === "between") { const c = 1 + Math.floor(Math.random() * 2); q = { text: `What is between ${nm(cell(r, c - 1))} and ${nm(cell(r, c + 1))}?`, a: cell(r, c)[0], hl: [cell(r, c - 1), cell(r, c + 1)] }; }
+      else {
+        const c = Math.floor(Math.random() * 4), A = cell(r, c);
+        const rel = pick(c > 0 && c < 3 ? ["next to", "opposite", "between"] : ["next to", "opposite"]);
+        const B = rel === "opposite" ? cell(1 - r, c) : rel === "next to" ? cell(r, c === 3 ? 2 : c + 1) : cell(r, c - 1), C = rel === "between" ? cell(r, c + 1) : null;
+        const sent = rel === "between" ? `It's between ${nm(B)} and ${nm(C)}.` : `It's ${rel} ${nm(B)}.`;
+        if (k === "rel") q = { text: rel === "between" ? `The ${A[0]} is ___ ${nm(B)} and ${nm(C)}.` : `The ${A[0]} is ___ ${nm(B)}.`, a: rel, choices: ["next to", "opposite", "between"], hl: [A] };
+        else {
+          // two wrong sentences about other buildings
+          const wrong = shuffle(grid.filter(x => x !== A && x !== B && x !== C)).slice(0, 2).map((x, i) => i ? `It's opposite ${nm(x)}.` : `It's next to ${nm(x)}.`);
+          q = { text: `Where is the ${A[0]}?`, a: sent, choices: [sent, ...wrong], hl: [A] };
+        }
+      }
+      if (!q.choices) q.choices = [q.a, ...shuffle(grid.map(x => x[0]).filter(x => x !== q.a && !q.hl.some(h => h[0] === x))).slice(0, 2)];
+      opts = shuffle(q.choices.slice()); tried = []; done = false; paint(); setCounter(`Question ${n}`); beep("open");
+    }
+    function paint() {
+      const worth = tried.length ? 50 : 100;
+      const tile = x => el("div", { class: "map-b" + (q.hl.includes(x) ? " hl" : "") + (done && x[0] === q.a ? " ans" : "") }, el("span", { class: "pic" }, x[1]), el("b", {}, x[0]));
+      const stage = stageOf("#E39B2B",
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, "Look at the map"), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "city-map" }, el("div", { class: "map-row" }, grid.slice(0, 4).map(tile)), el("div", { class: "map-road" }, el("span", {}, "Station Street")), el("div", { class: "map-row" }, grid.slice(4).map(tile))),
+        el("div", { class: "fact-q" }, q.text),
+        optRow(opts, tried, done, q.a, choose),
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; beep("ok"); paint(); } }, "Show the answer"), el("button", { class: "btn big", onclick: newMap }, "New map")),
+        el("div", { class: "hint" }, done ? "Now ask your own question about the map!" : "opposite = across the street · next to = beside · between = in the middle of two"));
+      swap(stage, "City Map", null);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === q.a) { done = true; beep("ok"); } else { tried.push(o); beep("no"); } paint(); }
+    keys = e => { if (done) { if (e.key === "n" || e.key === "Enter") $("[data-nobody]").click(); return; } pickKeys(opts, choose)(e); };
+    frame("City Map", null, stageOf("#E39B2B"));
+    newMap();
+  }
+
+  /* ----- what time is it? ----- */
+  const NUM = ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+  const MIN = { 5: "five", 10: "ten", 15: "quarter", 20: "twenty", 25: "twenty-five", 30: "half" };
+  function timeWords(h, m) {
+    const hh = h % 12 || 12, nx = h % 12 + 1;
+    if (m === 0) return `${NUM[hh]} o'clock`;
+    if (m <= 30) return `${MIN[m]} past ${NUM[hh]}`;
+    return `${MIN[60 - m]} to ${NUM[nx]}`;
+  }
+  function clockSvg(h, m) {
+    const ha = ((h % 12) + m / 60) * 30, ma = m * 6;
+    const nums = Array.from({ length: 12 }, (_, i) => { const a = (i + 1) * 30 * Math.PI / 180; return `<text x="${100 + 72 * Math.sin(a)}" y="${100 - 72 * Math.cos(a) + 7}" text-anchor="middle">${i + 1}</text>`; }).join("");
+    const ticks = Array.from({ length: 60 }, (_, i) => { const a = i * 6 * Math.PI / 180, r1 = i % 5 ? 88 : 84; return `<line x1="${100 + r1 * Math.sin(a)}" y1="${100 - r1 * Math.cos(a)}" x2="${100 + 92 * Math.sin(a)}" y2="${100 - 92 * Math.cos(a)}" class="${i % 5 ? "tk" : "tk big"}"/>`; }).join("");
+    const box = el("div", { class: "clock" });
+    // fixed markup only
+    box.innerHTML = `<svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96" class="face"/>${ticks}${nums}<line x1="100" y1="100" x2="${100 + 46 * Math.sin(ha * Math.PI / 180)}" y2="${100 - 46 * Math.cos(ha * Math.PI / 180)}" class="hh"/><line x1="100" y1="100" x2="${100 + 70 * Math.sin(ma * Math.PI / 180)}" y2="${100 - 70 * Math.cos(ma * Math.PI / 180)}" class="mh"/><circle cx="100" cy="100" r="6" class="pin"/></svg>`;
+    return box;
+  }
+  function clock() {
+    let h, m, opts, tried, done, n = 0, step = store.get(PFX + ".clockstep", 15);
+    const steps = seg([[15, "Easy: o'clock, quarter, half"], [5, "Every 5 minutes"]], step, v => { step = v; store.set(PFX + ".clockstep", v); next(); });
+    function next() {
+      h = 1 + Math.floor(Math.random() * 12); m = step * Math.floor(Math.random() * (60 / step));
+      const right = timeWords(h, m), set = new Set([right]);
+      const alt = [timeWords(h % 12 + 1, m), m ? timeWords(h, 60 - m) : timeWords(h + 6, 0), m > 0 && m < 60 ? timeWords(h, (m + 30) % 60 || 30) : timeWords(h + 1, 0)];
+      for (const a of shuffle(alt)) { if (set.size >= 3) break; set.add(a); }
+      while (set.size < 3) set.add(timeWords(1 + Math.floor(Math.random() * 12), step * Math.floor(Math.random() * (60 / step))));
+      opts = shuffle([...set]); tried = []; done = false; n++; paint(); setCounter(`Clock ${n}`); beep("open");
+    }
+    const digital = () => `${h}:${String(m).padStart(2, "0")}`;
+    function paint() {
+      const worth = tried.length ? 50 : 100;
+      const stage = stageOf("#1A8A8F",
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, "What time is it?"), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        clockSvg(h, m),
+        done ? el("div", { class: "say" }, el("b", {}, `It's ${timeWords(h, m)}.`), el("span", {}, `${digital()} · You can also say: "It's ${NUM[h % 12 || 12]} ${m === 0 ? "o'clock" : m < 10 ? "oh " + NUM[m] : ({ 15: "fifteen", 20: "twenty", 25: "twenty-five", 30: "thirty", 35: "thirty-five", 40: "forty", 45: "forty-five", 50: "fifty", 55: "fifty-five", 10: "ten" })[m]}."`)) : null,
+        optRow(opts, tried, done, timeWords(h, m), choose),
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; beep("ok"); paint(); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Ask a student: What time do you get up? What time does school start?" : "The long hand shows the minutes, the short hand shows the hour."));
+      swap(stage, "What Time Is It?", steps);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === timeWords(h, m)) { done = true; beep("ok"); } else { tried.push(o); beep("no"); } paint(); }
+    keys = e => { if (done) { if (e.key === "n" || e.key === "Enter") $("[data-nobody]").click(); return; } pickKeys(opts, choose)(e); };
+    frame("What Time Is It?", steps, stageOf("#1A8A8F"));
+    next();
+  }
+
+  /* ----- wordle: teams take turns to guess a word ----- */
+  function wordle() {
+    const lens = Object.keys(F.wordle || {}).filter(k => (F.wordle[k] || []).length);
+    let L = store.get(PFX + ".wlen", lens[0]); if (!lens.includes(String(L))) L = lens[0];
+    let word, guesses, cur, over, starter;
+    turn = turn % S.teams.length;
+    const ctr = seg(lens.map(k => [k, `${k} letters`]), String(L), v => { L = v; store.set(PFX + ".wlen", v); next(); });
+    function next() { word = cycle("wordle" + L, F.wordle[L])().toUpperCase(); guesses = []; cur = ""; over = null; starter = turn; paint(); setCounter(`${L}-letter word`); beep("open"); }
+    function score(g) {
+      const res = Array(g.length).fill("no"), left = {};
+      for (let i = 0; i < g.length; i++) if (g[i] === word[i]) res[i] = "ok"; else left[word[i]] = (left[word[i]] || 0) + 1;
+      for (let i = 0; i < g.length; i++) if (res[i] !== "ok" && left[g[i]] > 0) { res[i] = "near"; left[g[i]]--; }
+      return res;
+    }
+    function keyState() { const st = {}; for (const g of guesses) score(g).forEach((r, i) => { const k = g[i], rank = { ok: 3, near: 2, no: 1 }; if (!st[k] || rank[r] > rank[st[k]]) st[k] = r; }); return st; }
+    function paint() {
+      const tm = S.teams[turn], ks = keyState(), worth = (7 - (guesses.length + 1)) * 100;
+      const rows = Array.from({ length: 6 }, (_, r) => {
+        const g = guesses[r], res = g ? score(g) : null, live = r === guesses.length && !over;
+        return el("div", { class: "w-row" }, Array.from({ length: +L }, (_, i) => el("div", { class: "w-cell" + (res ? " " + res[i] : "") + (live && cur[i] ? " typed" : "") }, g ? g[i] : live ? cur[i] || "" : "")));
+      });
+      const kb = ["QWERTYUIOP", "ASDFGHJKL", "+ZXCVBNM-"].map(row => el("div", { class: "w-kb-row" }, [...row].map(ch => ch === "+" ? el("button", { class: "w-key wide", onclick: enter }, "Enter") : ch === "-" ? el("button", { class: "w-key wide", onclick: back, "aria-label": "Delete" }, "Del") : el("button", { class: "w-key " + (ks[ch] || ""), onclick: () => type(ch) }, ch))));
+      const stage = stageOf(tm.color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, over ? el("b", { style: "font-size:20px" }, over === "won" ? `${S.teams[turn].name} found it!` : "No more tries!") : el("b", { style: `color:${tm.color};font-size:20px` }, `${tm.name}: guess a word`), el("b", { style: "color:var(--gold)" }, over ? "" : `Worth ${worth}`)),
+        el("div", { class: "w-grid" }, rows),
+        over ? el("div", { class: "say" }, el("b", {}, word)) : el("div", { class: "w-kb" }, kb),
+        over ? el("button", { class: "btn gold huge", onclick: () => { turn = (starter + 1) % S.teams.length; next(); } }, "Next word") : el("div", { class: "actions" }, el("button", { class: "btn", onclick: () => { over = "lost"; beep("end"); paint(); } }, "Show the word")),
+        el("div", { class: "hint" }, over ? "Everyone: make a sentence with the word!" : "Green = right letter, right place. Yellow = in the word, wrong place. Grey = not in the word. Each team guesses once, then the next team."));
+      swap(stage, "Wordle", ctr, over ? -1 : turn); paintTurn(over ? -1 : turn);
+    }
+    function type(ch) { if (over || cur.length >= +L) return; cur += ch; beep("flip"); paint(); }
+    function back() { if (over) return; cur = cur.slice(0, -1); paint(); }
+    function enter() {
+      if (over) return; if (cur.length < +L) { toast(`The word has ${L} letters`); return; }
+      guesses.push(cur); const won = cur === word; cur = "";
+      if (won) { over = "won"; award(turn, (7 - guesses.length) * 100); beep("win"); }
+      else if (guesses.length >= 6) { over = "lost"; beep("end"); }
+      else { beep("no"); turn = (turn + 1) % S.teams.length; }
+      paint();
+    }
+    keys = e => { const k = e.key; if (over) { if (k === "Enter") $(".stage .btn.gold.huge").click(); return; } if (k === "Enter") enter(); else if (k === "Backspace") back(); else if (/^[a-z]$/i.test(k)) type(k.toUpperCase()); };
+    frame("Wordle", ctr, stageOf("#5E8C4F"), turn);
+    next();
+  }
+
   /* ================= 4. emoji riddles ================= */
   function riddles() {
     const have = { words: R.words.length > 0, movies: R.movies.length > 0 };
@@ -647,31 +936,34 @@
   /* ================= 5. draw it! ================= */
   function draw() {
     const d = deck("draw", p => p.c !== "feelings");
-    let secs = store.get(PFX + ".draw", 60), p, live = false, shown = false, rg;
+    let secs = store.get(PFX + ".draw", 60), p, live = false, shown = false, rg, mode = F.mime ? store.get(PFX + ".drawmode", "draw") : "draw";
+    const mimes = lvItems(F.mime), nextMime = mimes.length ? cycle("mime" + LV(), mimes) : null;
+    const isAct = () => mode === "act" && nextMime;
     turn = turn % S.teams.length;
-    const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set(PFX + ".draw", v); });
+    const lens0 = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set(PFX + ".draw", v); });
+    const lens = nextMime ? el("span", { class: "ctr2" }, seg([["draw", "Draw it"], ["act", "Act it out"]], mode, v => { mode = v; store.set(PFX + ".drawmode", v); intro(); }), lens0) : lens0;
     function intro() {
       live = false; shown = false; if (rg) rg.stop();
       const tm = S.teams[turn];
       const stage = stageOf(tm.color,
-        el("div", { class: "eyebrow" }, "Next to draw"), el("div", { class: "hs-word", style: `color:${tm.color}` }, tm.name),
+        el("div", { class: "eyebrow" }, isAct() ? "Next to act" : "Next to draw"), el("div", { class: "hs-word", style: `color:${tm.color}` }, tm.name),
         el("div", { class: "rules" },
-          el("div", {}, el("b", {}, "1. "), "One student comes to the board."),
-          el("div", {}, el("b", {}, "2. "), "They hold the card to see the word, then draw it. No letters, no talking!"),
+          el("div", {}, el("b", {}, "1. "), isAct() ? "One student comes to the front." : "One student comes to the board."),
+          el("div", {}, el("b", {}, "2. "), isAct() ? "They hold the card to see the words, then act them out. No talking, no sounds!" : "They hold the card to see the word, then draw it. No letters, no talking!"),
           el("div", {}, el("b", {}, "3. "), `Their team shouts the word in English. Correct = +100. You have ${secs} seconds.`)),
         el("button", { class: "btn gold huge", onclick: start }, "Start"));
       swap(stage, "Draw It!", lens, turn); paintTurn(turn);
       setCounter(`${d.pos} of ${d.size} words used`);
     }
-    function start() { p = d.take(); live = true; shown = false; rg = ring(secs, () => reveal(false)); paint(); beep("open"); }
+    function start() { p = isAct() ? { ...nextMime(), c: "mime", e: "" } : d.take(); live = true; shown = false; rg = ring(secs, () => reveal(false)); paint(); beep("open"); }
     function paint() {
       const tm = S.teams[turn];
       const peek = el("button", { class: "peek", "aria-label": "Hold to see the word",
         onpointerdown: e => { e.preventDefault(); peek.classList.add("open"); }, onpointerup: () => peek.classList.remove("open"), onpointerleave: () => peek.classList.remove("open"), onpointercancel: () => peek.classList.remove("open"), oncontextmenu: e => e.preventDefault() },
-        el("span", { class: "cover" }, el("b", {}, "Drawer only"), el("small", {}, "Hold here to see the word")),
+        el("span", { class: "cover" }, el("b", {}, isAct() ? "Actor only" : "Drawer only"), el("small", {}, "Hold here to see the word")),
         el("span", { class: "secret" }, el("span", { class: "pic mid" }, p.e), el("b", {}, p.w)));
       const stage = stageOf(tm.color,
-        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${tm.color};font-size:20px` }, tm.name), rg.node, el("span", { class: "pos" }, CAT[p.c].name)),
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${tm.color};font-size:20px` }, tm.name), rg.node, el("span", { class: "pos" }, (CAT[p.c] || {}).name || "Act it out")),
         peek,
         el("div", { class: "actions" }, el("button", { class: "btn huge", style: "background:var(--green);border-color:var(--green);color:#fff", onclick: () => reveal(true) }, "Got it"),
           el("button", { class: "btn big", onclick: () => reveal(false) }, "Give up"),
@@ -685,7 +977,7 @@
       if (ok) award(turn, 100); else beep("end");
       const stage = stageOf(tm.color,
         el("div", { class: "eyebrow" }, ok ? `+100 for ${tm.name}!` : "Time's up!"),
-        el("div", { class: "pic big pop" }, p.e), el("div", { class: "say" }, el("b", {}, p.w), el("span", {}, sentence(p))),
+        p.e ? el("div", { class: "pic big pop" }, p.e) : null, el("div", { class: "say" }, el("b", {}, p.w), p.c === "mime" ? null : el("span", {}, sentence(p))),
         el("button", { class: "btn gold huge", onclick: () => { turn = (turn + 1) % S.teams.length; intro(); } }, `Next: ${S.teams[(turn + 1) % S.teams.length].name}`));
       swap(stage, "Draw It!", lens, turn);
     }
@@ -1068,13 +1360,13 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
   }
 
   /* ================= routing ================= */
-  const ROUTES = { "": hub, pics, odd, hangman, balloon: hangman, mixed, countdown, riddles, facts, taboo, draw, rather, stop, spin };
+  const ROUTES = { "": hub, reading, grammar, halves, say: sayIt, map: cityMap, clock, wordle, pics, odd, hangman, balloon: hangman, mixed, countdown, riddles, facts, taboo, draw, rather, stop, spin };
   function route() {
     cleanup();
     const id = location.hash.replace(/^#\/?/, "");
     if (id === "make" || id.startsWith("make/")) { make(id.slice(5)); window.scrollTo(0, 0); return; }
     const g = GAMES.find(x => x.id === id); document.title = g ? `${g.name} · ${F.title || "Fun English"}` : F.title || "Fun English Games";
-    (ROUTES[id] || hub)(); window.scrollTo(0, 0);
+    (g && !LIST().includes(g) ? hub : ROUTES[id] || hub)(); window.scrollTo(0, 0);
   }
   addEventListener("hashchange", route);
   document.addEventListener("keydown", e => {

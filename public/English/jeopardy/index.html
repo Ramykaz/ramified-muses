@@ -94,6 +94,11 @@ h2 { font: 400 30px/1.15 var(--serif); margin: 0; }
 .unit-tiles { display: flex; gap: 6px; }
 .unit-tiles i { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font: 800 24px/1 var(--sans); font-style: normal; color: #fff; background: var(--c3); transform: rotate(-6deg); box-shadow: 0 4px 0 #5a3e96; }
 .unit-tiles i + i { background: var(--c1); transform: rotate(5deg); box-shadow: 0 4px 0 #b4533f; }
+.unit-link.rev { margin-top: 12px; border-color: #E2725B; }
+.unit-link.rev .tagline { color: #E2725B; }
+.unit-link.rev .go { background: #E2725B; }
+.unit-link.rev .unit-tiles i { background: #E2725B; box-shadow: 0 4px 0 #b4533f; }
+.unit-link.rev .unit-tiles i + i { background: #7C5CBF; box-shadow: 0 4px 0 #5a3e96; }
 .unit-link.fun { margin-top: 12px; border-color: #D6457A; }
 .unit-link.fun .tagline { color: #D6457A; }
 .unit-link.fun .go { background: #D6457A; }
@@ -400,6 +405,11 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
       <a class="unit-link" href="/English/jeopardy/unit1/">
         <span class="unit-tiles" aria-hidden="true"><i>U</i><i>1</i></span>
         <span><span class="tagline">Timeless B1 · Vocabulary</span><b>Unit 1 Word Games</b><span>All 133 words in five games: Scramble, Memory Match, Hot Seat, Missing Word and Quiz Board.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link rev" href="/English/jeopardy/unit1-revision/">
+        <span class="unit-tiles" aria-hidden="true"><i>R</i><i>1</i></span>
+        <span><span class="tagline">Combined class · A1.2 + A2.2</span><b>Unit 1 Revision</b><span>Stories with questions at both levels, grammar, a city map, clocks, Wordle and all the word games, made from the Unit 1 content pack.</span></span>
         <span class="go">Open →</span>
       </a>
       <a class="unit-link fun" href="/English/jeopardy/fun/">
