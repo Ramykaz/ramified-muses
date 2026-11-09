@@ -210,6 +210,9 @@
   const GAMES = [
     { id: "reading", name: "Reading Race", art: "📖", g: "linear-gradient(135deg,#4C5FD5,#7C5CBF)", p: "Read a story at your level (A1.2 or A2.2), then race to answer the questions.", tag: "Reading", need: () => !!(F.readings || []).length },
     { id: "grammar", name: "Grammar Battle", art: "A / B", g: "linear-gradient(135deg,#C9A84C,#E39B2B 55%,#E2725B)", p: "Choose the right grammar. Every answer shows the rule.", tag: "Grammar", need: () => lvItems(F.grammar).length > 0 },
+    { id: "minitest", name: "Mini Test", art: "✅", g: "linear-gradient(135deg,#4C5FD5,#1A8A8F)", p: "Ten questions for one student, with a score and a review of the mistakes. Good on a phone!", tag: "Exam practice", need: () => lvItems(F.grammar).length >= 10 },
+    { id: "lightning", name: "Lightning Round", art: "⚡", g: "linear-gradient(135deg,#E39B2B,#D64545)", p: "Quick questions against the clock. How many can your team get right?", tag: "Speed", need: () => !!(F.quickTopics || []).length && lvItems(F.grammar).some(g => F.quickTopics.includes(g.t)) },
+    { id: "mistake", name: "Spot the Mistake", art: "🔍", g: "linear-gradient(135deg,#D64545,#9C5FC4)", p: "Every sentence has one mistake. Tap the wrong word, then say it correctly.", tag: "Exam practice", need: () => !!(F.mistakes || []).length },
     { id: "halves", name: "Sentence Match", art: "½ + ½", g: "linear-gradient(135deg,#2E9E6B,#1A8A8F)", p: "The first half of a sentence and three endings. Which one is right?", tag: "Grammar", need: () => lvItems(F.halves).length > 2 },
     { id: "say", name: "What Do You Say?", art: "💬", g: "linear-gradient(135deg,#D6457A,#9C5FC4)", p: "A situation and three things to say. Choose, then act it out!", tag: "Speaking", need: () => lvItems(F.say).length > 0 },
     { id: "map", name: "City Map", art: "🗺️", g: "linear-gradient(135deg,#E39B2B,#E2725B)", p: "Opposite, next to, between: find the places on the map.", tag: "Prepositions", need: () => !!F.map },
@@ -228,7 +231,7 @@
     { id: "stop", name: "Stop!", art: "A–Z", g: "linear-gradient(135deg,#C9A84C,#E39B2B)", p: "A letter and five categories. Write an answer for each one before time is up!", tag: "Writing" },
     { id: "spin", name: "Spin & Talk", art: "🎡", g: "linear-gradient(135deg,#2E4A6B,#1a6b72)", p: "Spin the wheel and talk about the question. Easy, fun questions.", tag: "Speaking" }
   ];
-  const LIST = () => GAMES.filter(g => !g.need || g.need());
+  const LIST = () => GAMES.filter(g => (!g.need || g.need()) && !(F.hide || []).includes(g.id)).map(g => F.names && F.names[g.id] ? { ...g, name: F.names[g.id] } : g);
   // which games use the chosen pack (the others use the built-in lists)
   function packUse() {
     const pk = R.pack; if (!pk) return null;
@@ -265,7 +268,7 @@
     put($("#app"),
       el("div", { class: "hub-hero" },
         el("div", {}, el("div", { class: "eyebrow" }, F.eyebrow || "Easy English · Pictures and speaking"), el("h1", {}, PFX === "fun2" ? ["Fun English ", el("em", {}, "2")] : ["Fun English ", el("em", {}, "Games")]),
-          el("p", { class: "lede" }, R.pack ? `Playing with your pack "${R.pack.title}": ${PICS.length} words. Points add up across the games.` : F.lede ? `${F.lede} ${LIST().length} games, ${PICS.length} words.` : `${LIST().length} team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`),
+          el("p", { class: "lede" }, R.pack ? `Playing with your pack "${R.pack.title}": ${PICS.length} words. Points add up across the games.` : F.lede ? `${F.lede} ${LIST().length} games, ${F.countQuestions ? (F.grammar || []).length + " questions" : PICS.length + " words"}.` : `${LIST().length} team games with ${PICS.length} everyday words and pictures. No hard vocabulary: animals, food, clothes, jobs and more. Points add up across the games.`),
           F.other ? el("a", { class: "btn other-set", href: F.other.href }, F.other.label + " →") : null),
         el("div", { class: "panel fun-pics", "aria-hidden": "true" }, shuffle(PICS.filter(p => p.e)).slice(0, 12).map(p => el("span", {}, p.e)))),
       packPanel(),
@@ -674,6 +677,7 @@
 
   /* ----- grammar battle ----- */
   function grammar() {
+    const GNAME = (F.names && F.names.grammar) || "Grammar Battle";
     const TOP = F.grammarTopics || [], ALL = lvItems(F.grammar);
     const have = TOP.map((_, i) => ALL.some(g => g.t === i));
     let on = store.get(PFX + ".gtop", TOP.map((_, i) => i)).filter(i => have[i]); if (!on.length) on = TOP.map((_, i) => i).filter(i => have[i]);
@@ -684,8 +688,8 @@
     }
     function restart() { order = shuffle(ALL.filter(g => on.includes(g.t))); pos = 0; next(); }
     function next() { if (t) t.stop(); if (pos >= order.length) { order = shuffle(order); pos = 0; toast("All the questions done! Starting again."); } q = order[pos++]; opts = shuffle(q.o.slice()); tried = []; done = false; paint(true); setCounter(`Question ${pos} of ${order.length}`); beep("open"); }
-    const filled = () => { const [a, b] = q.q.split("___"); return [q.a[0] === "'" ? a.trimEnd() : a, el("mark", {}, q.a), b]; };
-    const blanked = () => { const [a, b] = q.q.split("___"); return [a, el("span", { class: "blank" }, " "), b]; };
+    const filled = () => { const parts = q.q.split("___"); if (parts.length > 2) return gapParts(q, true); const [a, b] = parts; return [q.a[0] === "'" ? a.trimEnd() : a, el("mark", {}, q.a), b]; };
+    const blanked = () => gapParts(q, false);
     function paint(fresh) {
       const color = GROUP_COLORS[q.t % GROUP_COLORS.length];
       if (fresh) t = timer(S.timer);
@@ -698,11 +702,11 @@
         done ? el("div", { class: "why", style: `--cc:${color}` }, el("b", {}, "Why? "), q.why) : null,
         done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); paint(false); } }, "Show the answer")),
         el("div", { class: "hint" }, done ? "Click the team that got it, or press N." : "Tap the answer a team says (or press A–C). A wrong answer turns red and the next team can steal it for 100."));
-      swap(stage, "Grammar Battle", null, -1);
+      swap(stage, GNAME, null, -1);
     }
     function choose(o) { if (done || tried.includes(o)) return; if (o === q.a) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(o); beep("no"); } paint(false); }
     keys = e => { if (done) { if (e.key === "n" || e.key === "Enter") $("[data-nobody]").click(); return; } pickKeys(opts, choose)(e); };
-    put($("#app"), el("div", { class: "game-head" }, el("a", { class: "btn", href: "#/" }, "← All games"), el("h2", {}, "Grammar Battle"), el("span", { class: "counter", id: "counter" }, "")), el("div", { class: "gwrap" }, chips, stageOf("#C9A84C")), scorebar());
+    put($("#app"), el("div", { class: "game-head" }, el("a", { class: "btn", href: "#/" }, "← All games"), el("h2", {}, GNAME), el("span", { class: "counter", id: "counter" }, "")), el("div", { class: "gwrap" }, chips, stageOf("#C9A84C")), scorebar());
     paintChips(); restart();
   }
 
@@ -891,6 +895,131 @@
     }
     keys = e => { const k = e.key; if (over) { if (k === "Enter") $(".stage .btn.gold.huge").click(); return; } if (k === "Enter") enter(); else if (k === "Backspace") back(); else if (/^[a-z]$/i.test(k)) type(k.toUpperCase()); };
     frame("Wordle", ctr, stageOf("#5E8C4F"), turn);
+    next();
+  }
+
+
+  /* ----- shared by the exam games: a sentence with one or more gaps ----- */
+  const gapParts = (q, fill) => { const parts = q.q.split("___"), ans = q.a.split(" / "); return parts.flatMap((p, i) => i < parts.length - 1 ? [p, fill ? el("mark", {}, ans[i] || "") : el("span", { class: "blank" }, " ")] : [p]); };
+  // topic chips that remember their choice; calls change() when it changes
+  function topicChips(change) {
+    const TOP = F.grammarTopics || [], ALL = lvItems(F.grammar), have = TOP.map((_, i) => ALL.some(g => g.t === i));
+    let on = store.get(PFX + ".gtop", TOP.map((_, i) => i)).filter(i => have[i]); if (!on.length) on = TOP.map((_, i) => i).filter(i => have[i]);
+    const box = el("div", { class: "sec-chips gtops" });
+    const paint = () => put(box, TOP.map((name, i) => have[i] ? el("button", { class: "chip" + (on.includes(i) ? " on" : ""), style: `--cc:${GROUP_COLORS[i % GROUP_COLORS.length]}`, onclick: () => { const nx = on.includes(i) ? on.filter(x => x !== i) : on.concat(i).sort((a, b) => a - b); if (!nx.length) { toast("Keep at least one topic on"); return; } on = nx; store.set(PFX + ".gtop", on); paint(); change(); } }, name, el("small", {}, String(ALL.filter(g => g.t === i).length))) : null));
+    paint();
+    return { node: box, items: () => ALL.filter(g => on.includes(g.t)) };
+  }
+
+  /* ----- mini test: ten questions for one student, with a score and a review ----- */
+  function minitest() {
+    let qs = [], i = 0, picks = [], opts = [], phase = "start";
+    const chips = topicChips(() => { if (phase === "start") paint(); });
+    function begin() { qs = shuffle(chips.items().slice()).slice(0, 10); i = 0; picks = []; phase = "q"; newQ(); }
+    function newQ() { opts = shuffle(qs[i].o.slice()); paint(); beep("open"); }
+    function paint() {
+      if (phase === "start") {
+        const stage = stageOf("#4C5FD5", el("div", { class: "eyebrow" }, "Practise for the exam"), el("div", { class: "hs-word", style: "color:#4C5FD5;font-size:clamp(40px,7vw,80px)" }, "Mini Test"),
+          el("p", { class: "lede", style: "margin:0;text-align:center" }, "Ten short questions from the topics you choose. You see the right answer and the rule after each one, and your score at the end."),
+          chips.node, el("button", { class: "btn gold huge", onclick: begin }, "Start the test"),
+          el("div", { class: "hint" }, "Students can also do it alone on their phones."));
+        swap(stage, "Mini Test", null, -1); setCounter(""); return;
+      }
+      if (phase === "end") {
+        const n = picks.filter((p, k) => p === qs[k].a).length, pct = Math.round(n / qs.length * 100);
+        const msg = n === qs.length ? "Perfect! You are ready for the exam." : pct >= 80 ? "Excellent! Just a few things to check." : pct >= 60 ? "Good! Look at your mistakes below." : pct >= 40 ? "Not bad. Practise these topics again." : "Keep practising. You can do it!";
+        const ring = el("div", { class: "score-ring", style: `--p:${pct}` }, el("b", {}, `${n}/${qs.length}`), el("small", {}, `${pct}%`));
+        const wrong = qs.map((q, k) => ({ q, p: picks[k] })).filter(x => x.p !== x.q.a);
+        const stage = stageOf(pct >= 60 ? "#2E9E6B" : "#E39B2B", ring, el("div", { class: "say" }, el("b", { style: "font-size:clamp(26px,4vw,40px)" }, msg)),
+          wrong.length ? el("div", { class: "review" }, el("b", {}, "Check your mistakes:"), wrong.map(x => el("div", { class: "rv" }, el("div", { class: "rv-s" }, gapParts(x.q, true)), el("div", { class: "rv-you" }, "Your answer: ", el("s", {}, x.p)), el("div", { class: "rv-why" }, x.q.why)))) : null,
+          el("div", { class: "actions" }, el("button", { class: "btn gold big", onclick: begin }, "New test"), el("button", { class: "btn big", onclick: () => { phase = "start"; paint(); } }, "Change topics")));
+        if (pct >= 80) beep("win");
+        swap(stage, "Mini Test", null, -1); setCounter(""); return;
+      }
+      const q = qs[i], answered = picks.length > i, mine = picks[i], color = GROUP_COLORS[q.t % GROUP_COLORS.length];
+      const stage = stageOf(color,
+        el("div", { class: "dots" }, qs.map((x, k) => el("i", { class: k < picks.length ? (picks[k] === x.a ? "ok" : "no") : k === i ? "now" : "" }))),
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, (F.grammarTopics || [])[q.t]), el("b", {}, `${i + 1} / ${qs.length}`)),
+        el("div", { class: "sentence" }, gapParts(q, answered)),
+        el("div", { class: "opts4" + (opts.length === 3 ? " g3" : " g2") }, opts.map((o, k) => el("button", { class: "opt4" + (answered && o === q.a ? " right" : "") + (answered && o === mine && o !== q.a ? " wrong" : ""), disabled: answered, onclick: () => { picks.push(o); beep(o === q.a ? "ok" : "no"); paint(); } }, el("span", { class: "k" }, "ABC"[k]), o))),
+        answered ? el("div", { class: "why", style: `--cc:${mine === q.a ? "var(--green)" : "var(--red)"}` }, el("b", {}, mine === q.a ? "Right! " : "Not this one. "), q.why) : null,
+        answered ? el("button", { class: "btn gold huge", onclick: () => { i++; if (i >= qs.length) { phase = "end"; paint(); } else newQ(); } }, i + 1 >= qs.length ? "See my score" : "Next question") : null);
+      swap(stage, "Mini Test", null, -1); setCounter("");
+    }
+    keys = e => { if (phase !== "q") return; const answered = picks.length > i; if (answered) { if (e.key === "Enter" || e.key === " ") $(".stage .btn.gold.huge").click(); return; } const k = "abc".indexOf(e.key.toLowerCase()); if (k >= 0 && opts[k]) { picks.push(opts[k]); beep(opts[k] === qs[i].a ? "ok" : "no"); paint(); } };
+    frame("Mini Test", null, stageOf("#4C5FD5"), -1);
+    paint();
+  }
+
+  /* ----- lightning round: as many as you can before the time is up ----- */
+  function lightning() {
+    const pool = lvItems(F.grammar).filter(g => (F.quickTopics || []).includes(g.t) && g.q.length <= 80);
+    let secs = store.get(PFX + ".light", 45), live = false, rg, q, opts, res = [], flash = null;
+    turn = turn % S.teams.length;
+    const lens = seg([[30, "30 s"], [45, "45 s"], [60, "60 s"]], secs, v => { secs = v; store.set(PFX + ".light", v); });
+    const nextQ = cycle("light" + pool.length, pool);
+    function intro() {
+      live = false; if (rg) rg.stop();
+      const tm = S.teams[turn];
+      const stage = stageOf(tm.color, el("div", { class: "eyebrow" }, "Next team"), el("div", { class: "hs-word", style: `color:${tm.color}` }, tm.name),
+        el("div", { class: "rules" },
+          el("div", {}, el("b", {}, "1. "), "Quick questions: irregular verbs, for or since, already / yet / just and more."),
+          el("div", {}, el("b", {}, "2. "), "The team says the answer, the teacher taps it. Right = +50, and the next question comes at once."),
+          el("div", {}, el("b", {}, "3. "), `You have ${secs} seconds. How many can you get?`)),
+        el("button", { class: "btn gold huge", onclick: start }, "Start"));
+      swap(stage, "Lightning Round", lens, turn); paintTurn(turn);
+    }
+    function start() { live = true; res = []; next(); rg = ring(secs, end); paint(); beep("open"); }
+    function next() { q = nextQ(); opts = shuffle(q.o.slice()); }
+    function paint() {
+      const tm = S.teams[turn], ok = res.filter(x => x.ok).length;
+      const stage = stageOf(tm.color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${tm.color};font-size:20px` }, tm.name), rg.node, el("b", { style: "font-size:20px" }, `Right: ${ok}`)),
+        el("div", { class: "sentence light-q" + (flash ? " " + flash : "") }, gapParts(q, false)),
+        el("div", { class: "opts4" + (opts.length === 3 ? " g3" : " g2") }, opts.map((o, k) => el("button", { class: "opt4 big-opt", onclick: () => answer(o) }, el("span", { class: "k" }, "ABC"[k]), o))),
+        el("div", { class: "hint" }, "Tap the answer the team says (or press A, B, C). Keep going!"));
+      swap(stage, "Lightning Round", lens, turn);
+    }
+    function answer(o) {
+      if (!live) return;
+      const ok = o === q.a; res.push({ q, ok, said: o });
+      if (ok) award(turn, 50); else beep("no");
+      flash = ok ? "flash-ok" : "flash-no"; next(); paint(); setTimeout(() => { flash = null; const s = $(".light-q"); if (s) s.classList.remove("flash-ok", "flash-no"); }, 350);
+    }
+    function end() {
+      live = false; const tm = S.teams[turn], ok = res.filter(x => x.ok).length, bad = res.filter(x => !x.ok);
+      const stage = stageOf(tm.color, el("div", { class: "eyebrow" }, "Time's up!"), el("div", { class: "hs-word", style: `color:${tm.color}` }, `${tm.name}: ${ok} right`),
+        bad.length ? el("div", { class: "review" }, el("b", {}, "Let's check these:"), bad.map(x => el("div", { class: "rv" }, el("div", { class: "rv-s" }, gapParts(x.q, true)), el("div", { class: "rv-you" }, "Said: ", el("s", {}, x.said))))) : el("p", { class: "muted" }, "No mistakes!"),
+        el("button", { class: "btn gold huge", onclick: () => { turn = (turn + 1) % S.teams.length; intro(); } }, `Next: ${S.teams[(turn + 1) % S.teams.length].name}`));
+      swap(stage, "Lightning Round", lens, turn);
+    }
+    keys = e => { if (!live) { if (e.key === "Enter") { const b = $(".stage .btn.gold.huge"); if (b) b.click(); } return; } const k = "abc".indexOf(e.key.toLowerCase()); if (k >= 0 && opts[k]) answer(opts[k]); };
+    frame("Lightning Round", lens, stageOf("#E39B2B"), turn);
+    intro();
+  }
+
+  /* ----- spot the mistake: tap the wrong word ----- */
+  function mistake() {
+    const nextM = cycle("mistakes", F.mistakes || []);
+    let m, tried, done, t, n = 0;
+    const clean = w => w.replace(/[.,?!"]/g, "");
+    function next() { if (t) t.stop(); m = nextM(); tried = []; done = false; n++; paint(true); setCounter(`Sentence ${n}`); beep("open"); }
+    function paint(fresh) {
+      if (fresh) t = timer(S.timer);
+      const worth = tried.length ? 50 : 100;
+      const words = m.s.split(" ");
+      const stage = stageOf("#D64545",
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, "Find the mistake"), el("b", { style: "color:var(--gold)" }, `Worth ${worth}`)),
+        el("div", { class: "mis-words" }, words.map((w, k) => el("button", { class: "mis-w" + (tried.includes(k) ? " wrong" : "") + (done && m.bad.includes(clean(w)) ? " bad" : ""), disabled: done || tried.includes(k), onclick: () => tap(k, w) }, w))),
+        done ? el("div", { class: "fix" }, el("small", {}, "Correct sentence"), el("b", {}, m.fix)) : null,
+        done ? null : t.node,
+        done ? awardRow(worth, next) : el("div", { class: "actions" }, el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); paint(false); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Everyone: read the correct sentence aloud." : "Each sentence has one mistake. Tap the wrong word. Then say the correct sentence!"));
+      swap(stage, "Spot the Mistake", null);
+    }
+    function tap(k, w) { if (done) return; if (m.bad.includes(clean(w))) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(k); beep("no"); } paint(false); }
+    keys = e => { if (done && (e.key === "n" || e.key === "Enter")) $("[data-nobody]").click(); };
+    frame("Spot the Mistake", null, stageOf("#D64545"));
     next();
   }
 
@@ -1360,13 +1489,13 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
   }
 
   /* ================= routing ================= */
-  const ROUTES = { "": hub, reading, grammar, halves, say: sayIt, map: cityMap, clock, wordle, pics, odd, hangman, balloon: hangman, mixed, countdown, riddles, facts, taboo, draw, rather, stop, spin };
+  const ROUTES = { "": hub, reading, grammar, minitest, lightning, mistake, halves, say: sayIt, map: cityMap, clock, wordle, pics, odd, hangman, balloon: hangman, mixed, countdown, riddles, facts, taboo, draw, rather, stop, spin };
   function route() {
     cleanup();
     const id = location.hash.replace(/^#\/?/, "");
     if (id === "make" || id.startsWith("make/")) { make(id.slice(5)); window.scrollTo(0, 0); return; }
-    const g = GAMES.find(x => x.id === id); document.title = g ? `${g.name} · ${F.title || "Fun English"}` : F.title || "Fun English Games";
-    (g && !LIST().includes(g) ? hub : ROUTES[id] || hub)(); window.scrollTo(0, 0);
+    const g = LIST().find(x => x.id === id) || GAMES.find(x => x.id === id); document.title = g ? `${g.name} · ${F.title || "Fun English"}` : F.title || "Fun English Games";
+    (g && !LIST().some(x => x.id === g.id) ? hub : ROUTES[id] || hub)(); window.scrollTo(0, 0);
   }
   addEventListener("hashchange", route);
   document.addEventListener("keydown", e => {
