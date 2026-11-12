@@ -1,0 +1,10 @@
+{
+  "name": "Commute Prep: TOEFL and GRE",
+  "short_name": "Commute Prep",
+  "start_url": "/prep/",
+  "scope": "/prep/",
+  "display": "standalone",
+  "background_color": "#0E1320",
+  "theme_color": "#0E1320",
+  "icons": [{ "src": "/prep/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
