@@ -25,6 +25,8 @@
     { "source": "/English/jeopardy/unit1-revision/", "destination": "/English/jeopardy/unit1-revision/index.html" },
     { "source": "/English/jeopardy/exam-units1-3",  "destination": "/English/jeopardy/exam-units1-3/index.html" },
     { "source": "/English/jeopardy/exam-units1-3/", "destination": "/English/jeopardy/exam-units1-3/index.html" },
+    { "source": "/English/jeopardy/b1-vocab",  "destination": "/English/jeopardy/b1-vocab/index.html" },
+    { "source": "/English/jeopardy/b1-vocab/", "destination": "/English/jeopardy/b1-vocab/index.html" },
     { "source": "/(.*)",      "destination": "/index.html" }
   ]
 }

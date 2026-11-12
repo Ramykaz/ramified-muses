@@ -208,6 +208,12 @@
 
   /* ================= hub ================= */
   const GAMES = [
+    { id: "context", name: "Context Clues", art: "🔎", g: "linear-gradient(135deg,#4C5FD5,#7C5CBF)", p: "A short sentence. What does the word mean? Guess first, then uncover the choices if you need them.", tag: "Meaning", need: () => VOCALL.length > 0 },
+    { id: "gapword", name: "Missing Word", art: "___", g: "linear-gradient(135deg,#2E9E6B,#1A8A8F)", p: "A sentence with a gap and the meaning. Which word is missing?", tag: "Meaning", need: () => VOCALL.length > 0 },
+    { id: "rightwrong", name: "Right or Wrong?", art: "✔ ✘", g: "linear-gradient(135deg,#7C5CBF,#D6457A)", p: "A sentence and a meaning. Is it the right meaning? Every team votes.", tag: "Meaning", need: () => VOCALL.length > 0 },
+    { id: "speedmean", name: "Speed Meanings", art: "⚡", g: "linear-gradient(135deg,#E39B2B,#D64545)", p: "Word after word against the clock. How many meanings can your team get?", tag: "Speed", need: () => VOCALL.length > 0 },
+    { id: "memory", name: "Memory Match", art: "🃏", g: "linear-gradient(135deg,#1A8A8F,#3DB2A6)", p: "Find each word and its meaning. Every match shows the word in a sentence.", tag: "Memory", need: () => VOCALL.length > 0 },
+    { id: "studycards", name: "Study Cards", art: "📇", g: "linear-gradient(135deg,#5E8C4F,#7FB069)", p: "All the words. Tap a card to see the meaning, the Turkish and an example.", tag: "Review", need: () => VOCALL.length > 0 },
     { id: "reading", name: "Reading Race", art: "📖", g: "linear-gradient(135deg,#4C5FD5,#7C5CBF)", p: "Read a story at your level (A1.2 or A2.2), then race to answer the questions.", tag: "Reading", need: () => !!(F.readings || []).length },
     { id: "grammar", name: "Grammar Battle", art: "A / B", g: "linear-gradient(135deg,#C9A84C,#E39B2B 55%,#E2725B)", p: "Choose the right grammar. Every answer shows the rule.", tag: "Grammar", need: () => lvItems(F.grammar).length > 0 },
     { id: "minitest", name: "Mini Test", art: "✅", g: "linear-gradient(135deg,#4C5FD5,#1A8A8F)", p: "Ten questions for one student, with a score and a review of the mistakes. Good on a phone!", tag: "Exam practice", need: () => lvItems(F.grammar).length >= 10 },
@@ -231,7 +237,7 @@
     { id: "stop", name: "Stop!", art: "A–Z", g: "linear-gradient(135deg,#C9A84C,#E39B2B)", p: "A letter and five categories. Write an answer for each one before time is up!", tag: "Writing" },
     { id: "spin", name: "Spin & Talk", art: "🎡", g: "linear-gradient(135deg,#2E4A6B,#1a6b72)", p: "Spin the wheel and talk about the question. Easy, fun questions.", tag: "Speaking" }
   ];
-  const LIST = () => GAMES.filter(g => (!g.need || g.need()) && !(F.hide || []).includes(g.id)).map(g => F.names && F.names[g.id] ? { ...g, name: F.names[g.id] } : g);
+  const LIST = () => (F.only ? F.only.map(id => GAMES.find(g => g.id === id)).filter(Boolean) : GAMES).filter(g => (!g.need || g.need()) && !(F.hide || []).includes(g.id)).map(g => F.names && F.names[g.id] ? { ...g, name: F.names[g.id] } : g);
   // which games use the chosen pack (the others use the built-in lists)
   function packUse() {
     const pk = R.pack; if (!pk) return null;
@@ -284,8 +290,9 @@
           teams,
           el("div", { class: "row" }, el("button", { class: "btn gold", onclick: showWinner }, "Show the winner"), el("button", { class: "btn", onclick: () => { if (confirm("Set every team back to 0?")) { S.teams.forEach(t => t.score = 0); save(); hub(); } } }, "Reset scores"))),
         el("section", { class: "panel" }, el("h2", { style: "font-size:28px" }, "Settings"),
-          el("div", {}, el("div", { class: "row", style: "margin-bottom:8px" }, el("b", {}, `Picture groups (${n} words)`), el("span", { class: "spacer" }),
-            el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.cats = CATS.map(c => c.id); save(); hub(); } }, "All")), chips),
+          el("div", {}, el("div", { class: "row", style: "margin-bottom:8px" }, el("b", {}, F.vocab ? `Topics (${pool().length} words)` : `Picture groups (${n} words)`), el("span", { class: "spacer" }),
+            el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.cats = CATS.map(c => c.id); save(); hub(); } }, "All"),
+            (F.units || []).map(u => el("button", { class: "btn", style: "padding:5px 12px;font-size:13px", onclick: () => { S.cats = u.cats.slice(); save(); hub(); } }, u.name))), chips),
           F.levels ? el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Level"), seg([["a1", "A1.2"], ["a2", "A2.2"], ["both", "Both (mixed class)"]], LV(), v => { S.level = v; save(); hub(); })) : null,
           el("div", {}, el("b", { style: "display:block;margin-bottom:8px" }, "Timer for each question"), seg([[0, "Off"], [15, "15 s"], [30, "30 s"], [45, "45 s"]], S.timer, v => { S.timer = v; save(); })))));
   }
@@ -566,8 +573,10 @@
 
   /* ================= taboo ================= */
   function taboo() {
-    if (!R.taboo.length) { toast("No Taboo cards here yet"); location.hash = "#/"; return; }
-    const nextC = cycle("taboo", R.taboo);
+    const tlist = R.taboo.filter(x => !x.c || S.cats.includes(x.c));
+    if (!tlist.length) { toast("No cards here yet"); location.hash = "#/"; return; }
+    const nextC = cycle("taboo" + S.cats.join(","), tlist);
+    const TNAME = (F.names && F.names.taboo) || "Taboo";
     let secs = store.get(PFX + ".taboo", 60), card, live = false, rg, got = [];
     turn = turn % S.teams.length;
     const lens = seg([[45, "45 s"], [60, "60 s"], [90, "90 s"]], secs, v => { secs = v; store.set(PFX + ".taboo", v); });
@@ -578,10 +587,10 @@
         el("div", { class: "eyebrow" }, "Next to describe"), el("div", { class: "hs-word", style: `color:${tm.color}` }, tm.name),
         el("div", { class: "rules" },
           el("div", {}, el("b", {}, "1. "), "One student comes to the screen (or takes the phone) and holds the card."),
-          el("div", {}, el("b", {}, "2. "), "Describe the word in English. Don't say the word or the words in red!"),
-          el("div", {}, el("b", {}, "3. "), `The team guesses: correct = +100. Said a red word? Oops = −50. You have ${secs} seconds: get as many as you can!`)),
+          el("div", {}, el("b", {}, "2. "), F.vocab ? "Explain the word in English: say what it means or give an example. Don't say the word!" : "Describe the word in English. Don't say the word or the words in red!"),
+          el("div", {}, el("b", {}, "3. "), F.vocab ? `The team guesses: correct = +100. Said the word? Oops = −50. You have ${secs} seconds!` : `The team guesses: correct = +100. Said a red word? Oops = −50. You have ${secs} seconds: get as many as you can!`)),
         el("button", { class: "btn gold huge", onclick: start }, "Start"));
-      swap(stage, "Taboo", lens, turn); paintTurn(turn);
+      swap(stage, TNAME, lens, turn); paintTurn(turn);
     }
     function start() { live = true; got = []; card = nextC(); rg = ring(secs, end); paint(); beep("open"); }
     function paint() {
@@ -589,7 +598,7 @@
       const peek = el("button", { class: "peek taboo-card", "aria-label": "Hold to see the card",
         onpointerdown: e => { e.preventDefault(); peek.classList.add("open"); }, onpointerup: () => peek.classList.remove("open"), onpointerleave: () => peek.classList.remove("open"), onpointercancel: () => peek.classList.remove("open"), oncontextmenu: e => e.preventDefault() },
         el("span", { class: "cover" }, el("b", {}, "Describer only"), el("small", {}, "Hold here to see the card")),
-        el("span", { class: "secret" }, el("b", {}, card.w), el("small", {}, "Don't say:"), el("span", { class: "no-words" }, card.no.map(x => el("i", {}, x)))));
+        el("span", { class: "secret" }, el("b", {}, card.w), card.m ? [el("small", {}, card.m), el("span", { class: "card-ex" }, card.ex)] : [el("small", {}, "Don't say:"), el("span", { class: "no-words" }, card.no.map(x => el("i", {}, x)))]));
       const stage = stageOf(tm.color,
         el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${tm.color};font-size:20px` }, tm.name), rg.node, el("b", { style: "font-size:20px" }, `Correct: ${got.filter(x => x.k === "ok").length}`)),
         peek,
@@ -599,7 +608,7 @@
           el("button", { class: "btn big", style: "border-color:var(--red);color:var(--red)", onclick: () => mark("oops") }, "Oops! (−50)"),
           el("button", { class: "btn big", "data-pause": "1", onclick: e => { e.currentTarget.textContent = rg.toggle() ? "Resume" : "Pause"; } }, "Pause")),
         el("div", { class: "hint" }, "Space = got it · S = skip · O = oops · W = peek on a laptop"));
-      swap(stage, "Taboo", lens, turn);
+      swap(stage, TNAME, lens, turn);
     }
     function mark(k) { if (!live) return; got.push({ w: card.w, k }); if (k === "ok") award(turn, 100); else if (k === "oops") award(turn, -50); else beep("pass"); card = nextC(); paint(); }
     function end() {
@@ -608,7 +617,7 @@
         el("div", { class: "eyebrow" }, "Time's up!"), el("div", { class: "hs-word", style: `color:${tm.color}` }, `${tm.name}: ${n * 100 - o * 50 >= 0 ? "+" : ""}${n * 100 - o * 50}`),
         el("div", { class: "got" }, got.map(x => el("span", { class: x.k === "ok" ? "" : "skip" }, x.w))),
         el("button", { class: "btn gold huge", onclick: () => { turn = (turn + 1) % S.teams.length; intro(); } }, `Next: ${S.teams[(turn + 1) % S.teams.length].name}`));
-      swap(stage, "Taboo", lens, turn);
+      swap(stage, TNAME, lens, turn);
     }
     keys = e => {
       const k = e.key.toLowerCase();
@@ -616,7 +625,7 @@
       if (k === " " || k === "enter") mark("ok"); else if (k === "s") mark("skip"); else if (k === "o") mark("oops"); else if (k === "p") $("[data-pause]").click();
       else if (k === "w") { const q = $(".peek"); if (q) { q.classList.add("open"); setTimeout(() => q.classList.remove("open"), 1500); } }
     };
-    frame("Taboo", lens, stageOf("#D64545"), turn);
+    frame(TNAME, lens, stageOf("#D64545"), turn);
     intro();
   }
 
@@ -1021,6 +1030,205 @@
     keys = e => { if (done && (e.key === "n" || e.key === "Enter")) $("[data-nobody]").click(); };
     frame("Spot the Mistake", null, stageOf("#D64545"));
     next();
+  }
+
+
+  /* ================= vocabulary in context (word sets with F.vocab) ================= */
+  const VOCALL = (F.vocab || []);
+  const vocPool = () => VOCALL.filter(v => S.cats.includes(v.c));
+  const topicName = v => (CAT[v.c] || {}).name || "";
+  // the example with the word marked, or with a gap
+  const exNodes = (v, mode) => v.ex.split(/(\[[^\]]*\])/).map(part => /^\[.*\]$/.test(part) ? (mode === "gap" ? el("span", { class: "blank" }, " ") : el("mark", {}, part.slice(1, -1))) : part);
+  // close wrong answers: same kind of word, same topic first, never a near-synonym
+  function closeOnes(v, n) {
+    const sim = new Set((F.similar || []).filter(g => g.includes(v.w)).flat());
+    const ok = x => x !== v && x.m !== v.m && !sim.has(x.w);
+    const tiers = [x => x.pos === v.pos && x.c === v.c, x => x.pos === v.pos && x.u === v.u, x => x.pos === v.pos, x => x.c === v.c, () => true];
+    const picks = [];
+    for (const tier of tiers) for (const x of shuffle(VOCALL.filter(x => ok(x) && tier(x)))) { if (picks.length >= n) break; if (!picks.includes(x) && !picks.some(p => p.m === x.m)) picks.push(x); }
+    return picks;
+  }
+  const vocDeck = name => { const list = vocPool(); if (!list.length) return null; return cycle(name + ":" + S.cats.join(","), list); };
+  const answerBox = v => el("div", { class: "voc-ans" }, el("b", {}, v.w), el("div", { class: "voc-m" }, v.m), el("div", { class: "voc-tr" }, "Türkçe: ", el("span", {}, v.tr)));
+
+  /* ----- context clues: the meaning from a sentence; the choices stay covered ----- */
+  function context() {
+    const nextV = vocDeck("ctx"); if (!nextV) { toast("Choose some topics first"); location.hash = "#/"; return; }
+    let v, opts, stage, tried, done, t, n = 0;
+    const worth = () => stage === 0 ? 300 : tried.length ? 100 : 200;
+    function next() { if (t) t.stop(); v = nextV(); opts = shuffle([v, ...closeOnes(v, 3)]); stage = 0; tried = []; done = false; n++; paint(true); setCounter(`Word ${n}`); beep("open"); }
+    function paint(fresh) {
+      if (fresh) t = timer(S.timer);
+      const color = catColor(v.c);
+      const st = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, topicName(v)), el("b", { style: "color:var(--gold)" }, done ? "" : `Worth ${worth()}`)),
+        el("div", { class: "voc-ex" }, exNodes(v, "mark")),
+        done ? null : el("div", { class: "voc-ask" }, "What does ", el("b", {}, `“${v.w.replace(/ \(.*\)| \+.*|\.\.\./g, "").trim()}”`), " mean here?"),
+        !done && stage === 1 ? el("div", { class: "opts4 voc-opts" }, opts.map((o, i) => el("button", { class: "opt4" + (tried.includes(o) ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABCD"[i]), o.m))) : null,
+        !done && stage === 0 ? el("div", { class: "covered" }, el("span", {}, "4 choices are hidden"), el("small", {}, "Guess from the sentence first: 300 points!")) : null,
+        done ? answerBox(v) : t.node,
+        done ? awardRow(worth(), next) : el("div", { class: "actions" },
+          stage === 0 ? el("button", { class: "btn gold big", onclick: () => { stage = 1; beep("pass"); paint(false); } }, "Uncover the choices") : null,
+          el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); paint(false); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? "Can someone make a new sentence with this word?" : stage === 0 ? "Teams say the meaning in English or Türkçe. Right? Show the answer and give 300!" : "Tap the meaning a team says (or press A–D). Wrong = red, the next team tries for 100."));
+      swap(st, "Context Clues", null);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === v) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(o); beep("no"); } paint(false); }
+    keys = e => { const k = e.key.toLowerCase(); if (done) { if (k === "n" || k === "enter") $("[data-nobody]").click(); return; } if (stage === 0 && (k === " " || k === "enter")) { stage = 1; paint(false); return; } const i = "abcd".indexOf(k); if (stage === 1 && i >= 0 && opts[i]) choose(opts[i]); };
+    frame("Context Clues", null, stageOf("#4C5FD5"));
+    next();
+  }
+
+  /* ----- missing word: the sentence has a gap; the meaning helps; word choices stay covered ----- */
+  function gapword() {
+    const nextV = vocDeck("gap"); if (!nextV) { toast("Choose some topics first"); location.hash = "#/"; return; }
+    let v, opts, stage, tried, done, t, n = 0;
+    const worth = () => stage === 0 ? 300 : stage === 1 ? 200 : tried.length ? 50 : 100;
+    const filled = () => v.ex.replace(/\[|\]/g, "");
+    function next() { if (t) t.stop(); v = nextV(); opts = shuffle([v, ...closeOnes(v, 3)]); stage = 0; tried = []; done = false; n++; paint(true); setCounter(`Sentence ${n}`); beep("open"); }
+    function paint(fresh) {
+      if (fresh) t = timer(S.timer);
+      const color = catColor(v.c), firstWord = v.ex.match(/\[([^\]]*)\]/)[1];
+      const st = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, topicName(v)), el("b", { style: "color:var(--gold)" }, done ? "" : `Worth ${worth()}`)),
+        el("div", { class: "voc-ex" }, done ? exNodes(v, "mark") : exNodes(v, "gap")),
+        done ? null : el("div", { class: "voc-def" }, el("small", {}, "Meaning"), v.m),
+        !done && stage === 1 ? el("div", { class: "first-l" }, `It starts with “${firstWord[0].toUpperCase()}”`) : null,
+        !done && stage === 2 ? el("div", { class: "opts4" }, opts.map((o, i) => el("button", { class: "opt4" + (tried.includes(o) ? " wrong" : ""), onclick: () => choose(o) }, el("span", { class: "k" }, "ABCD"[i]), o.w))) : null,
+        !done && stage < 2 ? el("div", { class: "covered" }, el("span", {}, "4 words are hidden"), el("small", {}, stage === 0 ? "Who knows the word? 300 points!" : "Still 200 points without the choices!")) : null,
+        done ? el("div", { class: "voc-tr" }, "Türkçe: ", el("span", {}, v.tr)) : t.node,
+        done ? awardRow(worth(), next) : el("div", { class: "actions" },
+          stage === 0 ? el("button", { class: "btn big", onclick: () => { stage = 1; beep("pass"); paint(false); } }, "Hint: first letter") : null,
+          stage < 2 ? el("button", { class: "btn gold big", onclick: () => { stage = 2; beep("pass"); paint(false); } }, "Uncover the choices") : null,
+          el("button", { class: "btn big", onclick: () => { done = true; if (t) t.stop(); beep("ok"); paint(false); } }, "Show the answer")),
+        el("div", { class: "hint" }, done ? `“${filled()}”  Everyone: read it together!` : "Read the sentence and the meaning. Which word is missing?"));
+      swap(st, "Missing Word", null);
+    }
+    function choose(o) { if (done || tried.includes(o)) return; if (o === v) { done = true; if (t) t.stop(); beep("ok"); } else { tried.push(o); beep("no"); } paint(false); }
+    keys = e => { const k = e.key.toLowerCase(); if (done) { if (k === "n" || k === "enter") $("[data-nobody]").click(); return; } const i = "abcd".indexOf(k); if (stage === 2 && i >= 0 && opts[i]) choose(opts[i]); else if (k === " " && stage < 2) { stage++; paint(false); } };
+    frame("Missing Word", null, stageOf("#2E9E6B"));
+    next();
+  }
+
+  /* ----- right or wrong? a sentence and a meaning: does it fit? every team votes ----- */
+  function rightwrong() {
+    const nextV = vocDeck("rw"); if (!nextV) { toast("Choose some topics first"); location.hash = "#/"; return; }
+    let v, shownM, truth, votes, shown, n = 0;
+    function next() { v = nextV(); truth = Math.random() < .5; shownM = truth ? v.m : (closeOnes(v, 1)[0] || v).m; if (shownM === v.m) truth = true; votes = S.teams.map(() => null); shown = false; n++; paint(); setCounter(`Sentence ${n}`); beep("open"); }
+    function paint() {
+      const color = catColor(v.c);
+      const st = stageOf(color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("span", { class: "pos" }, topicName(v)), el("b", { style: "color:var(--gold)" }, "Worth 100")),
+        el("div", { class: "voc-ex" }, exNodes(v, "mark")),
+        el("div", { class: "rw-claim" + (shown ? (truth ? " yes" : " no") : "") }, el("small", {}, "Here it means:"), el("b", {}, shownM)),
+        shown ? el("div", { class: "verdict " + (truth ? "yes" : "no") }, truth ? "RIGHT!" : "WRONG!") : null,
+        shown ? answerBox(v) : null,
+        el("div", { class: "fact-votes" }, S.teams.map((tm, i) => el("div", { class: "fv", style: `--c:${tm.color}` }, el("b", {}, tm.name),
+          el("div", { class: "fv-b" }, [true, false].map(val => el("button", { class: "fvb" + (votes[i] === val ? " on" : "") + (shown && votes[i] === val ? (val === truth ? " right" : " wrong") : ""), disabled: shown, onclick: () => { votes[i] = val; beep("flip"); paint(); } }, val ? "Right" : "Wrong")))))),
+        shown ? el("button", { class: "btn gold huge", onclick: next }, "Next sentence") : el("button", { class: "btn gold huge", disabled: votes.every(x => x === null), onclick: reveal }, "Show the answer"),
+        el("div", { class: "hint" }, shown ? (truth ? "Can you say it with other words?" : "So what does it really mean? Look above!") : "Each team decides: is this the right meaning? Every right team gets +100."));
+      swap(st, "Right or Wrong?", null);
+    }
+    function reveal() { shown = true; let any = false; votes.forEach((x, i) => { if (x === truth) { award(i, 100); any = true; } }); if (!any) beep("no"); paint(); }
+    keys = e => { if (e.key === "Enter" || e.key === " ") { if (shown) next(); else if (!votes.every(x => x === null)) reveal(); } };
+    frame("Right or Wrong?", null, stageOf("#7C5CBF"));
+    next();
+  }
+
+  /* ----- speed meanings: as many as you can in the time ----- */
+  function speedmean() {
+    const nextV = vocDeck("speed"); if (!nextV) { toast("Choose some topics first"); location.hash = "#/"; return; }
+    let secs = store.get(PFX + ".speed", 45), live = false, rg, v, opts, res = [], flash = null;
+    turn = turn % S.teams.length;
+    const lens = seg([[30, "30 s"], [45, "45 s"], [60, "60 s"]], secs, x => { secs = x; store.set(PFX + ".speed", x); });
+    function intro() {
+      live = false; if (rg) rg.stop(); const tm = S.teams[turn];
+      const st = stageOf(tm.color, el("div", { class: "eyebrow" }, "Next team"), el("div", { class: "hs-word", style: `color:${tm.color}` }, tm.name),
+        el("div", { class: "rules" },
+          el("div", {}, el("b", {}, "1. "), "A word in a short sentence, and three meanings."),
+          el("div", {}, el("b", {}, "2. "), "The team says the right meaning, the teacher taps it. Right = +50, the next word comes at once."),
+          el("div", {}, el("b", {}, "3. "), `You have ${secs} seconds. Go fast, but think!`)),
+        el("button", { class: "btn gold huge", onclick: start }, "Start"));
+      swap(st, "Speed Meanings", lens, turn); paintTurn(turn);
+    }
+    function start() { live = true; res = []; pickNext(); rg = ring(secs, end); paint(); beep("open"); }
+    function pickNext() { v = nextV(); opts = shuffle([v, ...closeOnes(v, 2)]); }
+    function paint() {
+      const tm = S.teams[turn];
+      const st = stageOf(tm.color,
+        el("div", { class: "row", style: "width:100%;justify-content:space-between" }, el("b", { style: `color:${tm.color};font-size:20px` }, tm.name), rg.node, el("b", { style: "font-size:20px" }, `Right: ${res.filter(x => x.ok).length}`)),
+        el("div", { class: "voc-ex light-q" + (flash ? " " + flash : "") }, exNodes(v, "mark")),
+        el("div", { class: "opts4 g3 voc-opts" }, opts.map((o, i) => el("button", { class: "opt4", onclick: () => answer(o) }, el("span", { class: "k" }, "ABC"[i]), o.m))),
+        el("div", { class: "hint" }, "Tap the meaning (or press A, B, C)."));
+      swap(st, "Speed Meanings", lens, turn);
+    }
+    function answer(o) { if (!live) return; const ok = o === v; res.push({ v, ok }); if (ok) award(turn, 50); else beep("no"); flash = ok ? "flash-ok" : "flash-no"; pickNext(); paint(); setTimeout(() => { flash = null; const s = $(".light-q"); if (s) s.classList.remove("flash-ok", "flash-no"); }, 350); }
+    function end() {
+      live = false; const tm = S.teams[turn], bad = res.filter(x => !x.ok);
+      const st = stageOf(tm.color, el("div", { class: "eyebrow" }, "Time's up!"), el("div", { class: "hs-word", style: `color:${tm.color}` }, `${tm.name}: ${res.filter(x => x.ok).length} right`),
+        bad.length ? el("div", { class: "review" }, el("b", {}, "Remember these:"), bad.map(x => el("div", { class: "rv" }, el("div", { class: "rv-s" }, el("b", {}, x.v.w), " = ", x.v.m), el("div", { class: "rv-why" }, x.v.tr)))) : el("p", { class: "muted" }, "No mistakes!"),
+        el("button", { class: "btn gold huge", onclick: () => { turn = (turn + 1) % S.teams.length; intro(); } }, `Next: ${S.teams[(turn + 1) % S.teams.length].name}`));
+      swap(st, "Speed Meanings", lens, turn);
+    }
+    keys = e => { if (!live) { if (e.key === "Enter") { const b = $(".stage .btn.gold.huge"); if (b) b.click(); } return; } const i = "abc".indexOf(e.key.toLowerCase()); if (i >= 0 && opts[i]) answer(opts[i]); };
+    frame("Speed Meanings", lens, stageOf("#E39B2B"), turn);
+    intro();
+  }
+
+  /* ----- memory match: a word card and its meaning card ----- */
+  function memory() {
+    let pairs = store.get(PFX + ".pairs", 6), cards, open, locked, found, last = null;
+    turn = turn % S.teams.length;
+    const nextV = vocDeck("mem"); if (!nextV) { toast("Choose some topics first"); location.hash = "#/"; return; }
+    const sizes = seg([[6, "6 pairs"], [8, "8 pairs"]], pairs, x => { pairs = x; store.set(PFX + ".pairs", x); round(); });
+    function round() {
+      const words = []; while (words.length < pairs) { const v = nextV(); if (!words.includes(v) && !words.some(w => w.m === v.m)) words.push(v); if (words.length >= vocPool().length) break; }
+      cards = shuffle(words.flatMap(v => [{ v, side: "w" }, { v, side: "m" }])); open = []; locked = false; found = 0; last = null; paint(); beep("open");
+    }
+    function paint() {
+      const tm = S.teams[turn], all = found === cards.length / 2;
+      const grid = el("div", { class: "vmem" }, cards.map((c, i) => el("button", { class: "vcard" + (c.done ? " done" : "") + (open.includes(i) ? " up" : ""), style: c.done ? `--c:${c.done}` : "", onclick: () => flip(i) },
+        c.done || open.includes(i) ? el("span", { class: c.side === "w" ? "vw" : "vm" }, c.side === "w" ? c.v.w : c.v.m) : el("span", { class: "q" }, "?"))));
+      const st = stageOf(all ? "var(--green)" : tm.color,
+        el("div", { style: "font-weight:800;font-size:20px" }, all ? "All pairs found!" : el("span", {}, el("span", { style: `color:${tm.color}` }, tm.name), ": find a word and its meaning")),
+        last ? el("div", { class: "matched", style: `--c:${last.c}` }, el("div", { class: "voc-ex small" }, exNodes(last.v, "mark"))) : el("div", { class: "muted" }, "A match = +100 and play again. No match = next team."),
+        grid,
+        all ? el("button", { class: "btn gold big", onclick: round }, "New cards") : null);
+      swap(st, "Memory Match", sizes, all ? -1 : turn); paintTurn(all ? -1 : turn);
+    }
+    function flip(i) {
+      const c = cards[i]; if (locked || c.done || open.includes(i)) return;
+      open.push(i); beep("flip"); paint();
+      if (open.length < 2) return;
+      const [a, b] = open.map(k => cards[k]);
+      if (a.v === b.v) { a.done = b.done = S.teams[turn].color; open = []; found++; last = { v: a.v, c: S.teams[turn].color }; award(turn, 100); setTimeout(paint, 60); }
+      else { locked = true; setTimeout(() => { open = []; locked = false; turn = (turn + 1) % S.teams.length; beep("no"); paint(); }, 1500); }
+    }
+    frame("Memory Match", sizes, stageOf("#1A8A8F"), turn);
+    round();
+  }
+
+  /* ----- study cards: flip to see the meaning, the Turkish and the example ----- */
+  function studycards() {
+    let q = "", side = "w";
+    const grid = el("div", { class: "cards" }), count = el("span", { class: "counter" });
+    const draw = () => {
+      const list = vocPool().filter(v => !q || fold(v.w + " " + v.m + " " + v.tr).includes(fold(q)));
+      count.textContent = `${list.length} words`;
+      put(grid, list.map(v => el("button", { class: "wcard" + (side === "m" ? " flip" : ""), onclick: e => { e.currentTarget.classList.toggle("flip"); beep("flip"); } },
+        el("div", { class: "in" },
+          el("div", { class: "face" }, el("b", {}, v.w), el("div", { class: "muted", style: "font-size:12px" }, topicName(v))),
+          el("div", { class: "face back" }, el("div", { class: "m" }, v.m), el("div", { class: "tr" }, v.tr), el("div", { class: "ex" }, exNodes(v, "mark")))))),
+        list.length ? null : el("p", { class: "muted" }, "No words match."));
+    };
+    const fold = s => String(s).replace(/[İIı]/g, "i").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "");
+    put($("#app"),
+      el("div", { class: "game-head" }, el("a", { class: "btn", href: "#/" }, "← All games"), el("h2", {}, "Study Cards"), count),
+      el("div", { class: "row", style: "margin-bottom:14px" },
+        el("input", { class: "search", type: "search", placeholder: "Search in English or Türkçe", "aria-label": "Search words", oninput: e => { q = e.target.value; draw(); } }),
+        el("button", { class: "btn", onclick: e => { side = side === "w" ? "m" : "w"; e.currentTarget.textContent = side === "m" ? "Show the words" : "Show the meanings"; draw(); } }, "Show the meanings")),
+      grid, el("div", { style: "height:40px" }));
+    draw();
   }
 
   /* ================= 4. emoji riddles ================= */
@@ -1489,7 +1697,7 @@ Breakfast: What do you eat for breakfast? | Do you drink tea or milk? | Who make
   }
 
   /* ================= routing ================= */
-  const ROUTES = { "": hub, reading, grammar, minitest, lightning, mistake, halves, say: sayIt, map: cityMap, clock, wordle, pics, odd, hangman, balloon: hangman, mixed, countdown, riddles, facts, taboo, draw, rather, stop, spin };
+  const ROUTES = { "": hub, context, gapword, rightwrong, speedmean, memory, studycards, reading, grammar, minitest, lightning, mistake, halves, say: sayIt, map: cityMap, clock, wordle, pics, odd, hangman, balloon: hangman, mixed, countdown, riddles, facts, taboo, draw, rather, stop, spin };
   function route() {
     cleanup();
     const id = location.hash.replace(/^#\/?/, "");
