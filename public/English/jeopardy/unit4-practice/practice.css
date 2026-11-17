@@ -42,6 +42,13 @@
 .opt.wrong { border-color: var(--red); background: #FBEAEA; }
 .opt.wrong .k { background: var(--red); color: #fff; }
 .opt[disabled] { cursor: default; }
+.opt .k svg { width: 20px; height: 20px; }
+.opt .ot { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.opt .note { font-size: 15px; font-weight: 500; line-height: 1.4; color: var(--muted); }
+.opt.right .note { color: #1f6e4a; }
+.opt.wrong .note { color: #9b2c2c; }
+.opt.noted[disabled]:not(.right):not(.wrong) { opacity: 1; }
+.opt.noted:not(.right):not(.wrong) .k { background: #FBEAEA; color: var(--red); }
 .opt[disabled]:not(.right):not(.wrong) { opacity: .55; }
 .why { border-radius: 16px; padding: 12px 16px; font-weight: 600; display: flex; gap: 10px; align-items: flex-start; }
 .why.good { background: #E7F5EE; color: #1f6e4a; }

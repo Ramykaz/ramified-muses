@@ -5,6 +5,9 @@
 window.PRACTICE = {
   title: "Unit 4 Practice",
   sub: "Book pages 61–65",
+  eyebrow: "Book practice · Book pages 61–65",
+  heading: ["Unit 4, ", "one question", " at a time"],
+  lede: "Every exercise from 4B, 4C, 4D, Test Yourself 3 and Test Yourself 4, in the same order as the book. Choose an answer and you see right away if it's correct, and why.",
   sections: [
     {
       book: "4B", title: "Climate change", task: "Complete the text with one of the words.",

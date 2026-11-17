@@ -3,7 +3,7 @@
 (() => {
   "use strict";
   const P = window.PRACTICE, S = P.sections, app = document.getElementById("app");
-  const KEY = "u4practice";
+  const KEY = P.key || "u4practice";
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   const save = v => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) { /* private mode */ } };
   let mem = load(); mem.best = mem.best || {};
@@ -41,9 +41,9 @@
     const next = mem.pos != null && mem.pos < S.length ? mem.pos : 0;
     app.replaceChildren(
       el("section", { class: "hero" },
-        el("div", { class: "eyebrow" }, "Book practice · " + P.sub),
-        el("h1", {}, "Unit 4, ", el("em", {}, "one question"), " at a time"),
-        el("p", { class: "lede" }, `Every exercise from 4B, 4C, 4D, Test Yourself 3 and Test Yourself 4, in the same order as the book. ${total} questions in ${S.length} parts. Choose an answer and you see right away if it's correct, and why.`),
+        el("div", { class: "eyebrow" }, P.eyebrow || "Book practice · " + P.sub),
+        el("h1", {}, (P.heading || ["", P.title, ""])[0], el("em", {}, (P.heading || ["", P.title, ""])[1]), (P.heading || ["", P.title, ""])[2]),
+        el("p", { class: "lede" }, `${P.lede} ${total} questions in ${S.length} parts.`),
         el("div", { class: "start-row" },
           el("button", { class: "btn gold big", type: "button", onclick: () => go(next) }, doneCount && next ? `Continue: ${S[next].book} · ${S[next].title}` : "Start from the beginning"),
           doneCount ? el("button", { class: "btn big", type: "button", onclick: () => { if (confirm("Clear all scores and start again?")) { mem = { best: {} }; save(mem); home(); } } }, "Reset scores") : null)),
@@ -93,9 +93,10 @@
         q.text ? el("div", { class: "reading" }, q.text) : null,
         q.q ? el("p", { class: "q" }, q.q.split("\n").map(t => line(t, done ? q.a : ""))) : (s.passage ? el("p", { class: "q" }, `Gap (${q.n})`) : null),
         el("div", { class: "opts" + (order.length === 2 || order.every(o => o.length < 18) ? " two" : "") }, order.map((o, k) =>
-          el("button", { class: "opt" + (done && o === q.a ? " right" : "") + (done && o === picks[qi] && o !== q.a ? " wrong" : ""), type: "button", disabled: done, onclick: () => choose(o) },
-            el("span", { class: "k" }, String(k + 1)), o))),
-        done ? el("div", { class: "why " + (right ? "good" : "bad"), role: "status" }, svg(right ? ICON.ok : ICON.no), el("span", {}, right ? "Correct! " : `The answer is "${q.a}". `, q.why || "")) : null,
+          el("button", { class: "opt" + (done && o === q.a ? " right" : "") + (done && o === picks[qi] && o !== q.a ? " wrong" : "") + (done && q.w ? " noted" : ""), type: "button", disabled: done, onclick: () => choose(o) },
+            el("span", { class: "k" }, done && q.w ? svg(o === q.a ? ICON.ok : ICON.no) : String(k + 1)),
+            el("span", { class: "ot" }, o, done && q.w && (o === q.a ? q.why : q.w[o]) ? el("span", { class: "note" }, o === q.a ? q.why : q.w[o]) : null)))),
+        done ? el("div", { class: "why " + (right ? "good" : "bad"), role: "status" }, svg(right ? ICON.ok : ICON.no), el("span", {}, right ? "Correct! " : `Not quite. The answer is "${q.a}". `, q.w ? (right ? "See why the others are wrong above." : "See why above each choice.") : (q.why || ""))) : null,
         el("div", { class: "nav" },
           el("button", { class: "btn", type: "button", disabled: qi === 0, onclick: () => { qi--; show(); } }, "← Back"),
           el("button", { class: "btn teal big", type: "button", disabled: !done, id: "nextB", onclick: next }, qi < s.qs.length - 1 ? "Next →" : "See my score →")),
@@ -119,7 +120,7 @@
         el("span", { class: "chip" }, el("i", {}, s.book), s.title),
         el("div", { class: "big-score" }, `${score} / ${s.qs.length}`),
         el("p", { class: "lede" }, score === s.qs.length ? "All correct. Well done!" : score >= s.qs.length * .7 ? "Good work! Look at the mistakes below." : "Look at the mistakes below, then try again."),
-        last ? el("p", { class: "lede" }, `That's the whole unit: ${all} / ${total} (best scores).`) : null,
+        last ? el("p", { class: "lede" }, `That's everything: ${all} / ${total} (best scores).`) : null,
         el("div", { class: "nav", style: "justify-content:center" },
           !last ? el("button", { class: "btn gold big", type: "button", id: "nextB", onclick: () => go(si + 1) }, `Next: ${S[si + 1].book} · ${S[si + 1].title} →`) : el("a", { class: "btn gold big", href: "#/", id: "nextB" }, "All parts"),
           el("button", { class: "btn big", type: "button", onclick: () => section(si) }, "Try again")),
