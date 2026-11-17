@@ -1,0 +1,1479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Team games for English class: Quiz Board and Word Bomb.">
+<link rel="icon" type="image/svg+xml" href="/english/games/favicon.svg">
+<title>Class Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Serif+Display&display=swap">
+<style>
+/* Layout: light classroom stage matching the English page (cream paper, gold, teal), with one bright colour per category so the board reads at a glance from the back of the room. Light look by choice. */
+:root {
+  --bg: #FAFAF8;
+  --cream: #F4F1EB;
+  --ink: #1a1a2e;
+  --muted: #5c5c6e;
+  --gold: #C9A84C;
+  --teal: #1a6b72;
+  --card: #FFFFFF;
+  --line: #E7E2D8;
+  --c1: #E2725B; /* coral */
+  --c2: #1A8A8F; /* lagoon */
+  --c3: #7C5CBF; /* plum */
+  --c4: #E39B2B; /* saffron */
+  --c5: #5E8C4F; /* olive */
+  --c6: #D6457A; /* rose */
+  --red: #D64545;
+  --serif: "DM Serif Display", Georgia, serif;
+  --sans: "DM Sans", -apple-system, "Segoe UI", sans-serif;
+  --shadow: 0 10px 30px rgba(26,26,46,.08);
+  --shadow-lg: 0 24px 60px rgba(26,26,46,.16);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans);
+  background-image: radial-gradient(rgba(201,168,76,.18) 1px, transparent 1.4px), radial-gradient(900px 500px at 85% -10%, rgba(26,138,143,.10), transparent 70%), radial-gradient(800px 500px at 0% 0%, rgba(226,114,91,.10), transparent 70%);
+  background-size: 26px 26px, auto, auto;
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1380px; margin: 0 auto; }
+
+/* top bar */
+.topbar { padding-block: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0; text-align: left; }
+.brand svg { width: 40px; height: 40px; flex: none; }
+.brand b { display: block; font: 400 26px/1 var(--serif); }
+.brand small { color: var(--muted); font-size: 13px; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.link { color: var(--teal); font-weight: 600; text-decoration: none; padding: 8px 6px; }
+.link:hover { text-decoration: underline; }
+
+.btn { border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 0 rgba(26,26,46,.05); transition: transform .1s, background .15s, border-color .15s, box-shadow .15s; }
+.btn:hover { border-color: var(--gold); box-shadow: 0 6px 16px rgba(26,26,46,.08); }
+.btn:active { transform: translateY(1px); }
+.btn.gold { background: var(--gold); border-color: var(--gold); color: #fff; }
+.btn.gold:hover { background: #b8963d; }
+.btn.teal { background: var(--teal); border-color: var(--teal); color: #fff; }
+.btn.teal:hover { background: #155a60; }
+.btn.danger { color: var(--red); border-color: rgba(214,69,69,.4); }
+.btn.big { padding: 14px 26px; font-size: 18px; }
+.btn.huge { padding: 20px 36px; font-size: 24px; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* home */
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; align-items: center; padding-block: 18px 8px; }
+.eyebrow { color: var(--teal); font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; }
+h1 { font: 400 clamp(38px, 5.4vw, 66px)/1.02 var(--serif); margin: 8px 0 12px; letter-spacing: -.01em; text-wrap: balance; }
+h1 em { font-style: italic; color: var(--c1); }
+.lede { color: var(--muted); font-size: 18px; margin: 0; max-width: 56ch; }
+.hero-art { width: 100%; max-width: 520px; justify-self: end; filter: drop-shadow(0 18px 30px rgba(26,26,46,.12)); }
+.hero-art .balloon { animation: float 6s ease-in-out infinite; transform-box: fill-box; }
+.hero-art .balloon.b2 { animation-delay: -2s; animation-duration: 7s; }
+.hero-art .balloon.b3 { animation-delay: -4s; animation-duration: 8s; }
+@keyframes float { 50% { transform: translateY(-10px); } }
+
+h2 { font: 400 30px/1.15 var(--serif); margin: 0; }
+.pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; padding-block: 18px 8px; }
+.gamecard { position: relative; overflow: hidden; border-radius: 24px; padding: 24px; min-height: 230px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: end; color: #fff; border: 0; text-align: left; box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s; }
+.gamecard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.gamecard.quiz { background: linear-gradient(135deg, #1a6b72, #1A8A8F 60%, #3DB2A6); }
+.gamecard.bomb { background: linear-gradient(135deg, #E2725B, #E39B2B 70%, #F2C14E); }
+.unit-link { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; margin-top: 18px; padding: 18px 22px; border-radius: 24px; background: var(--card); border: 2px solid var(--gold); color: var(--ink); text-decoration: none; box-shadow: var(--shadow); transition: transform .15s; }
+.unit-link:hover { transform: translateY(-3px); }
+.unit-link b { display: block; font: 400 28px/1.1 var(--serif); margin: 2px 0 4px; }
+.unit-link .tagline { font-weight: 800; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.unit-link > span:nth-child(2) > span:last-child { color: var(--muted); font-size: 15px; }
+.unit-tiles { display: flex; gap: 6px; }
+.unit-tiles i { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font: 800 24px/1 var(--sans); font-style: normal; color: #fff; background: var(--c3); transform: rotate(-6deg); box-shadow: 0 4px 0 #5a3e96; }
+.unit-tiles i + i { background: var(--c1); transform: rotate(5deg); box-shadow: 0 4px 0 #b4533f; }
+.unit-link.voc { margin-top: 12px; border-color: #7C5CBF; }
+.unit-link.voc .tagline { color: #7C5CBF; }
+.unit-link.voc .go { background: #7C5CBF; }
+.unit-link.voc .unit-tiles i { background: #7C5CBF; box-shadow: 0 4px 0 #5a3e96; }
+.unit-link.voc .unit-tiles i + i { background: #E39B2B; box-shadow: 0 4px 0 #a8701a; }
+.unit-link.exam { margin-top: 12px; border-color: #4C5FD5; }
+.unit-link.exam .tagline { color: #4C5FD5; }
+.unit-link.exam .go { background: #4C5FD5; }
+.unit-link.exam .unit-tiles i { background: #4C5FD5; box-shadow: 0 4px 0 #3343a3; }
+.unit-link.exam .unit-tiles i + i { background: #2E9E6B; box-shadow: 0 4px 0 #1f6e4a; }
+.unit-link.rev { margin-top: 12px; border-color: #E2725B; }
+.unit-link.rev .tagline { color: #E2725B; }
+.unit-link.rev .go { background: #E2725B; }
+.unit-link.rev .unit-tiles i { background: #E2725B; box-shadow: 0 4px 0 #b4533f; }
+.unit-link.rev .unit-tiles i + i { background: #7C5CBF; box-shadow: 0 4px 0 #5a3e96; }
+.unit-link.fun { margin-top: 12px; border-color: #D6457A; }
+.unit-link.fun .tagline { color: #D6457A; }
+.unit-link.fun .go { background: #D6457A; }
+.unit-link.fun .unit-tiles i { background: #4C5FD5; box-shadow: 0 4px 0 #3343a3; }
+.unit-link.fun.two { border-color: #4C5FD5; }
+.unit-link.fun.two .tagline { color: #4C5FD5; }
+.unit-link.fun.two .go { background: #4C5FD5; }
+.unit-link.fun .unit-tiles i + i { background: #D6457A; box-shadow: 0 4px 0 #a3305b; }
+.unit-link.a2 { margin-top: 12px; border-color: var(--teal, #1a6b72); }
+.unit-link.a2 .tagline { color: #1a6b72; }
+.unit-link.a2 .go { background: #1a6b72; }
+.unit-link.a2 .unit-tiles i { background: #1A8A8F; box-shadow: 0 4px 0 #0f5458; }
+.unit-link.a2 .unit-tiles i + i { background: #E39B2B; box-shadow: 0 4px 0 #a8701a; }
+.unit-link .go { background: var(--gold); color: #fff; font-weight: 800; padding: 9px 18px; border-radius: 999px; }
+@media (max-width: 640px) { .unit-link { grid-template-columns: 1fr; } .unit-link .go { justify-self: start; } }
+.gamecard.scr { background: linear-gradient(135deg, #7C5CBF, #9C5FC4 55%, #D6457A); }
+.gamecard h3 { font: 400 34px/1 var(--serif); margin: 6px 0 8px; }
+.gamecard p { margin: 0; opacity: .92; max-width: 34ch; }
+.gamecard .tagline { font-weight: 700; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .9; }
+.gamecard svg { width: 130px; height: 130px; }
+.gamecard .go { display: inline-block; margin-top: 14px; background: rgba(255,255,255,.95); color: var(--ink); font-weight: 800; padding: 9px 18px; border-radius: 999px; }
+
+.section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 26px 12px; }
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding-bottom: 50px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; display: grid; gap: 12px; align-content: start; box-shadow: var(--shadow); min-width: 0; }
+.card h3 { font: 400 23px/1.15 var(--serif); margin: 0; overflow-wrap: anywhere; }
+.card .meta { color: var(--muted); font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #fff; background: var(--cc, var(--teal)); }
+.tag { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 800; color: var(--gold); }
+.card .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.card.new { border: 2px dashed var(--gold); background: rgba(201,168,76,.06); place-items: center; text-align: center; min-height: 200px; box-shadow: none; }
+.card.new .plus { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #fff; font: 800 32px/1 var(--sans); }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--red); font-weight: 600; }
+.importer { display: grid; gap: 12px; padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
+#syncBtn.on { border-color: var(--teal); color: var(--teal); }
+#syncBtn.err { border-color: var(--red); color: var(--red); }
+.importer h3 { font: 400 23px/1.15 var(--serif); margin: 0; }
+.importer p { margin: 0; color: var(--muted); font-size: 14.5px; }
+#importText { font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; min-height: 220px; }
+.imp-status { font-size: 14.5px; font-weight: 700; color: var(--muted); display: grid; gap: 8px; }
+.imp-status.is-ok { color: var(--teal); }
+.imp-status.is-bad { color: var(--red); }
+.imp-status .warn { font-weight: 600; color: var(--muted); }
+.importer .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.importer details { font-size: 14.5px; color: var(--muted); }
+.importer summary { cursor: pointer; font-weight: 700; color: var(--teal); }
+.importer pre { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; overflow-x: auto; font-size: 13px; margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* forms */
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 26px; display: grid; gap: 20px; max-width: 780px; margin: 18px auto 50px; box-shadow: var(--shadow); }
+label.f { display: grid; gap: 6px; font-weight: 700; font-size: 14px; color: var(--muted); }
+input[type=text], input[type=number], input[type=url], textarea, select { background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; width: 100%; min-width: 0; color: var(--ink); }
+input:focus, textarea:focus, select:focus { border-color: var(--gold); outline: none; }
+textarea { resize: vertical; min-height: 60px; line-height: 1.4; }
+.teams-edit { display: grid; gap: 10px; }
+.team-line { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center; }
+.dot { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
+.stepper { display: inline-flex; align-items: center; gap: 12px; }
+.stepper button { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--bg); font-weight: 800; font-size: 20px; }
+.stepper output { font: 400 30px/1 var(--serif); min-width: 2ch; text-align: center; }
+.opts { display: flex; gap: 18px; flex-wrap: wrap; align-items: end; }
+.opts > * { flex: 1 1 200px; }
+.switch { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.switch input { width: 22px; height: 22px; accent-color: var(--teal); }
+.setup-head { display: flex; gap: 16px; align-items: center; }
+.setup-head svg { width: 64px; height: 64px; flex: none; }
+
+/* quiz board */
+.board-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 4px 14px; }
+.board-head h2 { font-size: clamp(22px, 2.6vw, 34px); }
+.left { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.board-scroll { overflow-x: auto; padding: 4px 2px 10px; }
+.grid { display: grid; gap: 10px; min-width: 660px; }
+.cat { --cc: var(--teal); background: var(--cc); color: #fff; border-radius: 18px; min-height: 92px; padding: 10px 8px; display: grid; justify-items: center; align-content: center; gap: 4px; text-align: center; box-shadow: 0 6px 0 color-mix(in srgb, var(--cc) 70%, #000); }
+.cat svg { width: 34px; height: 34px; }
+.cat span { font: 800 clamp(13px, 1.4vw, 18px)/1.1 var(--sans); text-transform: uppercase; letter-spacing: .06em; text-wrap: balance; }
+.tile { --cc: var(--teal); position: relative; border: 2px solid color-mix(in srgb, var(--cc) 30%, transparent); background: var(--card); border-radius: 18px; min-height: clamp(70px, 10.5vh, 118px);
+  font: 400 clamp(30px, 3.8vw, 54px)/1 var(--serif); color: var(--cc); font-variant-numeric: tabular-nums; box-shadow: 0 4px 0 color-mix(in srgb, var(--cc) 25%, transparent); transition: transform .12s, background .12s, color .12s; }
+.tile:hover { background: var(--cc); color: #fff; transform: translateY(-3px); }
+.tile.used { background: var(--cream); border-color: transparent; box-shadow: none; color: transparent; transform: none; cursor: default; }
+.tile.used::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; color: color-mix(in srgb, var(--cc) 45%, transparent); font: 700 24px/1 var(--sans); }
+.tile.empty { opacity: .35; cursor: not-allowed; }
+
+.scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding-block: 16px 34px; }
+.score { --c: var(--teal); background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 12px 14px 12px 20px; display: grid; gap: 4px; position: relative; overflow: hidden; box-shadow: var(--shadow); min-width: 0; }
+.score::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 7px; background: var(--c); }
+.score .name { font-weight: 800; font-size: 15px; color: var(--muted); overflow-wrap: anywhere; }
+.score .pts { font: 400 clamp(32px, 3.4vw, 46px)/1 var(--serif); font-variant-numeric: tabular-nums; color: var(--c); }
+.score .pts.neg { color: var(--red); }
+.score.leader { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.35), var(--shadow); }
+.score.leader .name::after { content: "  ★ leading"; color: var(--gold); font-size: 12px; }
+.score .adj { display: flex; gap: 6px; }
+.score .adj button { flex: 1; border: 1.5px solid var(--line); background: var(--bg); border-radius: 10px; padding: 4px 0; font-weight: 800; font-size: 14px; }
+.bump { animation: bump .45s ease; }
+@keyframes bump { 40% { transform: scale(1.2); } }
+
+/* overlays */
+.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(250,250,248,.82); backdrop-filter: blur(8px); display: grid; place-items: center; overflow-y: auto;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.clue-card { --cc: var(--teal); width: min(1100px, 100%); background: var(--card); border-radius: 30px; overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--line); animation: pop .35s cubic-bezier(.2,1.4,.4,1); }
+@keyframes pop { from { transform: scale(.86); opacity: 0; } }
+.clue-band { background: var(--cc); color: #fff; padding: 16px clamp(18px, 3vw, 36px); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.clue-band .cname { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: clamp(15px, 1.8vw, 20px); }
+.clue-band svg { width: 36px; height: 36px; }
+.clue-band .val { font: 400 clamp(26px, 3vw, 40px)/1 var(--serif); font-variant-numeric: tabular-nums; }
+.clue-body { padding: clamp(18px, 3vw, 40px); display: grid; gap: clamp(14px, 2.2vh, 24px); }
+.clue-q { font: 400 clamp(28px, 4.2vw, 60px)/1.15 var(--serif); text-align: center; text-wrap: balance; margin: 0; overflow-wrap: anywhere; }
+.clue-img { justify-self: center; max-height: 34vh; max-width: 100%; border-radius: 18px; box-shadow: var(--shadow); }
+.timer-row { display: flex; align-items: center; gap: 12px; }
+.timer { flex: 1; height: 12px; border-radius: 99px; background: var(--cream); overflow: hidden; }
+.timer i { display: block; height: 100%; width: 100%; background: var(--cc); transform-origin: left; }
+.timer.low i { background: var(--red); }
+.timer-row output { font: 400 26px/1 var(--serif); min-width: 3ch; text-align: right; font-variant-numeric: tabular-nums; }
+.timer-row .btn { padding: 6px 14px; font-size: 14px; flex: none; }
+.timer-row.paused .timer i { opacity: .4; }
+.timer-row.paused output { color: var(--muted); }
+.answer { text-align: center; padding: 14px; border-radius: 18px; background: color-mix(in srgb, var(--cc) 10%, var(--card)); border: 2px dashed var(--cc); }
+.answer small { display: block; color: var(--muted); font-weight: 800; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; }
+.answer b { font: 400 clamp(26px, 3.4vw, 46px)/1.15 var(--serif); color: var(--cc); overflow-wrap: anywhere; }
+.actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.award { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.award .team { --c: var(--teal); background: var(--bg); border: 1.5px solid var(--line); border-radius: 16px; padding: 10px; display: grid; gap: 8px; }
+.award .team .tn { font-weight: 800; display: flex; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.award .team .tn::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--c); flex: none; }
+.award .team div { display: flex; gap: 8px; }
+.award .team button { flex: 1; border-radius: 12px; padding: 10px 0; font-weight: 800; font-size: 17px; border: 0; }
+.ok { background: #2E9E6B; color: #fff; }
+.no { background: #fff; color: var(--red); border: 1.5px solid rgba(214,69,69,.5) !important; }
+.hint { color: var(--muted); font-size: 13px; text-align: center; }
+.dd { text-align: center; display: grid; gap: 16px; justify-items: center; padding: clamp(20px, 4vw, 44px); }
+.dd h3 { margin: 0; font: 400 clamp(48px, 8vw, 110px)/.95 var(--serif); color: var(--cc); animation: wobble 1s ease; }
+@keyframes wobble { 0% { transform: scale(.3) rotate(-8deg); } 60% { transform: scale(1.08) rotate(2deg); } }
+.dd .wager { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: end; }
+
+.win { text-align: center; display: grid; gap: 18px; justify-items: center; position: relative; z-index: 2; width: min(720px, 100%); background: var(--card); padding: 30px; border-radius: 30px; box-shadow: var(--shadow-lg); }
+.win svg { width: 110px; height: 110px; }
+.win h3 { margin: 0; font: 400 clamp(40px, 6.5vw, 82px)/1 var(--serif); color: var(--ink); text-wrap: balance; }
+.rank { width: 100%; display: grid; gap: 8px; }
+.rank div { display: flex; justify-content: space-between; gap: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 16px; font-weight: 800; }
+.rank div span:last-child { font: 400 22px/1 var(--serif); font-variant-numeric: tabular-nums; }
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+
+/* editor */
+.ed-head { padding-block: 10px 8px; }
+.ed-settings { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; box-shadow: var(--shadow); }
+.ed-cats { display: grid; gap: 16px; padding-block: 16px 20px; }
+.ed-cat { --cc: var(--teal); background: var(--card); border: 1px solid var(--line); border-top: 6px solid var(--cc); border-radius: 20px; padding: 16px; display: grid; gap: 12px; box-shadow: var(--shadow); }
+.ed-cat > header { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; }
+.ed-num { font-weight: 800; font-size: 14px; color: #fff; background: var(--cc); border-radius: 10px; padding: 8px 10px; }
+.ed-labels, .ed-clue { display: grid; grid-template-columns: 84px 1.3fr 1fr 1fr; gap: 10px; align-items: start; }
+.ed-labels { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.ed-clue input.val { text-align: center; color: var(--cc); font: 400 20px/1 var(--serif); }
+.ed-foot { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, var(--bg) 35%); padding-block: 24px 16px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+.ed-note { color: var(--muted); font-size: 14px; margin-right: auto; }
+
+/* word bomb */
+.bomb-stage { display: grid; grid-template-columns: 1fr minmax(260px, 340px); gap: 22px; padding-block: 8px 36px; align-items: start; }
+.bomb-main { background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: clamp(18px, 3vw, 34px); display: grid; gap: 16px; justify-items: center; text-align: center; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.topic small { display: block; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-size: 13px; }
+.topic b { display: block; font: 400 clamp(32px, 4.6vw, 64px)/1.08 var(--serif); text-wrap: balance; }
+.holder { --c: var(--teal); display: inline-flex; align-items: center; gap: 10px; background: var(--c); color: #fff; padding: 10px 22px; border-radius: 999px; font-weight: 800; font-size: clamp(18px, 2vw, 26px); box-shadow: 0 6px 0 color-mix(in srgb, var(--c) 70%, #000); }
+.bombwrap { position: relative; width: min(300px, 70vw); aspect-ratio: 1; max-width: 100%; }
+.bombwrap svg { width: 100%; height: 100%; }
+.bombwrap.live svg { animation: shake var(--shk, 1s) ease-in-out infinite; }
+@keyframes shake { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-3deg) scale(1.02); } 75% { transform: rotate(3deg) scale(1.02); } }
+.spark { transform-box: fill-box; transform-origin: center; animation: spark .25s linear infinite alternate; }
+@keyframes spark { to { transform: scale(1.5) rotate(40deg); } }
+.boom { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.boom b { font: 400 clamp(60px, 10vw, 140px)/1 var(--serif); color: var(--red); text-shadow: 0 6px 0 #fff, 0 10px 30px rgba(214,69,69,.4); animation: wobble .6s ease; }
+.flash { position: fixed; inset: 0; background: #fff3d6; z-index: 40; pointer-events: none; animation: flash .6s ease forwards; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+.counter { color: var(--muted); font-weight: 700; }
+.lives { display: grid; gap: 10px; }
+.life { --c: var(--teal); background: var(--card); border: 1px solid var(--line); border-left: 8px solid var(--c); border-radius: 18px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px; box-shadow: var(--shadow); }
+.life.turn { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent), var(--shadow); }
+.life.out { opacity: .4; }
+.life b { font-weight: 800; overflow-wrap: anywhere; }
+.hearts { display: flex; gap: 3px; }
+.hearts svg { width: 22px; height: 22px; }
+/* word scramble */
+.packs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pack { --cc: var(--teal); position: relative; }
+.pack input { position: absolute; opacity: 0; pointer-events: none; }
+.pack span { display: inline-block; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg); font-weight: 700; font-size: 15px; cursor: pointer; user-select: none; }
+.pack input:checked + span { background: var(--cc); border-color: var(--cc); color: #fff; }
+.pack input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+.scr-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; font-weight: 800; color: var(--muted); }
+.scr-cat { background: var(--cc); color: #fff; padding: 5px 14px; border-radius: 999px; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
+.worth { color: var(--gold); }
+.scr-clue { font: 400 clamp(22px, 2.8vw, 36px)/1.25 var(--serif); color: var(--ink); text-wrap: balance; margin: 0; }
+.scr-clue small { display: block; font: 800 12px/1.4 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.slots, .ltiles { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: clamp(4px, .9vw, 12px); }
+.slot { flex: none; width: clamp(28px, 6vw, 76px); height: clamp(40px, 7vw, 86px); border-bottom: 5px solid var(--line); display: grid; place-items: center; font: 800 clamp(24px, 4.4vw, 58px)/1 var(--sans); color: var(--cc); }
+.slot.on { border-color: var(--cc); animation: pop .3s; }
+.slot.gap, .ltile.gap { width: clamp(12px, 2vw, 28px); border: 0; background: none; box-shadow: none; }
+.ltile { --cc: var(--teal); flex: none; width: clamp(28px, 6.6vw, 84px); height: clamp(28px, 6.6vw, 84px); border-radius: clamp(8px, 1.4vw, 18px); display: grid; place-items: center; background: var(--cc); color: #fff; font: 800 clamp(22px, 4.4vw, 58px)/1 var(--sans); box-shadow: 0 5px 0 color-mix(in srgb, var(--cc) 70%, #000); transform: rotate(var(--r, 0deg)); animation: drop .45s cubic-bezier(.2,1.4,.4,1) both; animation-delay: calc(var(--i, 0) * 45ms); transition: opacity .25s, transform .25s; }
+.ltile.used { opacity: .12; transform: scale(.8); }
+.ltile.still { animation: none; }
+@keyframes drop { from { transform: translateY(-34px) scale(.5) rotate(0); opacity: 0; } }
+.scr-main { --cc: var(--c3); min-height: 420px; align-content: center; }
+.scr-main .timer-row { width: min(720px, 100%); }
+.team-win { --c: var(--teal); background: var(--c); border-color: var(--c); color: #fff; }
+.team-win:hover { background: color-mix(in srgb, var(--c) 85%, #000); border-color: var(--c); }
+.how { background: var(--cream); border-radius: 18px; padding: 14px 16px; font-size: 14px; color: var(--muted); }
+.how ol { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+
+#toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--ink); color: #fff; font-weight: 700; padding: 10px 18px; border-radius: 999px; z-index: 80; transition: .25s; pointer-events: none; max-width: calc(100% - 32px); text-align: center; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-art { justify-self: center; }
+  .bomb-stage { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .ed-settings { grid-template-columns: 1fr; }
+  .ed-clue { grid-template-columns: 1fr; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .ed-labels { display: none; }
+  .ed-clue input.val { width: 110px; }
+  .gamecard { grid-template-columns: 1fr; }
+  .gamecard svg { width: 90px; height: 90px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<!-- reusable drawings -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-scroll" viewBox="0 0 48 48"><path fill="#fff" d="M12 8h22a6 6 0 0 1 6 6v2h-6v20a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6v-2h6V8z" opacity=".95"/><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" d="M17 17h12M17 23h12M17 29h8"/></symbol>
+    <symbol id="i-map" viewBox="0 0 48 48"><circle cx="35" cy="13" r="5" fill="#FFE08A"/><path fill="#fff" d="M4 40l12-18 7 9 6-7 15 16z"/><path fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" d="M6 44c8-3 14 2 22-1s10-2 16 0" opacity=".8"/></symbol>
+    <symbol id="i-star" viewBox="0 0 48 48"><path fill="#fff" d="M24 4l5.9 12.6 13.6 1.7-10 9.4 2.6 13.5L24 34.5l-12.1 6.7 2.6-13.5-10-9.4 13.6-1.7z"/></symbol>
+    <symbol id="i-tea" viewBox="0 0 48 48"><path fill="#fff" d="M15 8h18c0 6-4 8-4 13s4 7 4 13H15c0-6 4-8 4-13s-4-7-4-13z"/><path fill="#C0392B" d="M17.5 22h13c-.6 1.4-1.5 2.8-1.5 5s1.8 4.1 2.6 5H16.4c.8-.9 2.6-2.8 2.6-5s-.9-3.6-1.5-5z" opacity=".85"/><ellipse cx="24" cy="38" rx="14" ry="3.5" fill="#fff"/></symbol>
+    <symbol id="i-column" viewBox="0 0 48 48"><path fill="#fff" d="M8 8h32l-3 5H11zM10 36h28v4H10zM6 41h36v4H6z"/><path fill="#fff" d="M13 14h4v21h-4zM22 14h4v21h-4zM31 14h4v21h-4z"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 48 48"><path fill="#fff" d="M24 5a14 14 0 0 0-8 25.5V35h16v-4.5A14 14 0 0 0 24 5z"/><rect x="17" y="37" width="14" height="4" rx="2" fill="#fff"/><rect x="19" y="42" width="10" height="3" rx="1.5" fill="#fff"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.6.8-1.4 2.3-2.6 4.4-2.6 3.6 0 5.7 3.9 4.2 7.2C19.5 16.4 12 21 12 21z"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 64 64"><path fill="#C9A84C" d="M18 8h28v14a14 14 0 0 1-28 0z"/><path fill="none" stroke="#C9A84C" stroke-width="4" d="M18 14H9c0 9 4 13 10 13M46 14h9c0 9-4 13-10 13"/><rect x="28" y="35" width="8" height="10" fill="#C9A84C"/><rect x="20" y="45" width="24" height="8" rx="3" fill="#1a6b72"/></symbol>
+    <symbol id="i-bomb" viewBox="0 0 200 200">
+      <ellipse cx="100" cy="186" rx="56" ry="8" fill="rgba(26,26,46,.12)"/>
+      <circle cx="95" cy="115" r="66" fill="#26283B"/>
+      <circle cx="95" cy="115" r="66" fill="url(#bombShine)"/>
+      <rect x="112" y="40" width="30" height="24" rx="5" transform="rotate(35 127 52)" fill="#3A3D55"/>
+      <path d="M138 38c10-14 24-18 34-10" fill="none" stroke="#8B6B3E" stroke-width="5" stroke-linecap="round"/>
+      <g class="spark"><circle cx="173" cy="27" r="9" fill="#F2C14E"/><circle cx="173" cy="27" r="4.5" fill="#fff"/><path d="M173 10v8M173 36v8M156 27h8M182 27h8M161 15l5 5M180 34l5 5M185 15l-5 5M166 34l-5 5" stroke="#E2725B" stroke-width="3" stroke-linecap="round"/></g>
+      <ellipse cx="72" cy="88" rx="16" ry="10" fill="#fff" opacity=".25" transform="rotate(-35 72 88)"/>
+    </symbol>
+    <radialGradient id="bombShine" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#4A4E6E"/><stop offset="1" stop-color="#1a1a2e"/></radialGradient>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="topbar">
+    <button class="brand" id="goHome" aria-label="Class Games home">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="#1a6b72"/><rect x="10" y="11" width="12" height="11" rx="3" fill="#E2725B"/><rect x="26" y="11" width="12" height="11" rx="3" fill="#E39B2B"/><rect x="10" y="26" width="12" height="11" rx="3" fill="#7C5CBF"/><rect x="26" y="26" width="12" height="11" rx="3" fill="#C9A84C"/></svg>
+      <span><b>Class Games</b><small>English lessons with Ramadan</small></span>
+    </button>
+    <div class="tools">
+      <a class="link" href="/english/" target="_blank" rel="noopener">← English lessons</a>
+      <button class="btn" id="soundBtn" aria-pressed="true">Sound: on</button>
+      <button class="btn" id="fsBtn">Full screen</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="home">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">For the smart board</div>
+          <h1>Play, laugh and <em>speak English.</em></h1>
+          <p class="lede">Three team games for class. Answer clues on the Quiz Board, pass the Word Bomb before it explodes, or race to fix the mixed-up letters in Word Scramble.</p>
+        </div>
+        <svg class="hero-art" viewBox="0 0 520 320" role="img" aria-label="Hot air balloons over Cappadocia">
+          <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE7D2"/><stop offset="1" stop-color="#FFF7EC"/></linearGradient></defs>
+          <rect x="0" y="0" width="520" height="320" rx="34" fill="url(#sky)"/>
+          <circle cx="410" cy="92" r="40" fill="#F2C14E" opacity=".9"/>
+          <path d="M0 250c60-30 120-36 180-20s120 10 180-8 110-20 160 0v98H0z" fill="#E8C9A8"/>
+          <path d="M60 300v-80c0-22 10-38 22-38s22 16 22 38v80zM120 300v-62c0-18 9-30 19-30s19 12 19 30v62zM330 300v-90c0-25 12-44 26-44s26 19 26 44v90zM400 300v-60c0-16 8-28 17-28s17 12 17 28v60z" fill="#D9A97E"/>
+          <path d="M0 290c80-20 160-24 260-10s180 12 260-4v54H0z" fill="#C98E63"/>
+          <g class="balloon"><path d="M168 64c-26 0-44 20-44 44 0 26 26 44 38 58h12c12-14 38-32 38-58 0-24-18-44-44-44z" fill="#E2725B"/><path d="M168 64c-10 0-16 20-16 44 0 26 8 44 12 58h8c4-14 12-32 12-58 0-24-6-44-16-44z" fill="#F2C14E"/><rect x="160" y="172" width="16" height="12" rx="3" fill="#8B6B3E"/></g>
+          <g class="balloon b2"><path d="M290 110c-18 0-30 14-30 30 0 18 18 30 26 40h8c8-10 26-22 26-40 0-16-12-30-30-30z" fill="#1A8A8F"/><path d="M290 110c-7 0-11 14-11 30 0 18 6 30 8 40h6c2-10 8-22 8-40 0-16-4-30-11-30z" fill="#fff" opacity=".8"/><rect x="284" y="184" width="12" height="9" rx="2" fill="#8B6B3E"/></g>
+          <g class="balloon b3"><path d="M440 150c-13 0-22 10-22 22 0 13 13 22 19 29h6c6-7 19-16 19-29 0-12-9-22-22-22z" fill="#7C5CBF"/><path d="M440 150c-5 0-8 10-8 22 0 13 4 22 6 29h4c2-7 6-16 6-29 0-12-3-22-8-22z" fill="#F4F1EB"/><rect x="435" y="204" width="10" height="7" rx="2" fill="#8B6B3E"/></g>
+        </svg>
+      </div>
+
+      <div class="pick">
+        <button class="gamecard quiz" id="pickQuiz">
+          <span><span class="tagline">Game 1 · Clues and points</span><h3>Quiz Board</h3><p>Teams pick a square, read the clue and win points. Use the Türkiye game or build your own.</p><span class="go">See the games ↓</span></span>
+          <svg viewBox="0 0 120 120" aria-hidden="true"><rect x="6" y="14" width="108" height="92" rx="16" fill="rgba(255,255,255,.18)"/><g fill="#fff"><rect x="16" y="24" width="28" height="20" rx="5"/><rect x="48" y="24" width="28" height="20" rx="5" fill="#F2C14E"/><rect x="80" y="24" width="24" height="20" rx="5"/><rect x="16" y="50" width="28" height="20" rx="5" fill="#F2C14E"/><rect x="48" y="50" width="28" height="20" rx="5"/><rect x="80" y="50" width="24" height="20" rx="5"/><rect x="16" y="76" width="28" height="20" rx="5"/><rect x="48" y="76" width="28" height="20" rx="5"/><rect x="80" y="76" width="24" height="20" rx="5" fill="#F2C14E"/></g></svg>
+        </button>
+        <button class="gamecard bomb" id="pickBomb">
+          <span><span class="tagline">Game 2 · Fast and loud</span><h3>Word Bomb</h3><p>Say a word for the topic, then pass the bomb. Don't hold it when it explodes!</p><span class="go">Play Word Bomb →</span></span>
+          <svg viewBox="0 0 200 200" aria-hidden="true"><use href="#i-bomb"/></svg>
+        </button>
+        <button class="gamecard scr" id="pickScr">
+          <span><span class="tagline">Game 3 · Easy and fun</span><h3>Word Scramble</h3><p>The letters are all mixed up. Which team can find the word first?</p><span class="go">Play Word Scramble →</span></span>
+          <svg viewBox="0 0 120 120" aria-hidden="true"><g font-family="DM Sans, Arial, sans-serif" font-weight="800" font-size="30" text-anchor="middle"><g transform="rotate(-8 34 40)"><rect x="12" y="18" width="44" height="44" rx="10" fill="#fff"/><text x="34" y="51" fill="#7C5CBF">W</text></g><g transform="rotate(7 86 36)"><rect x="64" y="14" width="44" height="44" rx="10" fill="#F2C14E"/><text x="86" y="47" fill="#fff">D</text></g><g transform="rotate(5 36 88)"><rect x="14" y="66" width="44" height="44" rx="10" fill="#F2C14E"/><text x="36" y="99" fill="#fff">O</text></g><g transform="rotate(-6 86 86)"><rect x="64" y="64" width="44" height="44" rx="10" fill="#fff"/><text x="86" y="97" fill="#D6457A">R</text></g></g></svg>
+        </button>
+      </div>
+
+      <a class="unit-link" href="/english/games/unit1/">
+        <span class="unit-tiles" aria-hidden="true"><i>U</i><i>1</i></span>
+        <span><span class="tagline">Timeless B1 · Vocabulary</span><b>Unit 1 Word Games</b><span>All 133 words in five games: Scramble, Memory Match, Hot Seat, Missing Word and Quiz Board.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link voc" href="/english/games/b1-vocab/">
+        <span class="unit-tiles" aria-hidden="true"><i>B</i><i>1</i></span>
+        <span><span class="tagline">Timeless B1 · Units 1–3 · 269 words</span><b>B1 Vocabulary</b><span>Guess the meaning from a sentence, find the missing word, Right or Wrong?, Speed Meanings, Memory Match, Explain It! and Study Cards.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link exam" href="/english/games/exam-units1-3/">
+        <span class="unit-tiles" aria-hidden="true"><i>E</i><i>3</i></span>
+        <span><span class="tagline">Timeless Pre-Intermediate · Units 1–3</span><b>Exam Prep</b><span>173 short questions in 10 topic packs: Exam Quiz, Mini Test, Lightning Round, Spot the Mistake, irregular verbs and more.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link rev" href="/english/games/unit1-revision/">
+        <span class="unit-tiles" aria-hidden="true"><i>R</i><i>1</i></span>
+        <span><span class="tagline">Combined class · A1.2 + A2.2</span><b>Unit 1 Revision</b><span>Stories with questions at both levels, grammar, a city map, clocks, Wordle and all the word games, made from the Unit 1 content pack.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link fun" href="/english/games/fun/">
+        <span class="unit-tiles" aria-hidden="true"><i>F</i><i>!</i></span>
+        <span><span class="tagline">Easy English · Any level</span><b>Fun English Games</b><span>12 games with easy everyday words: pictures, Hangman, Taboo, Fact or Fake?, Emoji Riddles, Draw It!, Stop! and more.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link fun two" href="/english/games/fun2/">
+        <span class="unit-tiles" aria-hidden="true"><i>F</i><i>2</i></span>
+        <span><span class="tagline">Harder words · B1 challenge</span><b>Fun English 2</b><span>The same games with harder words, plus Fact or Fake?, Taboo, Mixed Letters and Clue Countdown.</span></span>
+        <span class="go">Open →</span>
+      </a>
+      <a class="unit-link a2" href="/english/games/a2-unit1/">
+        <span class="unit-tiles" aria-hidden="true"><i>A</i><i>2</i></span>
+        <span><span class="tagline">Limitless A2.2 · Unit 1A and 1B</span><b>A2 Unit 1 Games</b><span>All 100 words and the unit grammar in 9 games, from easy (True or False, Quick Match) to English only.</span></span>
+        <span class="go">Open →</span>
+      </a>
+
+      <div class="section-head" id="quizList">
+        <h2>Quiz Board games</h2>
+        <div class="tools"><button class="btn" id="syncBtn" title="Your games are saved online, so every device shows the same games. Click to update now.">Saving…</button><button class="btn" id="importToggle">Paste a game</button></div>
+      </div>
+      <div class="importer" id="importer" hidden>
+        <h3>Paste a whole game</h3>
+        <p>Paste all your categories, clues and answers at once. Simple text or JSON both work. You can also copy the AI prompt, ask ChatGPT for a game, and paste its answer here.</p>
+        <label class="f" for="importText">Your game</label>
+        <textarea id="importText" rows="12" spellcheck="false" placeholder="Title: Unit 3 Review&#10;&#10;Category: Jobs&#10;He works in a hospital. = a doctor&#10;She teaches children. = a teacher&#10;&#10;Category: Food&#10;It's yellow and monkeys love it. = a banana"></textarea>
+        <div class="imp-status" id="importStatus" aria-live="polite"></div>
+        <div class="row">
+          <button class="btn gold" id="importPlay" disabled>Create and play</button>
+          <button class="btn teal" id="importBtn" disabled>Create game</button>
+          <button class="btn" id="importEdit" disabled>Check it in the editor</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="importExample">Fill with an example</button>
+          <button class="btn" id="importPrompt">Copy AI prompt</button>
+          <button class="btn" id="importCancel">Cancel</button>
+        </div>
+        <details>
+          <summary>What can I paste?</summary>
+          <p style="margin-top:8px"><b>Simple text.</b> A <code>Title:</code> line, then a <code>Category:</code> line before each group of clues. Write each clue as <code>clue = answer</code> (a <code>|</code> or a tab also works). Clues go from easiest to hardest.</p>
+          <pre>Title: Unit 3 Review
+Points: 100, 200, 300, 400, 500
+
+Category: Jobs
+He works in a hospital. = a doctor
+She teaches children. = a teacher</pre>
+          <p>You can also write <code>Q: clue</code> on one line and <code>A: answer</code> on the next.</p>
+          <p style="margin-top:8px"><b>JSON.</b> The text from "Copy game text" in the editor, or any JSON like this:</p>
+          <pre>{"title": "Unit 3 Review",
+ "categories": [
+  {"name": "Jobs", "clues": [
+   {"q": "He works in a hospital.", "a": "a doctor"},
+   ["She teaches children.", "a teacher"]]}]}</pre>
+          <p>Up to 6 categories and 6 clues in each.</p>
+        </details>
+      </div>
+      <div class="games" id="gameList"></div>
+    </section>
+
+    <!-- QUIZ SETUP -->
+    <section id="setup" hidden>
+      <div class="panel">
+        <div class="setup-head">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="28" fill="#1a6b72"/><g><rect x="18" y="22" width="24" height="18" rx="5" fill="#E2725B"/><rect x="48" y="22" width="24" height="18" rx="5" fill="#F2C14E"/><rect x="78" y="22" width="24" height="18" rx="5" fill="#7C5CBF"/><rect x="18" y="48" width="24" height="18" rx="5" fill="#fff"/><rect x="48" y="48" width="24" height="18" rx="5" fill="#fff"/><rect x="78" y="48" width="24" height="18" rx="5" fill="#fff"/><rect x="18" y="74" width="24" height="18" rx="5" fill="#fff"/><rect x="48" y="74" width="24" height="18" rx="5" fill="#fff"/><rect x="78" y="74" width="24" height="18" rx="5" fill="#fff"/></g></svg>
+          <div><div class="eyebrow">Quiz Board</div><h2 id="setupTitle" style="margin-top:4px"></h2></div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px">Number of teams</div>
+          <div class="stepper"><button id="teamMinus" aria-label="Fewer teams">−</button><output id="teamCount">2</output><button id="teamPlus" aria-label="More teams">+</button></div>
+        </div>
+        <div class="teams-edit" id="teamInputs"></div>
+        <div class="opts">
+          <label class="f" for="timerSel">Timer for each clue
+            <select id="timerSel"><option value="0">No timer</option><option value="15">15 seconds</option><option value="30" selected>30 seconds</option><option value="45">45 seconds</option><option value="60">60 seconds</option></select>
+          </label>
+          <label class="switch" for="ddToggle"><input type="checkbox" id="ddToggle" checked> Hide 2 Daily Doubles</label>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn gold big" id="startBtn">Start game</button>
+          <button class="btn big" id="resumeBtn" hidden>Continue last game</button>
+          <button class="btn big" id="setupBack">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ BOARD -->
+    <section id="board" hidden>
+      <div class="board-head">
+        <h2 id="boardTitle"></h2>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="left" id="cluesLeft"></span><button class="btn" id="endBtn">End game</button></div>
+      </div>
+      <div class="board-scroll"><div class="grid" id="grid"></div></div>
+      <div class="scores" id="scores"></div>
+    </section>
+
+    <!-- QUIZ EDITOR -->
+    <section id="editor" hidden>
+      <div class="ed-head"><div class="eyebrow" id="edEyebrow">New game</div><h2 style="margin-top:4px">Build your Quiz Board</h2></div>
+      <div class="ed-settings">
+        <label class="f" for="edTitle">Game title<input type="text" id="edTitle" placeholder="e.g. Unit 1: Jobs and Routines"></label>
+        <label class="f" for="edCats">Categories<select id="edCats"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
+        <label class="f" for="edRows">Clues per category<select id="edRows"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
+      </div>
+      <div class="ed-cats" id="edCatsBox"></div>
+      <div class="ed-foot">
+        <span class="ed-note" id="edNote"></span>
+        <button class="btn" id="edCancel">Cancel</button>
+        <button class="btn" id="edCopy">Copy game text</button>
+        <button class="btn teal" id="edSave">Save</button>
+        <button class="btn gold" id="edPlay">Save and play</button>
+      </div>
+    </section>
+
+    <!-- WORD BOMB SETUP -->
+    <section id="bombSetup" hidden>
+      <div class="panel">
+        <div class="setup-head">
+          <svg viewBox="0 0 200 200" aria-hidden="true"><use href="#i-bomb"/></svg>
+          <div><div class="eyebrow">Word Bomb</div><h2 style="margin-top:4px">Pass it before it explodes</h2></div>
+        </div>
+        <div class="how"><b style="color:var(--ink)">How to play</b>
+          <ol><li>You see a topic, for example <i>Things in a kitchen</i>.</li><li>The team with the bomb says one English word for the topic.</li><li>The teacher presses <b>Good word, pass!</b> and the bomb goes to the next team.</li><li>Nobody knows when it explodes. The team holding it loses a heart.</li><li>The last team with hearts wins.</li></ol></div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px">Number of teams</div>
+          <div class="stepper"><button id="bTeamMinus" aria-label="Fewer teams">−</button><output id="bTeamCount">2</output><button id="bTeamPlus" aria-label="More teams">+</button></div>
+        </div>
+        <div class="teams-edit" id="bTeamInputs"></div>
+        <div class="opts">
+          <label class="f" for="bLives">Hearts for each team<select id="bLives"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+          <label class="f" for="bSpeed">Bomb time<select id="bSpeed"><option value="slow">Slow (25 to 50 seconds)</option><option value="normal" selected>Normal (15 to 35 seconds)</option><option value="fast">Fast (8 to 20 seconds)</option></select></label>
+        </div>
+        <label class="f" for="bTopics">Topics (one per line, change them as you like)<textarea id="bTopics" rows="8"></textarea></label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn gold big" id="bStart">Start Word Bomb</button>
+          <button class="btn big" id="bReset">Reset topics</button>
+          <button class="btn big" id="bBack">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORD BOMB PLAY -->
+    <section id="bombPlay" hidden>
+      <div class="bomb-stage">
+        <div class="bomb-main" id="bombMain">
+          <div class="topic"><small>Topic</small><b id="bTopic"></b></div>
+          <div class="holder" id="bHolder"></div>
+          <div class="bombwrap" id="bombWrap"><svg viewBox="0 0 200 200" aria-hidden="true"><use href="#i-bomb"/></svg></div>
+          <div class="counter" id="bCounter"></div>
+          <div class="actions" id="bActions"></div>
+          <div class="hint">Space = good word, pass. N = new topic.</div>
+        </div>
+        <aside class="lives" id="bLivesBox"></aside>
+      </div>
+    </section>
+
+    <!-- WORD SCRAMBLE SETUP -->
+    <section id="scrSetup" hidden>
+      <div class="panel">
+        <div class="setup-head">
+          <svg style="background:linear-gradient(135deg,#7C5CBF,#D6457A);border-radius:16px;padding:4px" viewBox="0 0 120 120" aria-hidden="true"><g font-family="DM Sans, Arial, sans-serif" font-weight="800" font-size="30" text-anchor="middle"><g transform="rotate(-8 34 40)"><rect x="12" y="18" width="44" height="44" rx="10" fill="#fff"/><text x="34" y="51" fill="#7C5CBF">W</text></g><g transform="rotate(7 86 36)"><rect x="64" y="14" width="44" height="44" rx="10" fill="#F2C14E"/><text x="86" y="47" fill="#fff">D</text></g><g transform="rotate(5 36 88)"><rect x="14" y="66" width="44" height="44" rx="10" fill="#F2C14E"/><text x="36" y="99" fill="#fff">O</text></g><g transform="rotate(-6 86 86)"><rect x="64" y="64" width="44" height="44" rx="10" fill="#fff"/><text x="86" y="97" fill="#D6457A">R</text></g></g></svg>
+          <div><div class="eyebrow">Word Scramble</div><h2 style="margin-top:4px">Fix the mixed-up word</h2></div>
+        </div>
+        <div class="how"><b style="color:var(--ink)">How to play</b>
+          <ol><li>The letters of an English word are mixed up, for example <b>T A C</b>.</li><li>Teams read the clue and try to find the word: <b>CAT</b>!</li><li>The first team to say it <i>and spell it</i> gets the points.</li><li>Too hard? Press <b>Hint</b> and one letter goes in its place, but the word is worth 1 point less.</li><li>The team with the most points wins.</li></ol></div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px">Number of teams</div>
+          <div class="stepper"><button id="sTeamMinus" aria-label="Fewer teams">−</button><output id="sTeamCount">2</output><button id="sTeamPlus" aria-label="More teams">+</button></div>
+        </div>
+        <div class="teams-edit" id="sTeamInputs"></div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--muted);margin-bottom:8px">Word topics (pick one or more)</div>
+          <div class="packs" id="sPacks"></div>
+        </div>
+        <div class="opts">
+          <label class="f" for="sRounds">Words in the game<select id="sRounds"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select></label>
+          <label class="f" for="sTimer">Timer for each word<select id="sTimer"><option value="0">No timer</option><option value="20">20 seconds</option><option value="30" selected>30 seconds</option><option value="45">45 seconds</option><option value="60">60 seconds</option></select></label>
+          <label class="switch" for="sClue"><input type="checkbox" id="sClue" checked> Show a clue for each word</label>
+        </div>
+        <label class="f" for="sMine">Your own words (optional). One per line, with a clue after = if you like. They are added to the topics above; to play only your words, turn the topics off.<textarea id="sMine" rows="5" spellcheck="false" placeholder="elephant = a very big grey animal&#10;library = you borrow books here&#10;breakfast"></textarea></label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn gold big" id="sStart">Start Word Scramble</button>
+          <button class="btn big" id="sBack">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORD SCRAMBLE PLAY -->
+    <section id="scrPlay" hidden>
+      <div class="bomb-stage">
+        <div class="bomb-main scr-main" id="scrMain"></div>
+        <aside class="lives" id="sScores"></aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="clue" hidden role="dialog" aria-modal="true" aria-label="Clue"></div>
+<div class="overlay" id="winner" hidden role="dialog" aria-modal="true" aria-label="Results"><canvas id="confetti"></canvas><div class="win" id="winBox"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="/english/config.js"></script>
+<script>
+(() => {
+  /* ================= data ================= */
+  const SAMPLE = {
+    id: "sample-turkiye", sample: true, title: "Türkiye: How Well Do You Know It?",
+    categories: [
+      { name: "History", icon: "scroll", clues: [
+        { q: "The Republic of Türkiye was founded in this year.", a: "1923" },
+        { q: "In 1453, this young sultan took Constantinople.", a: "Mehmed II (Fatih Sultan Mehmet)" },
+        { q: "Before Istanbul, this city in Thrace was the Ottoman capital. Today it has the Selimiye Mosque.", a: "Edirne" },
+        { q: "This old trade road went from China to Anatolia. Merchants carried cloth on it.", a: "The Silk Road (İpek Yolu)" },
+        { q: "On 18 March 1915, the Ottoman army won a famous sea battle at this narrow sea passage.", a: "Çanakkale (the Dardanelles)" } ] },
+      { name: "Geography", icon: "map", clues: [
+        { q: "This is the longest river that starts and ends inside Türkiye.", a: "Kızılırmak" },
+        { q: "This very salty lake in Central Anatolia gives Türkiye most of its salt.", a: "Lake Tuz (Tuz Gölü)" },
+        { q: "These two famous rivers start in eastern Türkiye and flow into Iraq.", a: "The Tigris and the Euphrates (Dicle and Fırat)" },
+        { q: "Türkiye has land borders with this many countries.", a: "8" },
+        { q: "This narrow sea passage connects the Black Sea and the Sea of Marmara.", a: "The Bosphorus (İstanbul Boğazı)" } ] },
+      { name: "Famous People", icon: "star", clues: [
+        { q: "This architect built the Süleymaniye Mosque and the Selimiye Mosque.", a: "Mimar Sinan" },
+        { q: "This singer is called the \"Megastar\". His song \"Şımarık\" was a big hit in Europe.", a: "Tarkan" },
+        { q: "This chef became famous online in 2017 for dropping salt on meat in a special way.", a: "Nusret Gökçe (Salt Bae)" },
+        { q: "This poet wrote the words of the Turkish national anthem.", a: "Mehmet Akif Ersoy" },
+        { q: "This scientist from Mardin won the Nobel Prize in Chemistry in 2015 for his work on DNA repair.", a: "Aziz Sancar" } ] },
+      { name: "Food Culture", icon: "tea", clues: [
+        { q: "This city is famous for baklava and pistachios. UNESCO calls it a City of Gastronomy.", a: "Gaziantep" },
+        { q: "This kebab from Bursa has thin meat on bread with tomato sauce, hot butter and yogurt.", a: "İskender kebab" },
+        { q: "This white milk pudding has a surprising ingredient: chicken.", a: "Tavuk göğsü" },
+        { q: "This hot winter drink is made with milk and powder from the root of an orchid flower.", a: "Salep" },
+        { q: "In 2013, UNESCO added this drink and its culture to its list of Intangible Cultural Heritage.", a: "Turkish coffee" } ] },
+      { name: "Ancient Places", icon: "column", clues: [
+        { q: "This ancient city near İzmir has the famous Library of Celsus.", a: "Ephesus (Efes)" },
+        { q: "This ancient city in Çanakkale is famous for the story of a wooden horse.", a: "Troy (Truva)" },
+        { q: "On top of this mountain in Adıyaman, there are giant stone heads of kings and gods.", a: "Mount Nemrut (Nemrut Dağı)" },
+        { q: "Under Istanbul, this old water palace has 336 columns and two stone Medusa heads.", a: "The Basilica Cistern (Yerebatan Sarnıcı)" },
+        { q: "This place in Şanlıurfa has stone temples that are about 11,000 years old, much older than Stonehenge.", a: "Göbekli Tepe" } ] }
+    ]
+  };
+  const ICONS = ["scroll", "map", "star", "tea", "column", "bulb"];
+  const CAT_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)"];
+  const TEAM_COLORS = ["#E2725B", "#1A8A8F", "#7C5CBF", "#E39B2B", "#5E8C4F", "#D6457A"];
+  const TEAM_NAMES = ["Tulips", "Seagulls", "Simits", "Lions", "Comets", "Rockets"];
+  const DEFAULT_TOPICS = ["Things in a kitchen", "Jobs", "Animals", "Things in a classroom", "Food for breakfast", "Countries", "Sports", "Clothes", "Things in a bathroom", "Places in a city",
+    "Things you take on holiday", "Fruits", "Vegetables", "Drinks", "Parts of the body", "Things in your bag", "Weather words", "Family members", "Transport", "Things that are red",
+    "Things with wheels", "Things you do every morning", "Words to describe people", "Turkish food (say it in English)", "Cities in Türkiye", "Things at the beach", "Things in a supermarket",
+    "Things that fly", "Hobbies", "School subjects", "Furniture", "Things in the sky", "Shops", "Musical instruments", "Things that are cold", "Things you can open", "Words that start with B", "Words that start with S"];
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  };
+  const K_GAMES = "qb.games.v1", K_MATCH = "qb.match.v1", K_SOUND = "qb.sound.v1", K_TOPICS = "wb.topics.v1";
+  const K_DEL = "qb.deleted.v1";
+  let games = store.get(K_GAMES, []);
+  // games seen as "shared" under the old publish feature become normal games here
+  for (const p of store.get("qb.public.v1", [])) if (!games.some(g => g.id === p.id)) { const { pub, ...g } = p; games.push(g); }
+  try { localStorage.removeItem("qb.public.v1"); localStorage.removeItem("qb.sync.v1"); } catch (e) { /* storage blocked */ }
+  let match = store.get(K_MATCH, null);
+  let soundOn = store.get(K_SOUND, true);
+  let setupGameId = null, teamCount = 2, bTeamCount = 2, editing = null;
+
+  const $ = s => document.querySelector(s);
+  const el = (tag, props = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === "class") n.className = v;
+      else if (k === "style") n.setAttribute("style", v);
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()) if (c != null) n.append(c.nodeType ? c : document.createTextNode(c));
+    return n;
+  };
+  const NS = "http://www.w3.org/2000/svg";
+  const icon = (name, cls) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 48 48"); s.setAttribute("aria-hidden", "true"); if (cls) s.setAttribute("class", cls); const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-" + name); s.append(u); return s; };
+  const symbolSvg = (name, vb) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", vb); s.setAttribute("aria-hidden", "true"); const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-" + name); s.append(u); return s; };
+  const heart = on => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); s.style.color = on ? "#E2725B" : "#E7E2D8"; const u = document.createElementNS(NS, "use"); u.setAttribute("href", "#i-heart"); s.append(u); return s; };
+  const catIcon = (c, i) => c.icon && ICONS.includes(c.icon) ? c.icon : ICONS[i % ICONS.length];
+  const allGames = () => [SAMPLE, ...games];
+  const findGame = id => allGames().find(g => g.id === id);
+  const uid = () => "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const valueOf = (g, r) => (g.values && g.values[r]) || (r + 1) * 100;
+  function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2400); }
+
+  /* ================= sound ================= */
+  let actx = null;
+  function ctx() { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+  function beep(type) {
+    if (!soundOn) return;
+    try {
+      const a = ctx();
+      if (type === "boom") {
+        const len = a.sampleRate * .9, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+        const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+        src.buffer = buf; f.type = "lowpass"; f.frequency.value = 900; g.gain.value = .9;
+        src.connect(f).connect(g).connect(a.destination); src.start(); return;
+      }
+      const seq = { open: [[660, .08], [880, .12]], ok: [[523, .1], [659, .1], [784, .18]], no: [[180, .35]], tick: [[1400, .025]], end: [[300, .2], [200, .4]], pass: [[700, .06], [1050, .1]], win: [[523, .12], [659, .12], [784, .12], [1046, .4]] }[type] || [];
+      let t = a.currentTime;
+      for (const [fr, du] of seq) {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = type === "no" || type === "end" ? "sawtooth" : "triangle";
+        o.frequency.value = fr; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.2, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + du);
+        o.connect(g).connect(a.destination); o.start(t); o.stop(t + du + .02); t += du * .9;
+      }
+    } catch (e) {}
+  }
+  function paintSound() { const b = $("#soundBtn"); b.textContent = "Sound: " + (soundOn ? "on" : "off"); b.setAttribute("aria-pressed", soundOn); }
+
+  /* ================= screens ================= */
+  const SCREENS = ["home", "setup", "board", "editor", "bombSetup", "bombPlay", "scrSetup", "scrPlay"];
+  function show(id) { for (const s of SCREENS) $("#" + s).hidden = s !== id; if (id !== "bombPlay") stopBomb(); if (id !== "scrPlay") stopScrTimer(); window.scrollTo(0, 0); }
+
+  /* ================= home ================= */
+  function renderHome() {
+    const list = $("#gameList"); list.replaceChildren();
+    list.append(el("button", { class: "card new", onclick: () => openEditor(null) },
+      el("div", { class: "plus" }, "+"), el("h3", {}, "Create a new Quiz Board"), el("div", { class: "meta" }, "Your categories, clues and answers")));
+    list.append(el("button", { class: "card new", onclick: () => { if ($("#importer").hidden) $("#importToggle").click(); else $("#importText").focus(); } },
+      el("div", { class: "plus", style: "font-size:22px" }, "{ }"), el("h3", {}, "Paste a whole game"), el("div", { class: "meta" }, "Paste all the clues at once, or use an AI prompt")));
+    for (const g of allGames()) {
+      const n = g.categories.reduce((s, c) => s + c.clues.filter(x => x.q.trim()).length, 0);
+      list.append(el("article", { class: "card" },
+        g.sample ? el("div", { class: "tag" }, "Example game") : null,
+        el("h3", {}, g.title || "Untitled game"),
+        el("div", { class: "meta" }, `${g.categories.length} categories · ${n} clues`),
+        el("div", { class: "chips" }, g.categories.map((c, i) => el("span", { class: "chip", style: `--cc:${CAT_COLORS[i % 6]}` }, c.name || "Category"))),
+        el("div", { class: "row" },
+          el("button", { class: "btn gold", onclick: () => openSetup(g.id) }, "Play"),
+          el("button", { class: "btn", onclick: () => openEditor(g) }, g.sample ? "Edit a copy" : "Edit"),
+          g.sample ? null : el("button", { class: "btn", onclick: () => { const c = JSON.parse(JSON.stringify(g)); c.id = uid(); c.title = "Copy of " + g.title; c.updatedAt = Date.now(); games.push(c); saveGames(); renderHome(); toast("Copy made"); } }, "Duplicate"),
+          g.sample ? null : el("button", { class: "btn danger", onclick: e => askDelete(e.currentTarget, g) }, "Delete"))));
+    }
+  }
+  function askDelete(btn, g) {
+    btn.parentElement.replaceWith(el("div", { class: "confirm" }, "Delete this game?",
+      el("button", { class: "btn danger", onclick: () => { games = games.filter(x => x.id !== g.id); const dels = store.get(K_DEL, {}); dels[g.id] = Date.now(); store.set(K_DEL, dels); saveGames(); if (match && match.gameId === g.id) { match = null; store.set(K_MATCH, null); } renderHome(); toast("Game deleted"); } }, "Yes, delete"),
+      el("button", { class: "btn", onclick: () => renderHome() }, "Keep it")));
+  }
+
+  /* ================= team inputs (shared) ================= */
+  function renderTeams(boxId, countId, count, names) {
+    const box = $(boxId); const old = [...box.querySelectorAll("input")].map(i => i.value);
+    box.replaceChildren();
+    for (let i = 0; i < count; i++) {
+      box.append(el("div", { class: "team-line" }, el("span", { class: "dot", style: `background:${TEAM_COLORS[i]}` }),
+        el("input", { type: "text", id: boxId.slice(1) + i, value: (names && names[i]) || old[i] || TEAM_NAMES[i], "aria-label": `Team ${i + 1} name`, maxlength: 24 })));
+    }
+    $(countId).textContent = count;
+  }
+  const readTeams = boxId => [...$(boxId).querySelectorAll("input")].map((inp, i) => ({ name: inp.value.trim() || `Team ${i + 1}`, color: TEAM_COLORS[i] }));
+
+  /* ================= quiz: setup ================= */
+  function openSetup(id) {
+    setupGameId = id; const g = findGame(id);
+    $("#setupTitle").textContent = g.title;
+    const same = match && match.gameId === id;
+    teamCount = same ? match.teams.length : 2;
+    renderTeams("#teamInputs", "#teamCount", teamCount, same ? match.teams.map(t => t.name) : null);
+    $("#resumeBtn").hidden = !(same && !match.over);
+    show("setup");
+  }
+  function startMatch() {
+    const g = findGame(setupGameId);
+    const teams = readTeams("#teamInputs").map(t => ({ ...t, score: 0 }));
+    const cells = []; g.categories.forEach((c, ci) => c.clues.forEach((x, ri) => { if (x.q.trim() && ri >= 1) cells.push(ci + "-" + ri); }));
+    const dd = [];
+    if ($("#ddToggle").checked) while (dd.length < Math.min(2, cells.length)) { const k = cells[Math.floor(Math.random() * cells.length)]; if (!dd.includes(k)) dd.push(k); }
+    match = { gameId: g.id, teams, used: [], dd, timer: +$("#timerSel").value, over: false };
+    store.set(K_MATCH, match); beep("open"); renderBoard(); show("board");
+  }
+
+  /* ================= quiz: board ================= */
+  function renderBoard() {
+    const g = findGame(match.gameId); if (!g) { show("home"); return; }
+    $("#boardTitle").textContent = g.title;
+    const rows = Math.max(...g.categories.map(c => c.clues.length));
+    const grid = $("#grid"); grid.replaceChildren();
+    grid.style.gridTemplateColumns = `repeat(${g.categories.length}, minmax(110px, 1fr))`;
+    g.categories.forEach((c, i) => grid.append(el("div", { class: "cat", style: `--cc:${CAT_COLORS[i % 6]}` }, icon(catIcon(c, i)), el("span", {}, c.name || "Category"))));
+    let left = 0;
+    for (let r = 0; r < rows; r++) g.categories.forEach((c, ci) => {
+      const clue = c.clues[r], key = ci + "-" + r, used = match.used.includes(key), empty = !clue || !clue.q.trim();
+      if (!used && !empty) left++;
+      grid.append(el("button", { class: "tile" + (used ? " used" : "") + (empty ? " empty" : ""), style: `--cc:${CAT_COLORS[ci % 6]}`, disabled: used || empty,
+        "aria-label": used ? "Used" : `${c.name}, ${valueOf(g, r)} points`, onclick: () => openClue(ci, r) }, String(valueOf(g, r))));
+    });
+    $("#cluesLeft").textContent = `${left} clue${left === 1 ? "" : "s"} left`;
+    renderScores();
+    if (left === 0 && !match.over) setTimeout(() => showWinner(match.teams, "points"), 500);
+  }
+  function renderScores(bumpIdx) {
+    const box = $("#scores"); box.replaceChildren();
+    const top = Math.max(...match.teams.map(t => t.score));
+    match.teams.forEach((t, i) => box.append(el("div", { class: "score" + (top > 0 && t.score === top ? " leader" : ""), style: `--c:${t.color}` },
+      el("div", { class: "name" }, t.name),
+      el("div", { class: "pts" + (t.score < 0 ? " neg" : "") + (i === bumpIdx ? " bump" : "") }, String(t.score)),
+      el("div", { class: "adj" },
+        el("button", { "aria-label": `Take 100 from ${t.name}`, onclick: () => adjust(i, -100) }, "−100"),
+        el("button", { "aria-label": `Give 100 to ${t.name}`, onclick: () => adjust(i, 100) }, "+100")))));
+  }
+  function adjust(i, d) { match.teams[i].score += d; store.set(K_MATCH, match); renderScores(i); }
+
+  /* ================= quiz: clue ================= */
+  let timerId = null, cur = null;
+  function stopTimer() { clearInterval(timerId); timerId = null; }
+  function openClue(ci, r) {
+    const g = findGame(match.gameId); const c = g.categories[ci];
+    cur = { ci, r, key: ci + "-" + r, cat: c.name, icon: catIcon(c, ci), color: CAT_COLORS[ci % 6], value: valueOf(g, r), clue: c.clues[r], revealed: false, dd: match.dd.includes(ci + "-" + r), wagerTeam: null, wager: 0 };
+    beep("open"); $("#clue").hidden = false;
+    cur.dd ? renderDD() : renderClue();
+  }
+  function band(right) { return el("div", { class: "clue-band" }, el("div", { class: "cname" }, icon(cur.icon), cur.cat), el("div", { class: "val" }, right)); }
+  function renderDD() {
+    const sel = el("select", { id: "ddTeam", "aria-label": "Team" }, match.teams.map((t, i) => el("option", { value: i }, t.name)));
+    const maxW = () => Math.max(match.teams[+sel.value].score, 500);
+    const amt = el("input", { type: "number", id: "ddAmt", min: 5, step: 50, value: Math.min(cur.value * 2, 1000), "aria-label": "Bet" });
+    const hint = el("div", { class: "hint" }); const upd = () => hint.textContent = `Bet between 5 and ${maxW()} points.`; sel.onchange = upd; upd();
+    $("#clue").replaceChildren(el("div", { class: "clue-card", style: `--cc:${cur.color}` }, band(String(cur.value)), el("div", { class: "dd" },
+      el("h3", {}, "Daily Double!"),
+      el("p", { class: "lede", style: "margin:0" }, "Only one team answers. They choose how many points to bet."),
+      el("div", { class: "wager" }, el("label", { class: "f", for: "ddTeam" }, "Team", sel), el("label", { class: "f", for: "ddAmt" }, "Bet", amt),
+        el("button", { class: "btn gold big", onclick: () => { const w = Math.round(+amt.value || 0); if (w < 5 || w > maxW()) { hint.textContent = `The bet must be between 5 and ${maxW()}.`; amt.focus(); return; } cur.wagerTeam = +sel.value; cur.wager = w; renderClue(); } }, "Show the clue")),
+      hint)));
+    beep("win");
+  }
+  function renderClue() {
+    const secs = match.timer, bar = el("i"), out = el("output", {}, secs ? String(secs) : "");
+    const tbar = el("div", { class: "timer" }, bar);
+    const ansSlot = el("div"), awardSlot = el("div");
+    const pauseBtn = el("button", { class: "btn", onclick: () => togglePause() }, "Pause");
+    const trow = el("div", { class: "timer-row" }, tbar, out, pauseBtn, el("button", { class: "btn", onclick: () => restart() }, "Restart"));
+    const revealBtn = el("button", { class: "btn gold big", onclick: reveal }, "Show answer");
+    const img = cur.clue.img ? el("img", { class: "clue-img", src: cur.clue.img, alt: "", onerror: e => e.currentTarget.remove() }) : null;
+    $("#clue").replaceChildren(el("div", { class: "clue-card", style: `--cc:${cur.color}` },
+      band(cur.dd ? `${match.teams[cur.wagerTeam].name} bets ${cur.wager}` : String(cur.value)),
+      el("div", { class: "clue-body" }, img, el("p", { class: "clue-q" }, cur.clue.q), secs ? trow : null, ansSlot,
+        el("div", { class: "actions" }, revealBtn, el("button", { class: "btn", onclick: closeClue }, "Back to board (keep square)")),
+        awardSlot, el("div", { class: "hint" }, secs ? "Space shows the answer. P pauses the timer. Esc goes back." : "Space shows the answer. Esc goes back."))));
+    revealBtn.focus();
+    function reveal() {
+      if (cur.revealed) return; cur.revealed = true; stopTimer(); revealBtn.remove(); trow.querySelectorAll(".btn").forEach(x => x.remove());
+      ansSlot.replaceWith(el("div", { class: "answer" }, el("small", {}, "Answer"), el("b", {}, cur.clue.a || "(no answer written)")));
+      const teams = cur.dd ? [cur.wagerTeam] : match.teams.map((_, i) => i), pts = cur.dd ? cur.wager : cur.value;
+      awardSlot.replaceWith(el("div", { style: "display:grid;gap:10px" },
+        el("div", { class: "hint", style: "font-size:15px;color:var(--ink);font-weight:700" }, "Who got it right?"),
+        el("div", { class: "award" }, teams.map(i => el("div", { class: "team", style: `--c:${match.teams[i].color}` }, el("div", { class: "tn" }, match.teams[i].name),
+          el("div", {}, el("button", { class: "ok", onclick: () => award(i, pts) }, `✓ +${pts}`),
+            el("button", { class: "no", onclick: e => { e.currentTarget.disabled = true; award(i, -pts, true); } }, `✗ −${pts}`))))),
+        el("div", { class: "actions" }, el("button", { class: "btn", onclick: () => finishClue() }, "Nobody got it"))));
+    }
+    cur.reveal = reveal;
+    // the timer counts down `left` seconds and can be paused (e.g. to translate the clue)
+    let left = secs, last = 0, paused = false;
+    function run() {
+      stopTimer(); last = Date.now();
+      timerId = setInterval(() => {
+        const now = Date.now(); left = Math.max(0, left - (now - last) / 1000); last = now;
+        bar.style.transform = `scaleX(${left / secs})`; out.textContent = Math.ceil(left); tbar.classList.toggle("low", left <= 5);
+        if (left <= 5 && left > 0 && Math.ceil(left) !== cur.lastTick) { cur.lastTick = Math.ceil(left); beep("tick"); }
+        if (left <= 0) { stopTimer(); beep("end"); out.textContent = "Time!"; pauseBtn.disabled = true; }
+      }, 100);
+    }
+    function paint() { pauseBtn.textContent = paused ? "Resume" : "Pause"; trow.classList.toggle("paused", paused); }
+    function togglePause() {
+      if (!secs || cur.revealed || left <= 0) return;
+      paused = !paused; if (paused) stopTimer(); else run(); paint();
+    }
+    function restart() {
+      left = secs; paused = false; cur.lastTick = null; pauseBtn.disabled = false;
+      bar.style.transform = ""; out.textContent = String(secs); tbar.classList.remove("low"); paint(); run();
+    }
+    cur.togglePause = togglePause;
+    if (secs) run();
+  }
+  function award(i, pts, wrongOnly) {
+    match.teams[i].score += pts; store.set(K_MATCH, match); beep(pts > 0 ? "ok" : "no");
+    if (!wrongOnly || cur.dd) finishClue(i); else renderScores(i);
+  }
+  function finishClue(bumpIdx) { if (!match.used.includes(cur.key)) match.used.push(cur.key); store.set(K_MATCH, match); closeClue(); renderBoard(); if (bumpIdx != null) renderScores(bumpIdx); }
+  function closeClue() { stopTimer(); $("#clue").hidden = true; $("#clue").replaceChildren(); }
+
+  /* ================= winner (shared) ================= */
+  function showWinner(teams, unit) {
+    if (unit === "points") { match.over = true; store.set(K_MATCH, match); }
+    const ranked = [...teams].sort((a, b) => (b.score ?? b.lives) - (a.score ?? a.lives));
+    const val = t => unit === "lives" ? t.lives : t.score;
+    const best = val(ranked[0]); const winners = ranked.filter(t => val(t) === best).map(t => t.name);
+    $("#winBox").replaceChildren(symbolSvg("trophy", "0 0 64 64"),
+      el("div", { class: "eyebrow" }, unit === "points" ? "Final scores" : unit === "scramble" ? "Word Scramble" : "Word Bomb"),
+      el("h3", {}, winners.length > 1 ? `It's a tie: ${winners.join(" & ")}!` : `${ranked[0].name} win!`),
+      el("div", { class: "rank" }, ranked.map((t, i) => el("div", { style: `border-left:7px solid ${t.color}` }, el("span", {}, `${i + 1}. ${t.name}`), el("span", {}, unit === "lives" ? `${t.lives} ♥` : String(t.score))))),
+      el("div", { class: "actions" },
+        el("button", { class: "btn gold big", onclick: () => { hideWinner(); unit === "points" ? openSetup(match.gameId) : unit === "scramble" ? openScrSetup() : openBombSetup(); } }, "Play again"),
+        unit === "points" ? el("button", { class: "btn big", onclick: () => { hideWinner(); show("board"); } }, "See the board") : null,
+        el("button", { class: "btn big", onclick: () => { hideWinner(); renderHome(); show("home"); } }, "Home")));
+    $("#winner").hidden = false; beep("win"); confetti();
+  }
+  function hideWinner() { $("#winner").hidden = true; cancelAnimationFrame(confetti.raf); }
+  function confetti() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const c = $("#confetti"), x = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
+    const cols = ["#E2725B", "#1A8A8F", "#7C5CBF", "#E39B2B", "#C9A84C", "#D6457A"];
+    const ps = Array.from({ length: 200 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height, w: 6 + Math.random() * 8, h: 8 + Math.random() * 10, vy: 2 + Math.random() * 3, vx: -1 + Math.random() * 2, r: Math.random() * 6, vr: -.1 + Math.random() * .2, col: cols[Math.floor(Math.random() * cols.length)] }));
+    const t0 = performance.now();
+    (function frame(t) {
+      x.clearRect(0, 0, c.width, c.height);
+      for (const p of ps) { p.y += p.vy; p.x += p.vx; p.r += p.vr; if (p.y > c.height + 20 && t - t0 < 4000) p.y = -20; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.col; x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); x.restore(); }
+      if (t - t0 < 7000) confetti.raf = requestAnimationFrame(frame); else x.clearRect(0, 0, c.width, c.height);
+    })(t0);
+  }
+
+  /* ================= quiz: editor ================= */
+  function blankGame(nc = 5, nr = 5) { return { id: uid(), title: "", categories: Array.from({ length: nc }, (_, i) => ({ name: "", icon: ICONS[i % 6], clues: Array.from({ length: nr }, () => ({ q: "", a: "", img: "" })) })), values: Array.from({ length: nr }, (_, i) => (i + 1) * 100) }; }
+  function openEditor(g) {
+    if (!g) { editing = blankGame(); $("#edEyebrow").textContent = "New game"; }
+    else if (g.sample) { editing = JSON.parse(JSON.stringify(g)); editing.id = uid(); delete editing.sample; editing.title = g.title + " (my copy)"; $("#edEyebrow").textContent = "Copy of the example"; }
+    else { editing = JSON.parse(JSON.stringify(g)); $("#edEyebrow").textContent = "Edit game"; }
+    const rows = Math.max(...editing.categories.map(c => c.clues.length));
+    editing.values = editing.values || Array.from({ length: rows }, (_, i) => (i + 1) * 100);
+    $("#edTitle").value = editing.title; $("#edCats").value = String(editing.categories.length); $("#edRows").value = String(rows);
+    renderEditor(); show("editor");
+  }
+  function readEditor() {
+    editing.title = $("#edTitle").value.trim();
+    document.querySelectorAll(".ed-cat").forEach((box, ci) => {
+      const cat = editing.categories[ci]; if (!cat) return;
+      cat.name = box.querySelector(".cat-name").value.trim();
+      box.querySelectorAll(".ed-clue").forEach((row, ri) => {
+        cat.clues[ri] = { q: row.querySelector("textarea").value, a: row.querySelector("input.ans").value, img: row.querySelector("input.img").value.trim() };
+        const v = parseInt(row.querySelector("input.val").value, 10); if (ci === 0 && v > 0) editing.values[ri] = v;
+      });
+    });
+  }
+  function resizeEditor() {
+    readEditor();
+    const nc = +$("#edCats").value, nr = +$("#edRows").value;
+    while (editing.categories.length < nc) editing.categories.push({ name: "", icon: ICONS[editing.categories.length % 6], clues: [] });
+    editing.categories.length = nc;
+    editing.categories.forEach(c => { while (c.clues.length < nr) c.clues.push({ q: "", a: "", img: "" }); c.clues.length = nr; });
+    while (editing.values.length < nr) editing.values.push((editing.values.length + 1) * 100);
+    editing.values.length = nr; renderEditor();
+  }
+  function renderEditor() {
+    const box = $("#edCatsBox"); box.replaceChildren();
+    editing.categories.forEach((c, ci) => box.append(el("section", { class: "ed-cat", style: `--cc:${CAT_COLORS[ci % 6]}` },
+      el("header", {}, el("span", { class: "ed-num" }, `Category ${ci + 1}`),
+        el("input", { type: "text", class: "cat-name", id: `c${ci}`, value: c.name, placeholder: "Category name, e.g. Jobs", "aria-label": `Category ${ci + 1} name`, maxlength: 40 })),
+      el("div", { class: "ed-labels" }, el("span", {}, "Points"), el("span", {}, "Clue"), el("span", {}, "Answer"), el("span", {}, "Picture link (optional)")),
+      c.clues.map((x, ri) => el("div", { class: "ed-clue" },
+        el("input", { type: "number", class: "val", id: `v${ci}-${ri}`, value: valueOf(editing, ri), min: 1, "aria-label": "Points", disabled: ci !== 0 }),
+        el("textarea", { id: `q${ci}-${ri}`, rows: 2, placeholder: "Clue (what students read)", "aria-label": `Category ${ci + 1}, clue ${ri + 1}` }, x.q),
+        el("input", { type: "text", class: "ans", id: `a${ci}-${ri}`, value: x.a, placeholder: "Answer", "aria-label": `Category ${ci + 1}, answer ${ri + 1}` }),
+        el("input", { type: "url", class: "img", id: `p${ci}-${ri}`, value: x.img || "", placeholder: "https://… .jpg", "aria-label": `Category ${ci + 1}, picture link ${ri + 1}` }))))));
+    box.querySelectorAll(".ed-cat:first-child input.val").forEach((inp, ri) => inp.addEventListener("input", () => box.querySelectorAll(".ed-cat").forEach(cat => { const o = cat.querySelectorAll("input.val")[ri]; if (o && o !== inp) o.value = inp.value; })));
+    updateNote();
+  }
+  function updateNote() { readEditor(); const empty = editing.categories.reduce((s, c) => s + c.clues.filter(x => !x.q.trim()).length, 0); $("#edNote").textContent = empty ? `${empty} empty clue${empty === 1 ? "" : "s"}. Empty squares can't be picked.` : "All clues are filled in."; }
+  function saveEditor(play) {
+    readEditor();
+    if (!editing.title) { $("#edTitle").focus(); toast("Give your game a title first"); return; }
+    if (!editing.categories.some(c => c.clues.some(x => x.q.trim()))) { toast("Write at least one clue"); return; }
+    editing.categories.forEach((c, i) => { if (!c.name) c.name = `Category ${i + 1}`; });
+    editing.updatedAt = Date.now();
+    const i = games.findIndex(g => g.id === editing.id); if (i >= 0) games[i] = editing; else games.push(editing);
+    const ok = saveGames();
+    if (match && match.gameId === editing.id) { match = null; store.set(K_MATCH, null); }
+    toast(ok ? "Game saved" : "Saved for now, but this browser can't keep it after closing");
+    if (play) openSetup(editing.id); else { renderHome(); show("home"); }
+  }
+  async function copyEditor() {
+    readEditor(); const { id, ...rest } = editing; const text = JSON.stringify(rest, null, 1);
+    try { await navigator.clipboard.writeText(text); toast("Game text copied. Use Paste a game on another device."); }
+    catch (e) { const ta = el("textarea", { rows: 6, "aria-label": "Game text", style: "margin-top:8px" }, text); $("#edNote").replaceChildren("Select this text and copy it:", ta); ta.focus(); ta.select(); }
+  }
+  /* ================= paste a game ================= */
+  const EXAMPLE_TEXT = `Title: Daily Life Review
+Points: 100, 200, 300, 400, 500
+
+Category: Jobs
+He works in a hospital and helps sick people. = a doctor
+She teaches children at school. = a teacher
+He cooks food in a restaurant. = a chef
+She flies planes. = a pilot
+He fixes cars. = a mechanic
+
+Category: Daily Routines
+You do this with a toothbrush. = brush your teeth
+You do this in the shower. = have a shower / wash
+The first meal of the day. = breakfast
+You do this at night in bed. = sleep
+You do this when the alarm rings. = wake up / get up
+
+Category: Food
+It's yellow and monkeys love it. = a banana
+Turkish breakfast bread with sesame seeds. = simit
+You drink it from a small tulip glass. = tea (çay)
+It's white and comes from a cow. = milk
+Italian food with cheese and tomato. = pizza`;
+  const AI_PROMPT = `Make a Jeopardy-style quiz game for my English class.
+Topic: [WRITE YOUR TOPIC]
+Level: [e.g. A2]
+Make 5 categories with 5 clues each. In each category, put the clues from easiest to hardest. Keep the clues short and use simple English.
+
+Reply with ONLY the game in exactly this format, nothing else:
+
+Title: (game title)
+
+Category: (category name)
+(clue) = (answer)
+(clue) = (answer)
+(clue) = (answer)
+(clue) = (answer)
+(clue) = (answer)
+
+Category: (next category name)
+...`;
+
+  const str = v => v == null ? "" : String(v).trim();
+  // turn any reasonable JSON shape into a game
+  function gameFromJson(o) {
+    if (Array.isArray(o)) o = { categories: o };
+    if (!o || typeof o !== "object") throw "That JSON doesn't look like a game.";
+    let cats = o.categories || o.board || o.cats || o.topics;
+    if (cats && !Array.isArray(cats) && typeof cats === "object") cats = Object.entries(cats).map(([name, clues]) => ({ name, clues }));
+    if (!Array.isArray(cats)) throw "The JSON needs a \"categories\" list.";
+    const clue = x => {
+      if (Array.isArray(x)) return { q: str(x[0]), a: str(x[1]), img: str(x[2]) };
+      if (typeof x === "string") { const m = splitClue(x); return m ? { q: m[0], a: m[1], img: "" } : { q: str(x), a: "", img: "" }; }
+      x = x || {};
+      return { q: str(x.q ?? x.question ?? x.clue ?? x.prompt), a: str(x.a ?? x.answer ?? x.response), img: str(x.img ?? x.image ?? x.picture), pts: parseInt(x.value ?? x.points, 10) };
+    };
+    const g = {
+      title: str(o.title || o.name) || "Pasted game",
+      categories: cats.map(c => Array.isArray(c) ? { name: "", clues: c } : (c || {})).map(c => ({ name: str(c.name ?? c.category ?? c.title), icon: c.icon, clues: (c.clues || c.questions || c.items || []).map(clue) })),
+      values: Array.isArray(o.values || o.points) ? (o.values || o.points).map(v => parseInt(v, 10)) : null
+    };
+    if (!g.values) { const p = (g.categories[0] || { clues: [] }).clues.map(x => x.pts); if (p.length && p.every(v => v > 0)) g.values = p; }
+    return g;
+  }
+  // "clue = answer", "clue | answer", "clue<TAB>answer", optional "200 | clue | answer"
+  function splitClue(line) {
+    let parts = null;
+    if (line.includes("\t")) parts = line.split("\t");
+    else if (line.includes("|")) parts = line.split("|");
+    else for (const sep of [" => ", " -> ", " = ", "="]) { const i = line.indexOf(sep); if (i > 0) { parts = [line.slice(0, i), line.slice(i + sep.length)]; break; } }
+    if (!parts) return null;
+    parts = parts.map(x => x.trim());
+    if (parts.length >= 3 && /^\d+$/.test(parts[0])) return [parts[1], parts.slice(2).join(" | "), +parts[0]];
+    return [parts[0], parts.slice(1).join(" | ")];
+  }
+  function gameFromText(text) {
+    const g = { title: "", categories: [], values: null }; let cat = null, pendingQ = null;
+    const addClue = (q, a, pts) => { if (!cat) { cat = { name: "", clues: [] }; g.categories.push(cat); } cat.clues.push({ q: str(q), a: str(a), img: "", pts }); };
+    for (let raw of text.split(/\r?\n/)) {
+      let line = raw.trim(); if (!line) continue;
+      let m;
+      if ((m = line.match(/^(?:title|game|name)\s*:\s*(.+)$/i))) { g.title = m[1].trim(); continue; }
+      if ((m = line.match(/^(?:points|values)\s*:\s*(.+)$/i))) { g.values = m[1].split(/[\s,;]+/).map(v => parseInt(v, 10)).filter(v => v > 0); continue; }
+      if ((m = line.match(/^(?:category|cat|topic)\s*\d*\s*[:.\-]\s*(.+)$/i)) || (m = line.match(/^#+\s*(.+)$/)) || (m = line.match(/^\[(.+)\]$/))) {
+        if (pendingQ != null) { addClue(pendingQ, ""); pendingQ = null; }
+        cat = { name: m[1].replace(/:$/, "").trim(), clues: [] }; g.categories.push(cat); continue;
+      }
+      if ((m = line.match(/^(?:q|question|clue)\s*\d*\s*[:.)]\s*(.+)$/i))) { if (pendingQ != null) addClue(pendingQ, ""); pendingQ = m[1]; continue; }
+      if ((m = line.match(/^(?:a|answer)\s*\d*\s*[:.)]\s*(.*)$/i))) { addClue(pendingQ ?? "", m[1]); pendingQ = null; continue; }
+      line = line.replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, "");
+      const parts = splitClue(line);
+      if (parts) { if (pendingQ != null) { addClue(pendingQ, ""); pendingQ = null; } addClue(parts[0], parts[1], parts[2]); continue; }
+      if (/\?$/.test(line)) { if (pendingQ != null) addClue(pendingQ, ""); pendingQ = line; continue; }
+      // a line with no answer: a category name (e.g. "Jobs" or "Jobs:")
+      if (pendingQ != null) { addClue(pendingQ, ""); pendingQ = null; }
+      cat = { name: line.replace(/:$/, "").trim(), clues: [] }; g.categories.push(cat);
+    }
+    if (pendingQ != null) addClue(pendingQ, "");
+    g.title = g.title || "Pasted game";
+    if (!g.values) { const p = (g.categories[0] || { clues: [] }).clues.map(x => x.pts); if (p.length && p.every(v => v > 0)) g.values = p; }
+    return g;
+  }
+  // returns { game, warnings } or throws a message for the teacher
+  function parseGame(text) {
+    text = text.trim().replace(/^```[a-z]*\s*\n?/i, "").replace(/\n?```\s*$/, "").trim();
+    if (!text) throw "";
+    let g;
+    if (/^[\[{]/.test(text)) {
+      let o;
+      try { o = JSON.parse(text); }
+      catch (e) {
+        try { o = JSON.parse(text.replace(/[“”]/g, '"').replace(/,\s*([\]}])/g, "$1")); }
+        catch (e2) { throw "This looks like JSON but it has a mistake in it (" + e.message.replace(/^JSON\.parse: |^Unexpected /, "") + "). Check the commas and quotes."; }
+      }
+      g = gameFromJson(o);
+    } else g = gameFromText(text);
+    const warnings = [];
+    g.categories = g.categories.filter(c => c.clues.some(x => x.q));
+    if (!g.categories.length) throw "I couldn't find any clues. Write each clue as \"clue = answer\" under a \"Category:\" line.";
+    if (g.categories.length > 6) { warnings.push(`Only the first 6 of ${g.categories.length} categories were kept.`); g.categories.length = 6; }
+    g.categories.forEach((c, i) => {
+      c.clues = c.clues.filter(x => x.q);
+      if (c.clues.length > 6) { warnings.push(`"${c.name || "Category " + (i + 1)}" has ${c.clues.length} clues; only the first 6 were kept.`); c.clues.length = 6; }
+      c.name = (c.name || `Category ${i + 1}`).slice(0, 40);
+      c.icon = ICONS.includes(c.icon) ? c.icon : ICONS[i % 6];
+      c.clues = c.clues.map(x => ({ q: x.q, a: x.a, img: x.img || "" }));
+    });
+    const rows = Math.max(...g.categories.map(c => c.clues.length));
+    const vals = (g.values || []).filter(v => v > 0);
+    g.values = Array.from({ length: rows }, (_, i) => vals[i] || (vals.length ? vals[vals.length - 1] + (i - vals.length + 1) * 100 : (i + 1) * 100));
+    const noAns = g.categories.reduce((s, c) => s + c.clues.filter(x => !x.a).length, 0);
+    if (noAns) warnings.push(`${noAns} clue${noAns === 1 ? " has" : "s have"} no answer yet.`);
+    if (g.categories.some(c => c.clues.length !== rows)) warnings.push("Some categories have fewer clues. Their extra squares will be empty.");
+    g.title = g.title.slice(0, 80);
+    return { game: g, warnings };
+  }
+  let pasted = null;
+  function checkPaste() {
+    const box = $("#importStatus"); box.className = "imp-status"; box.replaceChildren(); pasted = null;
+    try {
+      const { game: g, warnings } = parseGame($("#importText").value);
+      pasted = g;
+      const n = g.categories.reduce((s, c) => s + c.clues.length, 0);
+      box.classList.add("is-ok");
+      box.append(el("div", {}, `Ready: "${g.title}" with ${g.categories.length} categor${g.categories.length === 1 ? "y" : "ies"} and ${n} clue${n === 1 ? "" : "s"}.`),
+        el("div", { class: "chips" }, g.categories.map((c, i) => el("span", { class: "chip", style: `--cc:${CAT_COLORS[i % 6]}` }, `${c.name} (${c.clues.length})`))),
+        ...warnings.map(w => el("div", { class: "warn" }, w)));
+    } catch (e) {
+      if (typeof e !== "string") e = "That text isn't a game yet.";
+      if (e) { box.classList.add("is-bad"); box.textContent = e; }
+    }
+    for (const id of ["#importBtn", "#importPlay", "#importEdit"]) $(id).disabled = !pasted;
+  }
+  function closeImporter() { $("#importer").hidden = true; $("#importText").value = ""; checkPaste(); }
+  function doImport(then) {
+    checkPaste(); if (!pasted) { toast("Fix the text first"); return; }
+    const g = { ...pasted, id: uid(), updatedAt: Date.now() };
+    if (then === "edit") { closeImporter(); openEditor(g); $("#edEyebrow").textContent = "Pasted game: check it, then save"; return; }
+    games.push(g); const ok = saveGames(); closeImporter(); renderHome();
+    toast(ok ? "Game created" : "Created for now, but this browser can't keep it after closing");
+    if (then === "play") openSetup(g.id);
+  }
+  async function copyPrompt() {
+    try { await navigator.clipboard.writeText(AI_PROMPT); toast("Prompt copied. Add your topic, then paste it into ChatGPT."); }
+    catch (e) { $("#importText").value = AI_PROMPT; checkPaste(); $("#importText").select(); toast("Copy this prompt, then clear the box"); }
+  }
+
+  /* ================= saved online ================= */
+  // Games are saved in this browser first, then online in the site's database,
+  // so every device that opens the page shows the same games.
+  let syncing = false, syncAgain = false;
+  function saveGames() { const ok = store.set(K_GAMES, games); scheduleSync(); return ok; }
+  function scheduleSync(ms = 600) { clearTimeout(scheduleSync.t); scheduleSync.t = setTimeout(sync, ms); }
+  async function sync() {
+    if (syncing) { syncAgain = true; return; }
+    syncing = true; paintSync("busy");
+    const dels = store.get(K_DEL, {}), sent = {};
+    const payload = games.map(g => { g.updatedAt = g.updatedAt || 1; sent[g.id] = g.updatedAt; return { id: g.id, updatedAt: g.updatedAt, deleted: false, data: g }; })
+      .concat(Object.entries(dels).map(([id, t]) => { sent[id] = t; return { id, updatedAt: t, deleted: true }; }));
+    try {
+      const j = await window.classSync("games", payload);
+      const order = new Map(games.map((g, i) => [g.id, i]));
+      const result = new Map(j.games.filter(x => !x.deleted && x.data).map(x => [x.id, { ...x.data, id: x.id, updatedAt: x.updatedAt }]));
+      // keep anything changed here while the request was on its way
+      const nowDels = store.get(K_DEL, {});
+      for (const g of games) if (!(g.id in sent) || g.updatedAt > sent[g.id]) { result.set(g.id, g); syncAgain = true; }
+      for (const [id, t] of Object.entries(nowDels)) { if (id in sent && t <= sent[id]) delete nowDels[id]; else { result.delete(id); syncAgain = true; } }
+      const before = JSON.stringify(games);
+      games = [...result.values()].sort((a, b) => (order.get(a.id) ?? 1e9) - (order.get(b.id) ?? 1e9));
+      store.set(K_GAMES, games); store.set(K_DEL, nowDels);
+      if (JSON.stringify(games) !== before && !$("#home").hidden && !document.querySelector("#gameList .confirm")) renderHome();
+      paintSync("ok");
+    } catch (e) {
+      paintSync("err", (e && e.told) || "Couldn't reach the website. Your games are safe on this device and will be saved online later.");
+    } finally {
+      syncing = false;
+      if (syncAgain) { syncAgain = false; scheduleSync(300); }
+    }
+  }
+  function paintSync(state, msg) {
+    const b = $("#syncBtn");
+    b.textContent = state === "busy" ? "Saving…" : state === "err" ? "Not saved online" : "Saved online ✓";
+    b.className = "btn" + (state === "err" ? " err" : state === "ok" ? " on" : "");
+    b.title = state === "err" ? msg + " Click to try again." : "Your games are saved online, so every device shows the same games. Click to update now.";
+  }
+
+  /* ================= word bomb ================= */
+  let bomb = null, bombTimer = null, tickTimer = null;
+  function openBombSetup() {
+    renderTeams("#bTeamInputs", "#bTeamCount", bTeamCount);
+    $("#bTopics").value = store.get(K_TOPICS, DEFAULT_TOPICS).join("\n");
+    show("bombSetup");
+  }
+  function startBomb() {
+    const topics = $("#bTopics").value.split("\n").map(s => s.trim()).filter(Boolean);
+    if (!topics.length) { toast("Write at least one topic"); return; }
+    store.set(K_TOPICS, topics);
+    const lives = +$("#bLives").value;
+    bomb = { teams: readTeams("#bTeamInputs").map(t => ({ ...t, lives })), deck: shuffle(topics.slice()), topics, holder: 0, words: 0, live: false, speed: $("#bSpeed").value, topic: "" };
+    nextTopic(); show("bombPlay"); renderBomb();
+  }
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function nextTopic() { if (!bomb.deck.length) bomb.deck = shuffle(bomb.topics.slice()); bomb.topic = bomb.deck.pop(); bomb.words = 0; }
+  const alive = () => bomb.teams.map((t, i) => i).filter(i => bomb.teams[i].lives > 0);
+  function nextAlive(i) { const n = bomb.teams.length; for (let k = 1; k <= n; k++) { const j = (i + k) % n; if (bomb.teams[j].lives > 0) return j; } return i; }
+  function renderBomb(boomed) {
+    $("#bTopic").textContent = bomb.topic;
+    const h = bomb.teams[bomb.holder];
+    const holder = $("#bHolder"); holder.style.setProperty("--c", h.color); holder.textContent = (bomb.live ? "Bomb is with: " : "Starts with: ") + h.name;
+    $("#bCounter").textContent = bomb.live ? `${bomb.words} word${bomb.words === 1 ? "" : "s"} so far` : (boomed ? "" : "Press Start. The bomb starts ticking.");
+    $("#bombWrap").classList.toggle("live", bomb.live);
+    const act = $("#bActions"); act.replaceChildren();
+    if (bomb.live) act.append(el("button", { class: "btn gold huge", id: "passBtn", onclick: pass }, "Good word, pass!"));
+    else act.append(el("button", { class: "btn teal huge", id: "goBtn", onclick: lightFuse }, boomed ? "Next round" : "Start"),
+      el("button", { class: "btn big", onclick: () => { nextTopic(); renderBomb(); } }, "New topic"));
+    if (!bomb.live) act.append(el("button", { class: "btn big", onclick: () => { stopBomb(); openBombSetup(); } }, "Stop game"));
+    const lb = $("#bLivesBox"); lb.replaceChildren(el("h2", { style: "font-size:24px" }, "Teams"));
+    bomb.teams.forEach((t, i) => {
+      const hs = el("div", { class: "hearts", "aria-label": `${t.lives} hearts` });
+      for (let k = 0; k < +$("#bLives").value; k++) hs.append(heart(k < t.lives));
+      lb.append(el("div", { class: "life" + (i === bomb.holder ? " turn" : "") + (t.lives <= 0 ? " out" : ""), style: `--c:${t.color}` }, el("b", {}, t.name + (t.lives <= 0 ? " (out)" : "")), hs));
+    });
+    const fb = $("#passBtn") || $("#goBtn"); if (fb) fb.focus();
+  }
+  function lightFuse() {
+    if (bomb.boomedWaiting) { bomb.boomedWaiting = false; nextTopic(); }
+    const [lo, hi] = { slow: [25, 50], normal: [15, 35], fast: [8, 20] }[bomb.speed];
+    const total = (lo + Math.random() * (hi - lo)) * 1000;
+    bomb.live = true; bomb.start = Date.now(); bomb.total = total; beep("open"); renderBomb();
+    clearTimeout(bombTimer); bombTimer = setTimeout(explode, total);
+    (function tick() {
+      if (!bomb || !bomb.live) return;
+      const p = Math.min(1, (Date.now() - bomb.start) / bomb.total);
+      $("#bombWrap").style.setProperty("--shk", (1 - p * .8).toFixed(2) + "s");
+      beep("tick");
+      tickTimer = setTimeout(tick, 900 - p * 750);
+    })();
+  }
+  function pass() { if (!bomb.live) return; bomb.words++; bomb.holder = nextAlive(bomb.holder); beep("pass"); renderBomb(); }
+  function explode() {
+    if (!bomb || !bomb.live) return;
+    bomb.live = false; clearTimeout(tickTimer); beep("boom");
+    const t = bomb.teams[bomb.holder]; t.lives = Math.max(0, t.lives - 1);
+    document.body.append(Object.assign(el("div", { class: "flash" }), {}));
+    setTimeout(() => document.querySelectorAll(".flash").forEach(f => f.remove()), 700);
+    const left = alive();
+    bomb.holder = left.length ? (t.lives > 0 ? bomb.holder : nextAlive(bomb.holder)) : bomb.holder;
+    bomb.boomedWaiting = true;
+    renderBomb(true);
+    const main = $("#bombMain"); const b = el("div", { class: "boom" }, el("b", {}, "BOOM!")); main.append(b);
+    $("#bCounter").textContent = `${t.name} lose${t.name.endsWith("s") ? "" : "s"} a heart!`;
+    setTimeout(() => b.remove(), 1600);
+    if (left.length <= 1) setTimeout(() => showWinner(bomb.teams, "lives"), 1400);
+  }
+  function stopBomb() { clearTimeout(bombTimer); clearTimeout(tickTimer); if (bomb) bomb.live = false; }
+
+  /* ================= word scramble ================= */
+  // word = clue, in easy English (A1-A2)
+  const PACKS = {
+    "Animals": ["cat = It says \"meow\".", "dog = It says \"woof\".", "horse = You can ride it.", "rabbit = It has long ears and eats carrots.", "elephant = A very big grey animal with a long nose.", "monkey = It loves bananas and climbs trees.", "tiger = A big orange cat with black stripes.", "giraffe = It has a very long neck.", "snake = It is long and has no legs.", "sheep = It gives us wool.", "turtle = It is slow and has a hard shell.", "penguin = A black and white bird. It can't fly.", "zebra = A horse with black and white stripes.", "chicken = It gives us eggs."],
+    "Food": ["bread = We make sandwiches with it.", "cheese = It's made from milk. Mice love it.", "apple = A red or green fruit.", "banana = A long yellow fruit.", "orange = A fruit and a colour.", "tomato = A red vegetable in salad.", "potato = We make chips from it.", "carrot = An orange vegetable. Rabbits love it.", "water = We drink it every day.", "coffee = A hot brown drink.", "sugar = It makes your tea sweet.", "soup = You eat it hot with a spoon.", "honey = Bees make it.", "lemon = A sour yellow fruit."],
+    "Jobs": ["doctor = Works in a hospital.", "teacher = Works in a school.", "chef = Cooks in a restaurant.", "pilot = Flies a plane.", "farmer = Works on a farm with animals.", "driver = Drives a bus or a taxi.", "nurse = Helps the doctor.", "dentist = Looks at your teeth.", "waiter = Brings your food in a restaurant.", "singer = Sings songs.", "artist = Paints pictures.", "baker = Makes bread.", "firefighter = Stops fires.", "student = Learns at school."],
+    "School": ["pencil = You write and draw with it.", "eraser = It removes pencil mistakes.", "ruler = You draw straight lines with it.", "book = You read it.", "desk = A table in the classroom.", "chair = You sit on it.", "board = The teacher writes on it.", "lesson = An English ___ or a maths ___.", "homework = School work you do at home.", "scissors = You cut paper with them.", "notebook = You write notes in it.", "exam = A big test.", "break = Free time between lessons.", "school bag = You carry your books in it."],
+    "Home": ["kitchen = You cook here.", "bedroom = You sleep here.", "bathroom = You have a shower here.", "sofa = You sit on it in the living room.", "window = You look outside through it.", "door = Open it to go in.", "table = We eat at it.", "fridge = It keeps food cold.", "lamp = It gives you light.", "mirror = You see yourself in it.", "garden = Flowers and grass outside the house.", "stairs = You walk up them.", "pillow = Your head is on it in bed.", "carpet = It's on the floor."],
+    "Clothes": ["shirt = A top with buttons.", "dress = A girl or woman wears it. It's one piece.", "jacket = Wear it when it's cold.", "shoes = You wear them on your feet.", "socks = You wear them under your shoes.", "hat = You wear it on your head.", "scarf = It goes around your neck in winter.", "gloves = You wear them on your hands in winter.", "jeans = Blue trousers.", "skirt = Girls wear it. It isn't trousers.", "sweater = A warm top.", "boots = Tall shoes for rain or snow.", "pyjamas = You wear them in bed.", "belt = It holds your trousers up."],
+    "Body": ["head = Your hair is on it.", "hand = It has five fingers.", "foot = You walk on it.", "nose = You smell with it.", "mouth = You eat and speak with it.", "ear = You hear with it.", "eye = You see with it.", "tooth = It's white. You brush it.", "hair = It's on your head. You comb it.", "knee = It's in the middle of your leg.", "finger = You have ten of them.", "shoulder = Between your neck and your arm.", "stomach = Your food goes here.", "elbow = It's in the middle of your arm."],
+    "Weather and Nature": ["sunny = The sun is out.", "rainy = Take an umbrella!", "snow = It's white and cold. It falls in winter.", "cloud = It's white or grey in the sky.", "wind = It moves the trees.", "rainbow = Seven colours in the sky.", "storm = Very bad weather with thunder.", "tree = It's tall and has leaves.", "flower = A rose is one.", "river = Water that goes to the sea.", "mountain = Very, very high land.", "beach = Sand next to the sea.", "forest = A lot of trees.", "island = Land with water all around it."],
+    "Action Verbs": ["run = Move very fast on your legs.", "swim = Move in water.", "read = You do this with a book.", "write = You do this with a pen.", "sleep = You do this at night in bed.", "cook = Make food.", "dance = Move to music.", "sing = Use your voice to make music.", "jump = Go up into the air.", "listen = Use your ears.", "drink = You do this with water.", "climb = Go up a tree or a mountain.", "laugh = You do this when something is funny.", "buy = Get something in a shop with money."],
+    "Feelings": ["happy = Feeling good!", "sad = Feeling bad. You may cry.", "angry = Very, very cross.", "tired = You need to sleep.", "hungry = You want food.", "thirsty = You want water.", "scared = A ghost! You feel ___.", "bored = There's nothing to do.", "excited = It's my birthday party tomorrow!", "nervous = Before an exam you feel ___.", "surprised = Wow! I didn't know that!", "proud = You did something great.", "lonely = You are alone and sad.", "sleepy = You want to go to bed."],
+    "Places in Town": ["bank = You keep your money here.", "hospital = Doctors and nurses work here.", "park = A green place with trees. You walk here.", "library = You borrow books here.", "cinema = You watch films here.", "bakery = You buy bread here.", "pharmacy = You buy medicine here.", "museum = You see old things here.", "airport = Planes leave from here.", "station = You take a train here.", "market = You buy fruit and vegetables here.", "mosque = People pray here. It has minarets.", "zoo = You see animals here.", "hotel = You sleep here on holiday."],
+    "Sports and Hobbies": ["football = Kick the ball into the goal!", "tennis = Hit a small ball over a net with a racket.", "chess = A board game with a king and a queen.", "swimming = A sport in the pool.", "cycling = Riding a bike.", "basketball = Throw the ball into a high basket.", "volleyball = Hit the ball over a high net with your hands.", "painting = Making pictures with colours.", "skiing = A sport on the snow.", "fishing = Catching fish.", "camping = Sleeping in a tent.", "guitar = You play music on its six strings.", "drawing = Making pictures with a pencil.", "boxing = A sport with big gloves."]
+  };
+  const DEFAULT_PACKS = ["Animals", "Food", "Jobs", "School"];
+  const K_SCR = "ws.setup.v1";
+  let scr = null, sTeamCount = 2, scrTimerId = null;
+  const parseWord = (line, cat) => { const i = line.search(/\s*[=|]\s*/); const w = (i < 0 ? line : line.slice(0, i)).trim(); const h = i < 0 ? "" : line.slice(i).replace(/^\s*[=|]\s*/, "").trim(); return { w, h, cat }; };
+
+  function openScrSetup() {
+    const cfg = store.get(K_SCR, {});
+    renderTeams("#sTeamInputs", "#sTeamCount", sTeamCount);
+    const on = cfg.packs || DEFAULT_PACKS;
+    $("#sPacks").replaceChildren(...Object.keys(PACKS).map((name, i) => el("label", { class: "pack", style: `--cc:${CAT_COLORS[i % 6]}` },
+      el("input", { type: "checkbox", value: name, checked: on.includes(name) }), el("span", {}, name))));
+    if (cfg.rounds) $("#sRounds").value = String(cfg.rounds);
+    if (cfg.timer != null) $("#sTimer").value = String(cfg.timer);
+    if (cfg.clue != null) $("#sClue").checked = cfg.clue;
+    $("#sMine").value = cfg.mine || "";
+    show("scrSetup");
+  }
+  // mix the letters of each word; never show the word already solved
+  function scramble(word) {
+    const parts = word.toUpperCase().split(/\s+/);
+    for (let n = 0; n < 20; n++) {
+      const mixed = parts.map(p => shuffle([...p]));
+      if (parts.join("").length < 2 || mixed.some((m, i) => m.join("") !== parts[i])) return mixed;
+    }
+    return parts.map(p => [...p].reverse());
+  }
+  function startScr() {
+    const packs = [...$("#sPacks").querySelectorAll("input:checked")].map(i => i.value);
+    const mine = $("#sMine").value;
+    const words = packs.flatMap(n => PACKS[n].map(l => parseWord(l, n)))
+      .concat(mine.split("\n").map(l => l.trim()).filter(Boolean).map(l => parseWord(l, "My words")))
+      .filter(x => /[A-Za-z]/.test(x.w) && x.w.length <= 24);
+    if (!words.length) { toast("Pick a topic or write some words"); return; }
+    const rounds = +$("#sRounds").value, timer = +$("#sTimer").value, clue = $("#sClue").checked;
+    store.set(K_SCR, { packs, mine, rounds, timer, clue });
+    scr = { teams: readTeams("#sTeamInputs").map(t => ({ ...t, score: 0 })), deck: shuffle(words).slice(0, rounds), i: -1, timer, clue };
+    show("scrPlay"); nextScr();
+  }
+  function nextScr() {
+    stopScrTimer();
+    scr.i++;
+    if (scr.i >= scr.deck.length) { renderScrScores(); showWinner(scr.teams, "scramble"); return; }
+    const x = scr.deck[scr.i], letters = x.w.toUpperCase().split(/\s+/);
+    scr.cur = { ...x, letters, mixed: scramble(x.w), hints: 0, revealed: false, fresh: true, left: scr.timer, paused: false, colorIdx: Object.keys(PACKS).indexOf(x.cat) };
+    beep("open"); renderScr(); if (scr.timer) runScrTimer();
+  }
+  const scrWorth = () => Math.max(1, 3 - scr.cur.hints);
+  function renderScr() {
+    const c = scr.cur, main = $("#scrMain"), color = CAT_COLORS[(c.colorIdx < 0 ? 5 : c.colorIdx) % 6];
+    main.style.setProperty("--cc", color);
+    // the first `hints` letters (across the words) are placed for the class
+    const flat = c.letters.join(""), shown = c.revealed ? flat.length : c.hints;
+    let k = 0;
+    const slots = el("div", { class: "slots", "aria-label": "Answer" }, c.letters.flatMap((word, wi) => [wi ? el("div", { class: "slot gap" }) : null,
+      ...[...word].map(ch => { const on = k++ < shown; return el("div", { class: "slot" + (on ? " on" : "") }, on ? ch : ""); })]));
+    // grey out one mixed tile for each placed letter
+    const used = {}; for (const ch of flat.slice(0, shown)) used[ch] = (used[ch] || 0) + 1;
+    let ti = 0;
+    const tiles = el("div", { class: "ltiles", "aria-label": "Mixed-up letters" }, c.mixed.flatMap((word, wi) => [wi ? el("div", { class: "ltile gap" }) : null,
+      ...word.map(ch => { const u = used[ch] > 0; if (u) used[ch]--; const r = ((ti * 37) % 13) - 6; return el("div", { class: "ltile" + (u ? " used" : "") + (c.fresh ? "" : " still"), style: `--i:${ti++};--r:${r}deg;--cc:${color}` }, ch); })]));
+    const out = el("output", {}, c.left > 0 ? String(Math.ceil(c.left)) : scr.timer ? "Time!" : "");
+    const trow = scr.timer ? el("div", { class: "timer-row" + (c.paused ? " paused" : "") }, el("div", { class: "timer" + (c.left <= 5 ? " low" : "") }, el("i", { style: `transform:scaleX(${c.left / scr.timer})` })), out,
+      c.revealed ? null : el("button", { class: "btn", disabled: c.left <= 0, onclick: toggleScrPause }, c.paused ? "Resume" : "Pause")) : null;
+    const actions = c.revealed
+      ? [el("div", { class: "hint", style: "font-size:15px;color:var(--ink);font-weight:700" }, `Who got it? (+${scrWorth()})`),
+         el("div", { class: "actions" }, scr.teams.map((t, i) => el("button", { class: "btn big team-win", style: `--c:${t.color}`, onclick: () => scrAward(i) }, `${t.name} +${scrWorth()}`)),
+           el("button", { class: "btn big", onclick: () => scrAward(-1) }, "Nobody, next word"))]
+      : [el("div", { class: "actions" }, el("button", { class: "btn gold big", id: "sReveal", onclick: scrReveal }, "Show the word"),
+           el("button", { class: "btn big", disabled: c.hints >= flat.length - 1, onclick: scrHint }, "Hint (−1)"),
+           el("button", { class: "btn big", onclick: scrShuffle }, "Mix again"))];
+    main.replaceChildren(...[
+      el("div", { class: "scr-top" }, el("span", { class: "scr-cat" }, c.cat), el("span", {}, `Word ${scr.i + 1} of ${scr.deck.length}`), el("span", { class: "worth" }, `Worth ${scrWorth()} point${scrWorth() === 1 ? "" : "s"}`)),
+      scr.clue && c.h ? el("p", { class: "scr-clue" }, el("small", {}, "Clue"), c.h) : null,
+      slots, c.revealed ? null : tiles, trow, ...actions,
+      el("div", { style: "display:flex;gap:10px;flex-wrap:wrap;justify-content:center" }, el("button", { class: "btn", onclick: () => { stopScrTimer(); showWinner(scr.teams, "scramble"); } }, "End game")),
+      el("div", { class: "hint" }, c.revealed ? "Click the team that got it, or press N for the next word." : "Space shows the word. H = hint, M = mix again" + (scr.timer ? ", P = pause." : "."))].filter(Boolean));
+    renderScrScores(); c.fresh = false;
+    const f = $("#sReveal"); if (f) f.focus({ preventScroll: true });
+  }
+  function renderScrScores(bump) {
+    const top = Math.max(...scr.teams.map(t => t.score));
+    $("#sScores").replaceChildren(el("h2", { style: "font-size:24px" }, "Teams"), ...scr.teams.map((t, i) => el("div", { class: "score" + (top > 0 && t.score === top ? " leader" : ""), style: `--c:${t.color}` },
+      el("div", { class: "name" }, t.name),
+      el("div", { class: "pts" + (i === bump ? " bump" : "") }, String(t.score)),
+      el("div", { class: "adj" },
+        el("button", { "aria-label": `Take 1 point from ${t.name}`, onclick: () => { t.score--; renderScrScores(i); } }, "−1"),
+        el("button", { "aria-label": `Give 1 point to ${t.name}`, onclick: () => { t.score++; renderScrScores(i); } }, "+1")))));
+  }
+  function scrHint() { const c = scr.cur; if (c.revealed || c.hints >= c.letters.join("").length - 1) return; c.hints++; beep("pass"); renderScr(); }
+  function scrShuffle() { const c = scr.cur; if (c.revealed) return; c.mixed = scramble(c.letters.join(" ")); c.fresh = true; beep("tick"); renderScr(); }
+  function scrReveal() { const c = scr.cur; if (c.revealed) return; c.revealed = true; stopScrTimer(); beep("ok"); renderScr(); }
+  function scrAward(i) { if (scr.cur.done) return; scr.cur.done = true; if (i >= 0) { scr.teams[i].score += scrWorth(); beep("win"); renderScrScores(i); } setTimeout(nextScr, i >= 0 ? 450 : 0); }
+  function runScrTimer() {
+    stopScrTimer(); let last = Date.now();
+    scrTimerId = setInterval(() => {
+      const c = scr.cur, now = Date.now(); c.left = Math.max(0, c.left - (now - last) / 1000); last = now;
+      const bar = $("#scrMain .timer i"), out = $("#scrMain .timer-row output");
+      if (bar) { bar.style.transform = `scaleX(${c.left / scr.timer})`; bar.parentElement.classList.toggle("low", c.left <= 5); }
+      if (out) out.textContent = c.left > 0 ? String(Math.ceil(c.left)) : "Time!";
+      if (c.left <= 5 && c.left > 0 && Math.ceil(c.left) !== c.lastTick) { c.lastTick = Math.ceil(c.left); beep("tick"); }
+      if (c.left <= 0) { stopScrTimer(); beep("end"); renderScr(); }
+    }, 100);
+  }
+  function stopScrTimer() { clearInterval(scrTimerId); scrTimerId = null; }
+  function toggleScrPause() { const c = scr.cur; if (!scr.timer || c.revealed || c.left <= 0) return; c.paused = !c.paused; if (c.paused) stopScrTimer(); else runScrTimer(); renderScr(); }
+
+  /* ================= keys ================= */
+  document.addEventListener("keydown", e => {
+    const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    if (!$("#clue").hidden) {
+      if (e.key === "Escape") { e.preventDefault(); closeClue(); }
+      else if ((e.key === " " || e.key === "Enter") && cur && cur.reveal && !cur.revealed && !typing) { e.preventDefault(); cur.reveal(); }
+      else if ((e.key === "p" || e.key === "P") && cur && cur.togglePause && !typing) { e.preventDefault(); cur.togglePause(); }
+      return;
+    }
+    if (!$("#scrPlay").hidden && $("#winner").hidden && !typing && scr && scr.cur) {
+      const k = e.key.toLowerCase();
+      if (scr.cur.revealed && (k === "n" || k === "enter")) { e.preventDefault(); scrAward(-1); }
+      else if (!scr.cur.revealed && (k === " " || k === "enter")) { e.preventDefault(); scrReveal(); }
+      else if (k === "h") scrHint(); else if (k === "m") scrShuffle(); else if (k === "p") toggleScrPause();
+      return;
+    }
+    if (!$("#bombPlay").hidden && $("#winner").hidden && !typing) {
+      if (e.key === " ") { e.preventDefault(); bomb.live ? pass() : lightFuse(); }
+      else if ((e.key === "n" || e.key === "N") && !bomb.live) { nextTopic(); renderBomb(); }
+    }
+  });
+
+  /* ================= wiring ================= */
+  $("#goHome").onclick = () => { closeClue(); hideWinner(); renderHome(); show("home"); };
+  $("#soundBtn").onclick = () => { soundOn = !soundOn; store.set(K_SOUND, soundOn); paintSound(); beep("ok"); };
+  $("#fsBtn").onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (e) { toast("Full screen isn't available here"); } };
+  $("#pickQuiz").onclick = () => $("#quizList").scrollIntoView({ behavior: "smooth" });
+  $("#pickBomb").onclick = openBombSetup;
+  $("#pickScr").onclick = openScrSetup;
+  $("#sTeamMinus").onclick = () => { if (sTeamCount > 1) renderTeams("#sTeamInputs", "#sTeamCount", --sTeamCount); };
+  $("#sTeamPlus").onclick = () => { if (sTeamCount < 6) renderTeams("#sTeamInputs", "#sTeamCount", ++sTeamCount); };
+  $("#sStart").onclick = startScr;
+  $("#sBack").onclick = () => { renderHome(); show("home"); };
+  $("#teamMinus").onclick = () => { if (teamCount > 1) renderTeams("#teamInputs", "#teamCount", --teamCount); };
+  $("#teamPlus").onclick = () => { if (teamCount < 6) renderTeams("#teamInputs", "#teamCount", ++teamCount); };
+  $("#bTeamMinus").onclick = () => { if (bTeamCount > 2) renderTeams("#bTeamInputs", "#bTeamCount", --bTeamCount); };
+  $("#bTeamPlus").onclick = () => { if (bTeamCount < 6) renderTeams("#bTeamInputs", "#bTeamCount", ++bTeamCount); };
+  $("#startBtn").onclick = startMatch;
+  $("#resumeBtn").onclick = () => { renderBoard(); show("board"); };
+  $("#setupBack").onclick = () => { renderHome(); show("home"); };
+  $("#endBtn").onclick = () => showWinner(match.teams, "points");
+  $("#edCats").onchange = resizeEditor; $("#edRows").onchange = resizeEditor;
+  $("#edCatsBox").addEventListener("input", () => { clearTimeout(updateNote.t); updateNote.t = setTimeout(updateNote, 300); });
+  $("#edCancel").onclick = () => { renderHome(); show("home"); };
+  $("#edSave").onclick = () => saveEditor(false);
+  $("#edPlay").onclick = () => saveEditor(true);
+  $("#edCopy").onclick = copyEditor;
+  $("#importToggle").onclick = () => { $("#importer").hidden = !$("#importer").hidden; if (!$("#importer").hidden) { $("#importer").scrollIntoView({ behavior: "smooth", block: "start" }); $("#importText").focus({ preventScroll: true }); } };
+  $("#importCancel").onclick = closeImporter;
+  $("#syncBtn").onclick = () => { sync().then(() => { if ($("#syncBtn").classList.contains("err")) toast($("#syncBtn").title.replace(" Click to try again.", "")); else toast("Up to date"); }); };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") scheduleSync(100); });
+  addEventListener("online", () => scheduleSync(100));
+  setInterval(() => { if (document.visibilityState === "visible" && !$("#home").hidden) scheduleSync(0); }, 30000);
+  $("#importText").addEventListener("input", () => { clearTimeout(checkPaste.t); checkPaste.t = setTimeout(checkPaste, 200); });
+  $("#importBtn").onclick = () => doImport();
+  $("#importPlay").onclick = () => doImport("play");
+  $("#importEdit").onclick = () => doImport("edit");
+  $("#importExample").onclick = () => { $("#importText").value = EXAMPLE_TEXT; checkPaste(); };
+  $("#importPrompt").onclick = copyPrompt;
+  $("#bStart").onclick = startBomb;
+  $("#bReset").onclick = () => { $("#bTopics").value = DEFAULT_TOPICS.join("\n"); toast("Topics reset"); };
+  $("#bBack").onclick = () => { renderHome(); show("home"); };
+  addEventListener("resize", () => { const c = $("#confetti"); if (!$("#winner").hidden) { c.width = innerWidth; c.height = innerHeight; } });
+
+  paintSound(); paintSync("busy"); renderHome(); show("home"); scheduleSync(0);
+})();
+</script>
+
+</body>
+</html>
