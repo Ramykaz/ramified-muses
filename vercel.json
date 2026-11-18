@@ -7,6 +7,8 @@
     { "source": "/(.*)", "has": [{ "type": "host", "value": "forms.ramyfied.me" }], "destination": "/forms/index.html" },
     { "source": "/kawho",     "destination": "/kawho/index.html" },
     { "source": "/kawho/(.*)", "destination": "/kawho/index.html" },
+    { "source": "/imposter",     "destination": "/imposter/index.html" },
+    { "source": "/imposter/(.*)", "destination": "/imposter/index.html" },
     { "source": "/forms",     "destination": "/forms/index.html" },
     { "source": "/forms/(.*)", "destination": "/forms/index.html" },
     { "source": "/English",   "destination": "/English.html" },
