@@ -85,3 +85,14 @@ h2 { font-size: 20px; }
 #toast { position: fixed; bottom: 18px; left: 50%; transform: translate(-50%, 140%); background: var(--ink); color: var(--bg); border-radius: 999px; padding: 10px 18px; font-weight: 700; transition: transform .25s; max-width: calc(100% - 32px); z-index: 10; visibility: hidden; }
 #toast.show { transform: translate(-50%, 0); visibility: visible; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.wordcard .word.imp { color: var(--red); font-size: clamp(26px, 8vw, 40px); }
+.wordcard.hidden .word { filter: none; opacity: .5; letter-spacing: .1em; }
+.cat.make { border-style: dashed; color: var(--cyan); }
+.sheet { position: fixed; inset: 0; background: rgba(10,8,25,.7); display: grid; place-items: center; padding: 16px; z-index: 20; overflow-y: auto; }
+.sheet-in { width: min(100%, 640px); display: grid; gap: 12px; max-height: calc(100vh - 32px); overflow-y: auto; }
+.input.small-in { font-size: 17px; text-align: left; padding: 10px 14px; }
+.input.area { font-size: 15px; font-weight: 500; text-align: left; font-family: ui-monospace, Menlo, monospace; resize: vertical; min-height: 160px; }
+.packlist { display: grid; gap: 8px; }
+.pk { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--card); border-radius: 14px; padding: 8px 8px 8px 14px; }
+.pk span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
