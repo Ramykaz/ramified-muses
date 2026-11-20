@@ -33,6 +33,8 @@
     { "source": "/English/jeopardy/unit4-practice/", "destination": "/English/jeopardy/unit4-practice/index.html" },
     { "source": "/English/jeopardy/b1-quiz1",  "destination": "/English/jeopardy/b1-quiz1/index.html" },
     { "source": "/English/jeopardy/b1-quiz1/", "destination": "/English/jeopardy/b1-quiz1/index.html" },
+    { "source": "/English/jeopardy/b1-quiz2",  "destination": "/English/jeopardy/b1-quiz2/index.html" },
+    { "source": "/English/jeopardy/b1-quiz2/", "destination": "/English/jeopardy/b1-quiz2/index.html" },
     { "source": "/prep",  "destination": "/prep/index.html" },
     { "source": "/prep/", "destination": "/prep/index.html" },
     { "source": "/(.*)",      "destination": "/index.html" }

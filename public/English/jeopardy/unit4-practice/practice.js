@@ -62,12 +62,12 @@
 
   /* ---------- one section, one question at a time ---------- */
   function section(si) {
-    const s = S[si]; let qi = 0; const picks = [];
+    const s = S[si]; let qi = 0, readOpen = true; const picks = [];
     document.title = `${s.book} · ${s.title} · ${P.title}`;
     mem.pos = si; save(mem);
     const show = () => {
       const q = s.qs[qi], done = picks[qi] != null;
-      const order = q._o || (q._o = s.fixed ? q.o.slice() : shuffle(q.o));
+      const order = q._o || (q._o = s.fixed || q.fixed ? q.o.slice() : shuffle(q.o));
       const choose = o => { if (picks[qi] != null) return; picks[qi] = o; show(); };
       const next = () => { if (picks[qi] == null) return; if (qi < s.qs.length - 1) { qi++; show(); } else finish(); };
       // the passage, with the gaps answered so far filled in
@@ -89,6 +89,7 @@
           el("span", { class: "count" }, `${qi + 1} / ${s.qs.length}`)),
         el("div", { class: "bar", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": total, "aria-valuenow": before(si) + qi + 1, "aria-label": "Progress in the unit" }, el("i", { style: `width:${((before(si) + qi + (done ? 1 : 0)) / total) * 100}%` })),
         el("p", { class: "task" }, s.task),
+        s.reading ? el("details", { class: "card story", open: readOpen, ontoggle: e => { readOpen = e.target.open; } }, el("summary", {}, "The text"), s.reading.split(/\n\n+/).map(t => el("p", {}, t))) : null,
         passage,
         q.text ? el("div", { class: "reading" }, q.text) : null,
         q.q ? el("p", { class: "q" }, q.q.split("\n").map(t => line(t, done ? q.a : ""))) : (s.passage ? el("p", { class: "q" }, `Gap (${q.n})`) : null),
