@@ -68,3 +68,10 @@
 .story { font-size: clamp(15px, 1.8vw, 17px); line-height: 1.6; }
 .story summary { font-weight: 800; color: var(--teal); cursor: pointer; }
 .story p { margin: 10px 0 0; }
+.type-row { display: grid; gap: 10px; }
+.hint-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-weight: 600; }
+.hint-row b { background: var(--cream); border: 1.5px dashed var(--line); border-radius: 10px; padding: 4px 12px; color: var(--ink); font-weight: 700; }
+.type-box { display: flex; gap: 10px; flex-wrap: wrap; }
+.type-in { flex: 1 1 220px; min-width: 0; font-size: clamp(18px, 2.4vw, 22px); font-weight: 600; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; background: var(--card); outline: none; }
+.type-in:focus { border-color: var(--teal); }
+.mode-btn { font-size: 14px; }

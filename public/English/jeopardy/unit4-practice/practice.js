@@ -46,6 +46,7 @@
         el("p", { class: "lede" }, `${P.lede} ${total} questions in ${S.length} parts.`),
         el("div", { class: "start-row" },
           el("button", { class: "btn gold big", type: "button", onclick: () => go(next) }, doneCount && next ? `Continue: ${S[next].book} · ${S[next].title}` : "Start from the beginning"),
+          modeBtn(home),
           doneCount ? el("button", { class: "btn big", type: "button", onclick: () => { if (confirm("Clear all scores and start again?")) { mem = { best: {} }; save(mem); home(); } } }, "Reset scores") : null)),
       el("div", { class: "list" }, parts.map(p => el("section", { class: "part" },
         el("h2", {}, p.book),
@@ -59,6 +60,14 @@
     scrollTo(0, 0);
   }
   const go = i => { location.hash = "#/s/" + (i + 1); };
+  // typing mode: the student writes the answer; the three possible answers are shown as a hint
+  const mode = () => mem.mode || P.mode || "choose";
+  const modeBtn = after => el("button", { class: "btn mode-btn", type: "button", title: "Switch between typing the answer and choosing it", onclick: () => { mem.mode = mode() === "type" ? "choose" : "type"; save(mem); after(); } }, mode() === "type" ? "Mode: type the answer" : "Mode: choose the answer");
+  const norm = x => " " + String(x ?? "").toLowerCase().replace(/[’‘`]/g, "'").replace(/\s+/g, " ")
+    .replace(/\bwon't\b/g, "will not").replace(/\bcan't\b/g, "can not").replace(/\bcannot\b/g, "can not").replace(/n't\b/g, " not")
+    .replace(/'ve\b/g, " have").replace(/'ll\b/g, " will").replace(/'re\b/g, " are").replace(/'m\b/g, " am")
+    .replace(/[.,!?;:"()]/g, " ").replace(/\s+/g, " ").trim();
+  const isRight = (q, p) => p != null && [q.a, ...(q.alt || [])].some(x => norm(x) === norm(p));
 
   /* ---------- one section, one question at a time ---------- */
   function section(si) {
@@ -66,7 +75,7 @@
     document.title = `${s.book} · ${s.title} · ${P.title}`;
     mem.pos = si; save(mem);
     const show = () => {
-      const q = s.qs[qi], done = picks[qi] != null;
+      const q = s.qs[qi], done = picks[qi] != null, typing = mode() === "type" && !s.choose && !q.choose;
       const order = q._o || (q._o = s.fixed || q.fixed ? q.o.slice() : shuffle(q.o));
       const choose = o => { if (picks[qi] != null) return; picks[qi] = o; show(); };
       const next = () => { if (picks[qi] == null) return; if (qi < s.qs.length - 1) { qi++; show(); } else finish(); };
@@ -81,7 +90,11 @@
           return el("span", { class: "gap" + (now ? " now" : "") + (ans != null && !now ? " ok" : "") }, ans != null && !now ? s.qs[at].a : `(${n})`);
         }));
       }
-      const right = done && picks[qi] === q.a;
+      const right = done && isRight(q, picks[qi]);
+      const typedOpt = done ? order.find(o => norm(o) === norm(picks[qi])) : null;
+      const inp = typing && !done ? el("input", { class: "type-in", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", enterkeyhint: "done", "aria-label": "Your answer", placeholder: "Type your answer" }) : null;
+      const check = e => { if (e) e.preventDefault(); const v = inp.value.trim(); if (!v) { inp.focus(); return; } picks[qi] = v; show(); };
+      const hint = el("div", { class: "hint-row" }, el("span", {}, "Use one:"), order.map(o => el("b", {}, o)));
       app.replaceChildren(el("div", { class: "qwrap" },
         el("div", { class: "qtop" },
           el("a", { class: "link", href: "#/" }, "← All parts"),
@@ -93,28 +106,31 @@
         passage,
         q.text ? el("div", { class: "reading" }, q.text) : null,
         q.q ? el("p", { class: "q" }, q.q.split("\n").map(t => line(t, done ? q.a : ""))) : (s.passage ? el("p", { class: "q" }, `Gap (${q.n})`) : null),
-        el("div", { class: "opts" + (order.length === 2 || order.every(o => o.length < 18) ? " two" : "") }, order.map((o, k) =>
-          el("button", { class: "opt" + (done && o === q.a ? " right" : "") + (done && o === picks[qi] && o !== q.a ? " wrong" : "") + (done && q.w ? " noted" : ""), type: "button", disabled: done, onclick: () => choose(o) },
+        inp ? el("form", { class: "type-row", onsubmit: check }, hint, el("div", { class: "type-box" }, inp, el("button", { class: "btn teal big", type: "submit" }, "Check"))) : null,
+        inp ? null : el("div", { class: "opts" + (order.length === 2 || order.every(o => o.length < 18) ? " two" : "") }, order.map((o, k) =>
+          el("button", { class: "opt" + (done && o === q.a ? " right" : "") + (done && !right && (o === picks[qi] || o === typedOpt) && o !== q.a ? " wrong" : "") + (done && q.w ? " noted" : ""), type: "button", disabled: done, onclick: () => choose(o) },
             el("span", { class: "k" }, done && q.w ? svg(o === q.a ? ICON.ok : ICON.no) : String(k + 1)),
             el("span", { class: "ot" }, o, done && q.w && (o === q.a ? q.why : q.w[o]) ? el("span", { class: "note" }, o === q.a ? q.why : q.w[o]) : null)))),
-        done ? el("div", { class: "why " + (right ? "good" : "bad"), role: "status" }, svg(right ? ICON.ok : ICON.no), el("span", {}, right ? "Correct! " : `Not quite. The answer is "${q.a}". `, q.w ? (right ? "See why the others are wrong above." : "See why above each choice.") : (q.why || ""))) : null,
+        done ? el("div", { class: "why " + (right ? "good" : "bad"), role: "status" }, svg(right ? ICON.ok : ICON.no), el("span", {}, right ? (norm(picks[qi]) !== norm(q.a) ? `Correct! ("${q.a}" is right too.) ` : "Correct! ") : typing && !typedOpt ? `You wrote "${picks[qi]}". The answer is "${q.a}". ` : `Not quite. The answer is "${q.a}". `, q.w ? (right ? "See why the others are wrong above." : "See why above each choice.") : (q.why || ""))) : null,
         el("div", { class: "nav" },
           el("button", { class: "btn", type: "button", disabled: qi === 0, onclick: () => { qi--; show(); } }, "← Back"),
           el("button", { class: "btn teal big", type: "button", disabled: !done, id: "nextB", onclick: next }, qi < s.qs.length - 1 ? "Next →" : "See my score →")),
-        el("p", { class: "keys" }, "Keys: 1–" + order.length + " to choose, Enter for next")));
+        el("p", { class: "keys" }, typing ? "Press Enter to check, Enter again for next" : "Keys: 1–" + order.length + " to choose, Enter for next"),
+        el("div", { style: "text-align:center" }, modeBtn(show))));
       keys = e => {
+        if (e.target && e.target.tagName === "INPUT") return;
         const n = Number(e.key);
-        if (n >= 1 && n <= order.length && !done) { e.preventDefault(); choose(order[n - 1]); }
+        if (n >= 1 && n <= order.length && !done && !typing) { e.preventDefault(); choose(order[n - 1]); }
         else if ((e.key === "Enter" || e.key === "ArrowRight") && done) { e.preventDefault(); next(); }
         else if (e.key === "ArrowLeft" && qi > 0) { qi--; show(); }
       };
       if (done) { const b = document.getElementById("nextB"); if (b) b.focus({ preventScroll: true }); }
-      if (!done) scrollTo(0, 0);
+      if (!done) { scrollTo(0, 0); if (inp && matchMedia("(pointer: fine)").matches) inp.focus({ preventScroll: true }); }
     };
     const finish = () => {
-      const score = s.qs.filter((q, i) => picks[i] === q.a).length;
+      const score = s.qs.filter((q, i) => isRight(q, picks[i])).length;
       mem.best[si] = Math.max(score, mem.best[si] ?? 0); mem.pos = si + 1; save(mem);
-      const misses = s.qs.map((q, i) => ({ q, p: picks[i] })).filter(x => x.p !== x.q.a);
+      const misses = s.qs.map((q, i) => ({ q, p: picks[i] })).filter(x => !isRight(x.q, x.p));
       const last = si === S.length - 1;
       const all = S.reduce((t, _, i) => t + (mem.best[i] || 0), 0);
       app.replaceChildren(el("div", { class: "qwrap result" },
@@ -127,7 +143,7 @@
           el("button", { class: "btn big", type: "button", onclick: () => section(si) }, "Try again")),
         misses.length ? el("div", { class: "miss" }, misses.map(x => el("div", { class: "m" },
           el("b", {}, x.q.q || (x.q.text ? x.q.text.slice(0, 90) + "…" : `Gap (${x.q.n})`)),
-          el("span", {}, "You chose: " + x.p + " · "), el("span", { class: "ans" }, "Answer: " + x.q.a)))) : null));
+          el("span", {}, "Your answer: " + x.p + " · "), el("span", { class: "ans" }, "Answer: " + x.q.a)))) : null));
       keys = e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById("nextB").click(); } };
       scrollTo(0, 0);
     };
