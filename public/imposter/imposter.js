@@ -34,8 +34,18 @@
 
   const pairBox = r => el("div", { class: "pair" }, el("div", {}, el("small", {}, r.odd ? "Everyone's word" : "The word was"), el("b", {}, r.main)), r.odd ? el("div", { class: "odd" }, el("small", {}, "Imposter's word"), el("b", {}, r.odd)) : null);
 
+  // the games: same words and phones, different ways to play
+  const G = {
+    imposter: { name: "Imposter", short: "Say one thing", imp: true, steps: ["Look at your word. Don't show anyone!", "Go round: each person says one thing about their word. Don't say the word.", "Vote: who is the imposter?"], phone: "Say one thing about your word, but not the word. Who is the imposter?", impPhone: "Say something that fits the topic. Don't get caught!", reveal: "Reveal the imposter" },
+    draw: { name: "Draw it", short: "One line each on the board", imp: true, steps: ["Look at your word. Don't show anyone!", "Go round: each person draws ONE line on the board. No letters or words!", "Vote: who is the imposter?"], phone: "Draw one line on the board for your word. No letters!", impPhone: "Look at the drawing and add a line that fits. Don't get caught!", reveal: "Reveal the imposter" },
+    act: { name: "Act it out", short: "Mime it, no talking", imp: true, steps: ["Look at your word. Don't show anyone!", "Go round: act out your word for 5 seconds. No talking, no sounds!", "Vote: who is the imposter?"], phone: "Act out your word. No talking!", impPhone: "Watch the others and act something that fits. Don't get caught!", reveal: "Reveal the imposter" },
+    teams: { name: "Two teams", short: "Who has my word?", imp: false, steps: ["Half of you have one word. The other half have a different word. You don't know which team you are on!", "Go round: each person says one thing about their word.", "Stand with the people you think have your word."], phone: "Say one thing about your word. Who has the same word as you?", reveal: "Show the teams" },
+    pairs: { name: "Find your partner", short: "Walk and talk", imp: false, steps: ["One other person has the same word as you.", "Stand up and walk around. Tell each person one thing about your word. Don't say the word!", "Found your partner? Stand together!"], phone: "Walk around and find the person with the same word!", reveal: "Show the partners" },
+  };
+  const groupsBox = (r, me) => el("div", { class: "groups" }, r.groups.map(g => el("div", { class: "grp" + (me && g.names.includes(me) ? " mine" : "") }, el("b", {}, g.word), el("span", {}, g.names.join(", ")))));
+
   /* ================= host ================= */
-  let H = store.get("imp.host", null), hostCats = store.get("imp.cats", []), hostImps = store.get("imp.imps", 1), hostMode = store.get("imp.mode", "topic"), hostPack = store.get("imp.pack", ""), CATS = [], PACKS = [];
+  let H = store.get("imp.host", null), hostCats = store.get("imp.cats", []), hostImps = store.get("imp.imps", 1), hostMode = store.get("imp.mode", "topic"), hostGame = G[store.get("imp.game", "imposter")] ? store.get("imp.game", "imposter") : "imposter", hostPack = store.get("imp.pack", ""), CATS = [], PACKS = [];
   async function hostStart() {
     app.replaceChildren(el("div", { class: "center" }, el("div", { class: "stack" }, LOGO(),
       el("p", { class: "muted" }, "Everyone gets the same word, except the imposter, who gets a similar one and doesn't know it. Go round, each person says one thing about their word, then vote."),
@@ -57,6 +67,8 @@
       CATS.map(c => el("button", { class: "cat" + (hostCats.includes(c.id) ? " on" : ""), onclick: () => { hostCats = hostCats.includes(c.id) ? hostCats.filter(x => x !== c.id) : [...hostCats, c.id]; store.set("imp.cats", hostCats); drawCats(); } }, `${c.name} (${c.n})`))].flat());
     drawCats();
     const modeBox = el("div", { class: "row" }), packBox = el("div", { class: "cats" }), topicRow = el("div", { style: "display:grid;gap:8px" }, el("div", { class: "muted" }, "Topics (or keep Everything):"), catBox);
+    const gameBox = el("div", { class: "games" });
+    const drawGame = () => { gameBox.replaceChildren(...Object.entries(G).map(([id, g]) => el("button", { class: "game" + (hostGame === id ? " on" : ""), onclick: () => { hostGame = id; store.set("imp.game", id); drawGame(); last = null; poll(); } }, el("b", {}, g.name), el("small", {}, g.short)))); modeBox.hidden = impBox.hidden = !G[hostGame].imp; };
     const drawMode = () => modeBox.replaceChildren(el("span", { class: "muted" }, "The imposter sees:"),
       ...[["topic", "Only the topic"], ["word", "A similar word"]].map(([m, t]) => el("button", { class: "cat" + (hostMode === m ? " on" : ""), onclick: () => { hostMode = m; store.set("imp.mode", m); drawMode(); } }, t)));
     drawMode();
@@ -72,7 +84,7 @@
     drawPacks();
     const impBox = el("div", { class: "row" });
     const drawImps = () => impBox.replaceChildren(el("span", { class: "muted" }, "Imposters:"), ...[1, 2, 3].map(n => el("button", { class: "cat" + (hostImps === n ? " on" : ""), onclick: () => { hostImps = n; store.set("imp.imps", n); drawImps(); } }, String(n))));
-    drawImps();
+    drawImps(); drawGame();
     app.replaceChildren(
       el("div", { class: "top" }, LOGO(), el("div", { class: "row" },
         el("button", { class: "btn small", onclick: () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.().catch(() => {}); } }, "Full screen"),
@@ -85,44 +97,45 @@
         el("div", { style: "display:grid;gap:18px;min-width:0" },
           roundBox,
           el("div", { class: "panel", style: "display:grid;gap:12px" }, el("h2", {}, "Players"), plist),
-          el("div", { class: "panel", style: "display:grid;gap:12px" }, el("h2", {}, "Settings"), modeBox, el("div", { class: "muted" }, "Words:"), packBox, topicRow, impBox))));
+          el("div", { class: "panel", style: "display:grid;gap:12px" }, el("h2", {}, "Game"), gameBox, el("h2", {}, "Settings"), modeBox, el("div", { class: "muted" }, "Words:"), packBox, topicRow, impBox))));
     fixLogo();
     loadQR().then(() => drawQR(qr, `${location.origin}/imposter/${H.pin}`)).catch(() => qr.remove());
     let last = null;
+    const putR = (...kids) => roundBox.replaceChildren(...kids.flat().filter(k => k != null && k !== false));
     const draw = s => {
       count.textContent = String(s.players.length);
       plist.replaceChildren(...[s.players.length ? s.players.map(p => el("span", { class: "pl" + (s.state.round && !p.inRound ? " wait" : ""), title: s.state.round && !p.inRound ? "Joined during this round: plays from the next one" : null }, el("span", {}, p.name),
         el("button", { "aria-label": "Remove " + p.name, onclick: async () => { if (!confirm(`Remove ${p.name}?`)) return; await api("kick", { method: "POST", body: { pin: H.pin, host: H.host, pid: p.id } }).catch(e => toast(e.message)); poll(); } }, "×")))
         : el("span", { class: "muted dots" }, "Waiting for players")].flat());
-      const st = s.state, key = JSON.stringify([st.round, st.revealed, st.first, s.players.length]);
+      const st = s.state, key = JSON.stringify([st.round, st.revealed, st.first, s.players.length, hostGame]);
+      const gm = G[st.round ? st.game || "imposter" : hostGame] || G.imposter;
       if (key === last) return; last = key;
       if (!st.round) {
-        roundBox.replaceChildren(el("div", { class: "num" }, "Ready?"), el("div", { class: "cat-big" }, "Scan and join"),
-          el("p", { class: "muted", style: "margin:0;max-width:520px" }, "When everyone is in, press Next round. Everyone's phone shows the same word, except the imposter's."),
+        putR(el("div", { class: "num" }, "Ready? · " + gm.name), el("div", { class: "cat-big" }, "Scan and join"),
+          el("ol", { class: "steps" }, gm.steps.map(t => el("li", {}, t))),
+          el("p", { class: "muted", style: "margin:0;max-width:520px" }, "When everyone is in, press Next round. Choose another game below at any time."),
           s.players.length < 3 ? el("p", { class: "muted", style: "margin:0" }, "You need at least 3 players.") : null, nextBtn);
         nextBtn.disabled = s.players.length < 3;
         return;
       }
       nextBtn.disabled = false;
-      roundBox.replaceChildren(
-        el("div", { class: "num" }, "Round " + st.round),
-        el("div", { class: "cat-big" }, s.cat || ""),
-        el("div", { class: "first" }, el("b", {}, st.first), " starts"),
-        el("ol", { class: "steps" },
-          el("li", {}, "Look at your word. Don't show anyone!"),
-          el("li", {}, "Go round: each person says one thing about their word. Don't say the word."),
-          el("li", {}, "Vote: who is the imposter?")),
-        s.reveal ? el("div", { class: "reveal" },
+      putR(
+        el("div", { class: "num" }, "Round " + st.round + " · " + gm.name),
+        el("div", { class: "cat-big" }, s.cat || gm.name),
+        st.game === "pairs" ? null : el("div", { class: "first" }, el("b", {}, st.first), " starts"),
+        el("ol", { class: "steps" }, gm.steps.map(t => el("li", {}, t))),
+        s.reveal && s.reveal.kind === "groups" ? el("div", { class: "reveal" }, el("div", { class: "muted" }, st.game === "teams" ? "The two teams" : "The partners"), groupsBox(s.reveal))
+        : s.reveal ? el("div", { class: "reveal" },
           el("div", { class: "muted" }, s.reveal.imposters.length > 1 ? "The imposters were" : "The imposter was"),
           el("div", { class: "who" }, s.reveal.imposters.join(" & ") || "(left the game)"),
           pairBox(s.reveal))
-          : el("button", { class: "btn cyan big", onclick: reveal }, "Reveal the imposter"),
+          : el("button", { class: "btn cyan big", onclick: reveal }, gm.reveal),
         nextBtn);
     };
     async function poll() { try { const s = await api("host-state", { query: { pin: H.pin, host: H.host } }); draw(s); } catch (e) { if (e.status === 404) { store.del("imp.host"); H = null; clearInterval(hostTimer); toast("That game has ended."); hostStart(); } } }
     async function next() {
       nextBtn.disabled = true;
-      try { await api("next", { method: "POST", body: { pin: H.pin, host: H.host, cats: hostCats, imps: hostImps, mode: hostMode, pack: hostPack || undefined } }); await poll(); }
+      try { await api("next", { method: "POST", body: { pin: H.pin, host: H.host, cats: hostCats, imps: hostImps, mode: hostMode, pack: hostPack || undefined, game: hostGame } }); await poll(); }
       catch (e) { toast(e.message); } finally { nextBtn.disabled = false; }
     }
     async function reveal() { try { await api("reveal", { method: "POST", body: { pin: H.pin, host: H.host } }); poll(); } catch (e) { toast(e.message); } }
@@ -232,13 +245,19 @@ Weather | snow (kar) | rain (yağmur)`;
         : el("div", { class: "word" }, mine.word);
       const card = el("button", { class: "wordcard" + (shown ? "" : " hidden"), type: "button", "aria-label": shown ? "Hide my card" : "Show my card", onclick: () => { shown = !shown; render(); } },
         el("div", {}, el("div", { class: "label" }, "Topic: " + mine.cat), face, el("div", { class: "tap" }, shown ? "Tap to hide" : "Tap to see your card")));
-      const out = [top, el("div", { class: "hint" }, "Round " + S.round, " · ", el("b", {}, S.first), " starts"), card];
-      if (S.reveal) {
+      const gm = G[S.game] || G.imposter;
+      const out = [top, el("div", { class: "hint" }, "Round " + S.round, " · ", gm.name, S.game === "pairs" ? null : [" · ", el("b", {}, S.first), " starts"]), card];
+      if (S.reveal && S.reveal.kind === "groups") {
+        const myG = S.reveal.groups.find(g => g.names.includes(ME.name));
+        out.push(el("div", { class: "panel", style: "display:grid;gap:10px;justify-items:center;text-align:center" },
+          myG ? el("div", {}, el("span", { class: "muted" }, S.game === "teams" ? "Your team: " : myG.names.length > 2 ? "Your partners: " : "Your partner: "), el("b", { style: "color:var(--gold)" }, myG.names.filter(n => n !== ME.name).join(", ") || "(nobody else)")) : null,
+          groupsBox(S.reveal, ME.name)));
+      } else if (S.reveal) {
         const was = S.reveal.imposters.includes(ME.name);
         out.push(el("div", { class: "panel", style: "display:grid;gap:10px;justify-items:center;text-align:center" },
           was ? el("div", { class: "you-were" }, "You were the imposter!") : el("div", {}, el("span", { class: "muted" }, S.reveal.imposters.length > 1 ? "The imposters were " : "The imposter was "), el("b", { style: "color:var(--red)" }, S.reveal.imposters.join(" & "))),
           pairBox(S.reveal)));
-      } else out.push(el("p", { class: "muted", style: "text-align:center;margin:0" }, mine.imposter ? "Say something that fits the topic. Don't get caught!" : "Say one thing about your word, but not the word. Who is the imposter?"));
+      } else out.push(el("p", { class: "muted", style: "text-align:center;margin:0" }, mine.imposter ? gm.impPhone : gm.phone));
       root.replaceChildren(...out); fixLogo();
     };
     render();

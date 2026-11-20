@@ -6,6 +6,7 @@
   --display: "Unbounded", system-ui, sans-serif; --sans: "Space Grotesk", system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body { min-height: 100vh; background: radial-gradient(900px 600px at 80% -10%, rgba(255,90,95,.18), transparent 60%), radial-gradient(800px 600px at 0% 100%, rgba(159,231,245,.12), transparent 60%), var(--bg); color: var(--ink); font: 17px/1.5 var(--sans); }
 button, input { font: inherit; color: inherit; }
@@ -96,3 +97,24 @@ h2 { font-size: 20px; }
 .packlist { display: grid; gap: 8px; }
 .pk { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--card); border-radius: 14px; padding: 8px 8px 8px 14px; }
 .pk span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.games { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
+.game { text-align: left; border: 2px solid var(--line); background: var(--card); border-radius: 16px; padding: 10px 12px; display: grid; gap: 2px; }
+.game b { font-size: 16px; }
+.game small { color: var(--muted); font-size: 13px; }
+.game.on { border-color: var(--gold); background: #3A2F18; }
+.game.on b { color: var(--gold); }
+.groups { display: grid; gap: 8px; width: 100%; max-width: 640px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); }
+.grp { background: var(--card); border-radius: 14px; padding: 10px 14px; display: grid; gap: 2px; text-align: left; }
+.grp b { font-size: 18px; color: var(--cyan); overflow-wrap: anywhere; }
+.grp span { color: var(--muted); }
+.grp.mine { outline: 3px solid var(--gold); }
+.grp.mine span { color: var(--ink); }
+.round { grid-template-columns: minmax(0, 1fr); }
+.round > * { max-width: 100%; }
+.round .steps { width: 100%; max-width: 560px; }
+.round .cat-big { overflow-wrap: anywhere; }
+.reveal { width: 100%; grid-template-columns: minmax(0, 1fr); }
+.reveal > * { max-width: 100%; }
+.phone { grid-template-columns: minmax(0, 1fr); }
+.phone .panel { grid-template-columns: minmax(0, 1fr); width: 100%; }
+.phone .panel > * { max-width: 100%; }

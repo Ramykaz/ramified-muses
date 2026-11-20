@@ -35,9 +35,14 @@ type Card = { cat: string; main: string; odd: string | null }
 type State = {
   v: number; round: number; revealed: boolean
   cur?: Card; mode?: 'topic' | 'word'; imposters?: string[]; dealt?: string[]; first?: string
+  game?: Game; cards?: Record<string, { cat: string; word: string | null; imp: boolean }>; groups?: { word: string; ids: string[] }[]
   used?: Record<string, number[]>
 }
 type Row = Record<string, unknown>
+// imposter: say one thing · draw: one line each on the board · act: mime it · teams: two secret teams · pairs: find your partner
+type Game = 'imposter' | 'draw' | 'act' | 'teams' | 'pairs'
+const GAMES: Game[] = ['imposter', 'draw', 'act', 'teams', 'pairs']
+const ACTABLE = ['animals', 'jobs', 'sports']
 type Pair = [string, string, string | null]
 const newId = (n: number) => [...randomBytes(n)].map(b => 'abcdefghijkmnpqrstuvwxyz23456789'[b % 32]).join('')
 const fold = (s: unknown) => String(s ?? '').toLocaleLowerCase('tr').normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim()
@@ -49,8 +54,12 @@ async function loadGame(pin: string) {
 }
 const players = async (pin: string) =>
   (await db.execute(sql`SELECT id, name FROM imp_players WHERE pin = ${pin} ORDER BY joined_at`)).rows as { id: string; name: string }[]
-const revealOf = (st: State, ps: { id: string; name: string }[]) =>
-  st.revealed && st.cur ? { main: st.cur.main, odd: st.mode === 'word' ? st.cur.odd : null, imposters: ps.filter(p => st.imposters?.includes(p.id)).map(p => p.name) } : null
+const revealOf = (st: State, ps: { id: string; name: string }[]) => {
+  if (!st.revealed || !st.round) return null
+  const nameOf = (id: string) => ps.find(p => p.id === id)?.name
+  if (st.groups) return { kind: 'groups', game: st.game, groups: st.groups.map(g => ({ word: g.word, names: g.ids.map(nameOf).filter(Boolean) })) }
+  return st.cur ? { kind: 'imposter', main: st.cur.main, odd: st.mode === 'word' ? st.cur.odd : null, imposters: ps.filter(p => st.imposters?.includes(p.id)).map(p => p.name) } : null
+}
 
 // a pack from the host: [[topic, word, similar word?], …]
 function cleanPairs(raw: unknown): Pair[] {
@@ -109,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const g = await loadGame(pin)
       if (!g) return res.status(404).json({ error: 'No game with that PIN.' })
       const st = g.state
-      const out: Row = { pin, v: st.v, round: st.round, revealed: st.revealed, cat: st.round ? st.cur?.cat ?? null : null, first: st.round ? st.first ?? null : null }
+      const out: Row = { pin, v: st.v, round: st.round, revealed: st.revealed, game: st.game ?? 'imposter', cat: st.round && st.game !== 'pairs' ? st.cur?.cat ?? null : null, first: st.round ? st.first ?? null : null }
       if (st.revealed) out.reveal = revealOf(st, await players(pin))
       return res.status(200).json(out)
     }
@@ -131,6 +140,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const g = await loadGame(pin)
       if (!g) return res.status(404).json({ error: 'The game has ended.' })
       const st = g.state, c = st.cur, id = String(p.id)
+      if (st.cards) {
+        const card = st.round ? st.cards[id] : undefined
+        if (!card) return res.status(200).json({ name: p.name, round: st.round, game: st.game, cat: null, word: null, imposter: false, waiting: true })
+        return res.status(200).json({ name: p.name, round: st.round, game: st.game, cat: card.cat, word: card.word, imposter: card.imp })
+      }
       const base = { name: p.name, round: st.round, cat: c?.cat ?? null }
       if (!c || !st.round || !st.dealt?.includes(id)) return res.status(200).json({ ...base, word: null, imposter: false, waiting: true })
       const imp = !!st.imposters?.includes(id)
@@ -160,8 +174,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const ps = await players(pin)
       // the big screen gets no words and no imposter until the reveal
       return res.status(200).json({
-        pin, state: { v: st.v, round: st.round, revealed: st.revealed, first: st.round ? st.first ?? null : null },
-        cat: st.round ? st.cur?.cat ?? null : null,
+        pin, state: { v: st.v, round: st.round, revealed: st.revealed, game: st.game ?? 'imposter', first: st.round ? st.first ?? null : null },
+        cat: st.round && st.game !== 'pairs' ? st.cur?.cat ?? null : null,
         reveal: revealOf(st, ps),
         players: ps.map(p => ({ id: p.id, name: p.name, inRound: !!st.dealt?.includes(p.id) })),
       })
@@ -169,7 +183,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'next' && req.method === 'POST') {
       const ps = await players(pin)
       if (ps.length < 3) return res.status(409).json({ error: 'You need at least 3 players.' })
-      const mode = body.mode === 'word' ? 'word' : 'topic'
+      const game: Game = GAMES.includes(body.game as Game) ? body.game as Game : 'imposter'
+      if (game === 'pairs' && ps.length < 4) return res.status(409).json({ error: 'Find your partner needs at least 4 players.' })
+      const mode = game === 'teams' ? 'word' : body.mode === 'word' ? 'word' : 'topic'
       let all: Pair[], key: string, only: string[] = []
       if (body.pack) {
         const r = (await db.execute(sql`SELECT pairs FROM imp_packs WHERE id = ${String(body.pack)}`)).rows[0] as Row | undefined
@@ -178,13 +194,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } else {
         const cats = Array.isArray(body.cats) ? (body.cats as unknown[]).map(String).filter(c => c in CATS) : []
         all = PAIRS.map(p => [CATS[p[0]], p[1], p[2]] as Pair)
-        only = cats.map(c => CATS[c])
+        only = (game === 'act' && !cats.length ? ACTABLE : cats).map(c => CATS[c])
         key = 'built-in'
       }
       // a similar word is needed in word mode
       let pool = all.map((p, i) => i).filter(i => (!only.length || only.includes(all[i][0])) && (mode === 'topic' || all[i][2]))
-      if (!pool.length) return res.status(409).json({ error: mode === 'word' ? 'This pack has no similar words. Choose "Only the topic".' : 'No words to play with.' })
+      if (!pool.length) return res.status(409).json({ error: mode === 'word' ? 'This game needs pairs of similar words, and these words have none. Choose other words or another game.' : 'No words to play with.' })
       const usedAll = st.used ?? {}
+      const shuffled = <T,>(a: T[]) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = randomInt(i + 1); [a[i], a[j]] = [a[j], a[i]] } return a }
+      const base = { v: (st.v ?? 0) + 1, round: (st.round ?? 0) + 1, revealed: false, game, dealt: ps.map(p => p.id), first: ps[randomInt(ps.length)].name }
+      if (game === 'pairs') {
+        // everyone shares a word with one other person (a group of three if the number is odd)
+        const words = new Map<string, string>()
+        for (const i of shuffled(pool)) for (const w of [all[i][1], all[i][2]]) if (w && !words.has(fold(w)) && words.size < 40) words.set(fold(w), w)
+        const n = Math.floor(ps.length / 2)
+        if (words.size < n) return res.status(409).json({ error: 'There are not enough words for this many pairs. Choose more topics.' })
+        const pick = shuffled([...words.values()]).slice(0, n), ids = shuffled(ps.map(p => p.id))
+        const catOf = (w: string) => all.find(p => p[1] === w || p[2] === w)?.[0] ?? ''
+        const groups = pick.map((word, k) => ({ word, ids: ids.slice(k * 2, k * 2 + 2) }))
+        groups[groups.length - 1].ids.push(...ids.slice(n * 2))
+        const cards: State['cards'] = {}
+        for (const g of groups) for (const id of g.ids) cards[id] = { cat: catOf(g.word), word: g.word, imp: false }
+        const next: State = { ...base, cards, groups, used: usedAll }
+        await db.execute(sql`UPDATE imp_games SET state = ${JSON.stringify(next)}::jsonb WHERE pin = ${pin}`)
+        return res.status(200).json({ ok: true, round: next.round })
+      }
       let used = (usedAll[key] ?? []).filter(i => pool.includes(i))
       if (used.length >= pool.length) used = []
       pool = pool.filter(i => !used.includes(i))
@@ -194,11 +228,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const imps = Math.max(1, Math.min(Number(body.imps) || 1, Math.floor((ps.length - 1) / 2)))
       const ids = ps.map(p => p.id)
       for (let i = ids.length - 1; i > 0; i--) { const j = randomInt(i + 1); [ids[i], ids[j]] = [ids[j], ids[i]] }
-      const next: State = {
-        v: (st.v ?? 0) + 1, round: (st.round ?? 0) + 1, revealed: false, cur, mode,
-        imposters: ids.slice(0, imps), dealt: ps.map(p => p.id), first: ps[randomInt(ps.length)].name,
-        used: { ...usedAll, [key]: [...used, pick] },
+      const cards: State['cards'] = {}
+      let imposters = ids.slice(0, imps), groups: State['groups']
+      if (game === 'teams') {
+        // two secret teams of about the same size; nobody knows which word the other team has
+        const half = Math.floor(ids.length / 2)
+        groups = [{ word: cur.main, ids: ids.slice(half) }, { word: cur.odd!, ids: ids.slice(0, half) }]
+        imposters = []
+        for (const g of groups) for (const id of g.ids) cards[id] = { cat: cur.cat, word: g.word, imp: false }
+      } else for (const id of ids) {
+        const imp = imposters.includes(id)
+        cards[id] = mode === 'word' ? { cat: cur.cat, word: imp ? cur.odd : cur.main, imp: false } : { cat: cur.cat, word: imp ? null : cur.main, imp }
       }
+      const next: State = { ...base, cur, mode, imposters, cards, groups, used: { ...usedAll, [key]: [...used, pick] } }
       await db.execute(sql`UPDATE imp_games SET state = ${JSON.stringify(next)}::jsonb WHERE pin = ${pin}`)
       return res.status(200).json({ ok: true, round: next.round })
     }
