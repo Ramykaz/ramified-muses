@@ -330,15 +330,18 @@
     let set, oddOne, tried, done, t, round = 0;
     function next() {
       if (t) t.stop();
-      const cats = shuffle(S.cats.filter(c => PICS.filter(p => p.c === c).length >= 3));
-      const groups = CATS.map(c => c.id).filter(id => PICS.some(p => p.c === id));
+      const withPic = PICS.filter(p => p.e);
+      const cats = shuffle(S.cats.filter(c => withPic.filter(p => p.c === c).length >= 3));
+      const groups = CATS.map(c => c.id).filter(id => withPic.some(p => p.c === id));
       if (!cats.length || groups.length < 2) { toast("Odd One Out needs at least two picture groups"); location.hash = "#/"; return; }
       // groups that share words (a beach is nature and a place) are never mixed
       const CLOSE = ["nature|places", "sports|home", "clothes|home", "food|nature", "jobs|feelings", "body|feelings"];
       const main = cats[0], others = groups.filter(id => id !== main && !CLOSE.includes(main + "|" + id) && !CLOSE.includes(id + "|" + main));
-      const other = pick(others.length ? others : groups.filter(id => id !== main));
-      const three = shuffle(PICS.filter(p => p.c === main)).slice(0, 3);
-      oddOne = pick(PICS.filter(p => p.c === other));
+      // the odd one comes from another chosen group when there is one (the same unit)
+      const chosen = others.filter(id => S.cats.includes(id));
+      const other = pick(chosen.length ? chosen : others.length ? others : groups.filter(id => id !== main));
+      const three = shuffle(withPic.filter(p => p.c === main)).slice(0, 3);
+      oddOne = pick(withPic.filter(p => p.c === other && !three.some(x => x.w === p.w || x.e === p.e)));
       set = shuffle([...three, oddOne]); tried = []; done = false; round++;
       draw(true); setCounter(`Round ${round}`); beep("open");
     }
@@ -771,7 +774,7 @@
   }
 
   /* ----- city map: prepositions of place ----- */
-  const MAP_PLACES = [["museum", "🏛️"], ["bank", "🏦"], ["park", "🌳"], ["library", "📚"], ["hospital", "🏥"], ["post office", "🏣"], ["café", "☕"], ["mosque", "🕌"], ["hotel", "🏨"], ["school", "🏫"], ["cinema", "🎬"], ["supermarket", "🛒"]];
+  const MAP_PLACES = F.mapPlaces || [["museum", "🏛️"], ["bank", "🏦"], ["park", "🌳"], ["library", "📚"], ["hospital", "🏥"], ["post office", "🏣"], ["café", "☕"], ["mosque", "🕌"], ["hotel", "🏨"], ["school", "🏫"], ["cinema", "🎬"], ["supermarket", "🛒"]];
   function cityMap() {
     let grid, q, opts, tried, done, n = 0;
     const cell = (r, c) => grid[r * 4 + c];
@@ -1354,7 +1357,8 @@
 
   /* ================= 7. stop! ================= */
   // Category sets: the built-in one, the [STOP] part of each game pack, and older pasted sets.
-  const BUILTIN = { id: "builtin", title: F.stop.title, cats: F.stop.cats.map(x => ({ c: x.c, w: x.w.split(",").map(s => s.trim()).filter(Boolean) })) };
+  const STOP0 = F.stop || { title: "Stop!", cats: [] };
+  const BUILTIN = { id: "builtin", title: STOP0.title, cats: STOP0.cats.map(x => ({ c: x.c, w: x.w.split(",").map(s => s.trim()).filter(Boolean) })) };
   const allSets = () => [BUILTIN, ...PACKS.items.filter(x => x.stop).map(x => ({ ...x.stop, id: "pack:" + x.id, title: x.title, pack: true })), ...STOPS.items.filter(x => Array.isArray(x.cats))];
   // "category: word, word" lines
   function parseStop(text) {
