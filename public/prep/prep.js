@@ -38,7 +38,7 @@
     listen: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>',
     cards: '<rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/>',
     bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
-    gre: '<path d="M4 19V5h11l5 5v9z"/><path d="M8 13h8M8 16h5"/>',
+    gre: '<path d="M4 19V5h11l5 5v9z"/><path d="M8 13h8M8 16h5"/>', sigma: '<path d="M17 4H6l6 8-6 8h11"/>',
     book: '<path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/>',
     chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
@@ -165,6 +165,7 @@
         tile("#/review", "cards", "Review", "Spaced repetition, one thumb.", due ? String(due) : null),
         tile("#/quiz", "bolt", "Quick Quiz", "10 questions. Mistakes go back to review."),
         tile("#/gre", "gre", "GRE Verbal", "Text completion and sentence equivalence."),
+        tile("/prep/math/", "sigma", "GRE Quant", "Maths lessons, graphs and mock tests."),
         tile("#/browse", "book", "Browse", "Every word, root and phrase."),
         tile("#/stats", "chart", "Progress", "Streak, words learned, weak words.")),
       el("p", { class: "foot" }, `${GRE.length} GRE words · ${TOEFL.length} TOEFL words · ${ROOTS.length} roots · ${COLL.length} collocations · ${PHR.length} phrases · ${D.tc.length + D.se.length} GRE questions`));

@@ -9,7 +9,6 @@
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   let S = Object.assign({ done: {}, stats: {}, mocks: [], seen: {}, theme: "dark" }, load());
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* private mode */ } };
-  document.documentElement.dataset.theme = S.theme;
 
   const el = (tag, props, ...kids) => {
     const n = document.createElement(tag);
@@ -21,19 +20,23 @@
     for (const c of kids.flat(Infinity)) if (c != null && c !== false) n.append(c.nodeType ? c : String(c));
     return n;
   };
-  // lesson and question text is written by us and may contain <sup>, <b> and so on
-  const rich = (tag, html, props = {}) => el(tag, { ...props, html });
+  // lesson and question text is written by us: HTML like <b>, and maths between ⟦ and ⟧, typeset with KaTeX
+  const M = s => String(s ?? "").replace(/⟦([\s\S]+?)⟧/g, (_, tex) => { try { return window.katex.renderToString(tex, { throwOnError: false, strict: false }); } catch (e) { return tex; } });
+  const rich = (tag, html, props = {}) => el(tag, { ...props, html: M(html) });
+  window.MATH = M;
   const ICONS = { back: '<path d="M15 18l-6-6 6-6"/>', home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>', calc: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h2M12 18h2M16 15v3"/>', flag: '<path d="M5 21V4h11l-2 4 2 4H5"/>', check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>', moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>', bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', list: '<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>', next: '<path d="M9 6l6 6-6 6"/>' };
   const ic = (n, s = 22) => rich("span", `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`, { class: "ic", style: `--s:${s}px`, "aria-hidden": "true" });
   function toast(m) { const t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2400); }
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   let cleanup = null;
+  // back: a link for the back arrow ("/prep/" on the home screen goes to Commute Prep), or null during a mock test
   function screen(title, back, ...kids) {
     if (cleanup) { cleanup(); cleanup = null; }
+    const home = back === "/prep/";
     app.replaceChildren(el("header", { class: "top" },
-      back ? el("a", { class: "icon-b", href: back, "aria-label": "Back" }, ic("back")) : el("span", { class: "brand" }, rich("span", '<svg viewBox="0 0 64 64" width="30" height="30"><rect width="64" height="64" rx="14" fill="#0E1320"/><path d="M14 44l10-14 8 8 8-14 10 20" fill="none" stroke="#F2B544" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="48" cy="18" r="5" fill="#3DD6C1"/></svg>')),
+      back ? el("a", { class: "icon-b", href: back, "aria-label": home ? "Back to Commute Prep" : "Back" }, ic("back")) : el("span", { class: "logo-q" }, "∑"),
       el("h1", {}, title), el("span", { class: "sp" }),
-      back ? el("a", { class: "icon-b", href: "#/", "aria-label": "Home" }, ic("home")) : el("button", { class: "icon-b", "aria-label": "Light or dark", onclick: e => { S.theme = S.theme === "dark" ? "light" : "dark"; save(); document.documentElement.dataset.theme = S.theme; e.currentTarget.replaceChildren(...ic(S.theme === "dark" ? "sun" : "moon").childNodes); } }, ic(S.theme === "dark" ? "sun" : "moon"))),
+      back && !home ? el("a", { class: "icon-b", href: "#/", "aria-label": "GRE Quant home" }, ic("home")) : null),
       el("main", { class: "main" }, kids));
     scrollTo(0, 0);
   }
@@ -51,7 +54,7 @@
     if (q.t === "ma") return Array.isArray(ans) && ans.slice().sort().join() === q.a.slice().sort().join();
     return ans === q.a;
   }
-  const answerText = q => q.t === "ne" ? q.a + (q.unit ? " " + q.unit : "") : q.t === "qc" ? QC_OPTS[q.a] : q.t === "ma" ? q.a.map(i => q.o[i]).join(", ") : q.o[q.a];
+  const answerText = q => q.t === "ne" ? (String(q.a).includes("/") ? "⟦\\tfrac{" + q.a.split("/")[0] + "}{" + q.a.split("/")[1] + "}⟧" : q.a) + (q.unit ? " " + q.unit : "") : q.t === "qc" ? QC_OPTS[q.a] : q.t === "ma" ? q.a.map(i => q.o[i]).join(", ") : q.o[q.a];
   const TYPE = { mc: "Select one answer", ma: "Select all that apply", qc: "Quantitative Comparison", ne: "Numeric entry" };
   // draws a question; onChange(answer) is called when the student picks; locked shows the result
   function questionView(q, ans, onChange, locked) {
@@ -103,7 +106,7 @@
     const tot = Object.values(S.stats).reduce((t, x) => ({ n: t.n + x.n, ok: t.ok + x.ok }), { n: 0, ok: 0 });
     const next = L.find(l => !S.done[l.id]) || L[0];
     const lastMock = S.mocks[S.mocks.length - 1];
-    screen("GRE Quant", null,
+    screen("GRE Quant", "/prep/",
       el("section", { class: "hero" }, el("div", { class: "lbl" }, "GRE Quantitative Reasoning"), el("h2", {}, "Learn it, try it, test it."),
         el("div", { class: "stats3" }, el("div", {}, el("b", {}, `${done}/${L.length}`), el("small", {}, "lessons")), el("div", {}, el("b", {}, tot.n ? Math.round(tot.ok / tot.n * 100) + "%" : "–"), el("small", {}, `right of ${tot.n}`)), el("div", {}, el("b", {}, lastMock ? lastMock.est : "–"), el("small", {}, "last mock (est.)")))),
       el("a", { class: "btn wide", href: "#/l/" + next.id }, ic("book"), done ? "Continue: " + next.title : "Start: " + next.title),
@@ -130,7 +133,7 @@
       el("section", { class: "idea" }, el("small", {}, "The big idea"), rich("p", l.idea)),
       l.learn.map((x, k) => el("section", { class: "box learn" }, el("h3", {}, el("span", { class: "n" }, k + 1), x.h), rich("p", x.html))),
       widget ? el("section", { class: "box" }, el("div", { class: "lbl" }, "Try it: move the sliders"), widget) : null,
-      el("section", { class: "box" }, el("div", { class: "lbl" }, "Rules to remember"), el("div", { class: "rules" }, l.rules.map(r => el("code", {}, r)))),
+      el("section", { class: "box" }, el("div", { class: "lbl" }, "Rules to remember"), el("div", { class: "rules" }, l.rules.map(r => rich("span", "⟦\\displaystyle " + r + "⟧", { class: "rule" })))),
       el("div", { class: "lbl" }, "Worked examples: step by step"),
       l.examples.map((ex, k) => example(ex, k)),
       el("section", { class: "box tips" }, el("div", { class: "lbl" }, "Tips"), el("ul", {}, l.tips.map(t => rich("li", t)))),
@@ -283,7 +286,7 @@
 
   /* ================= formula sheet and progress ================= */
   function formulas() {
-    screen("Formula sheet", "#/", UNITS.map(u => el("section", { class: "box" }, el("div", { class: "lbl" }, u), L.filter(l => l.unit === u).map(l => el("div", { class: "fgroup" }, el("a", { href: "#/l/" + l.id }, el("b", {}, l.title)), el("div", { class: "rules" }, l.rules.map(r => el("code", {}, r))))))));
+    screen("Formula sheet", "#/", UNITS.map(u => el("section", { class: "box" }, el("div", { class: "lbl" }, u), L.filter(l => l.unit === u).map(l => el("div", { class: "fgroup" }, el("a", { href: "#/l/" + l.id }, el("b", {}, l.title)), el("div", { class: "rules" }, l.rules.map(r => rich("span", "⟦\\displaystyle " + r + "⟧", { class: "rule" }))))))));
   }
   function stats() {
     screen("Progress", "#/",
@@ -303,5 +306,5 @@
   }
   addEventListener("hashchange", route);
   route();
-  if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("/quant/sw.js", { scope: "/quant/" }).catch(() => {});
+  if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("/prep/sw.js", { scope: "/prep/" }).catch(() => {});
 })();

@@ -38,7 +38,9 @@
     return { key, el: wrap, get: () => v, on: f => { cb = f; } };
   }
   const line = (...items) => h("div", { class: "wline" }, items);
-  const kv = (k, v, cls) => h("span", { class: "kv" + (cls ? " " + cls : "") }, h("small", {}, k), h("b", {}, v));
+  // a result: maths between ⟦ and ⟧ is typeset with KaTeX (window.MATH comes from math.js)
+  const kv = (k, v, cls) => { const b = h("b"); const t = String(v); if (t.includes("⟦") && window.MATH) b.innerHTML = window.MATH(t); else b.textContent = t; return h("span", { class: "kv" + (cls ? " " + cls : "") }, h("small", {}, k), b); };
+  const tex = x => "⟦" + x + "⟧";
   // a coordinate plane
   function plane(svg, W, H, x0, x1, y0, y1, step = 1) {
     const X = x => (x - x0) / (x1 - x0) * W, Y = y => H - (y - y0) / (y1 - y0) * H;
@@ -71,8 +73,8 @@
     const counts = {}; pf.forEach(p => counts[p] = (counts[p] || 0) + 1);
     const nf = Object.values(counts).reduce((t, a) => t * (a + 1), 1);
     const factors = []; for (let d = 1; d <= n; d++) if (n % d === 0) factors.push(d);
-    add(out, line(kv("Prime factors", pf.length === 1 ? n + " is prime" : Object.entries(counts).map(([p, a]) => p + (a > 1 ? sup(a) : "")).join(" × ")),
-      kv("Number of factors", Object.values(counts).map(a => `(${a}+1)`).join("") + " = " + nf)),
+    add(out, line(kv("Prime factors", pf.length === 1 ? n + " is prime" : tex(n + " = " + Object.entries(counts).map(([p, a]) => p + (a > 1 ? "^{" + a + "}" : "")).join(" \\cdot "))),
+      kv("Number of factors", tex(Object.values(counts).map(a => `(${a}+1)`).join("") + " = " + nf))),
       h("div", { class: "wsmall" }, "Factors: " + (factors.length > 30 ? factors.slice(0, 30).join(", ") + " …" : factors.join(", "))));
   });
 
@@ -91,7 +93,7 @@
     if (val <= 2) add(svg, s("circle", { cx: X(val), cy: 120, r: 6, class: "dotA" }));
     add(svg, s("text", { x: 250, y: 70, class: "lbl big mid" }, `${a}/${b}`));
     const g = gcd(a, b) || 1;
-    add(out, line(kv("Simplest", a === 0 ? "0" : `${a / g}/${b / g}`), kv("Decimal", r2(val * 1000) / 1000 + ""), kv("Percent", r2(val * 100) + "%"), kv("vs ½", val > 0.5 ? "bigger" : val < 0.5 ? "smaller" : "equal")));
+    add(out, line(kv("Simplest", a === 0 ? "0" : tex(`\\frac{${a}}{${b}} = \\frac{${a / g}}{${b / g}}`)), kv("Decimal", r2(val * 1000) / 1000 + ""), kv("Percent", r2(val * 100) + "%"), kv("vs ½", val > 0.5 ? "bigger" : val < 0.5 ? "smaller" : "equal")));
   });
 
   QW.power = () => frame([slider("x", "Base x", -3, 3, 0.5, 2), slider("n", "Exponent n", -3, 5, 1, 3)], 320, 200, ({ x, n }, svg, out) => {
@@ -100,7 +102,7 @@
     const v = Math.pow(x, n);
     if (isFinite(v) && Math.abs(v) <= 8) P.dot(x, v, "dotA", 6);
     P.label(-2.9, 7.2, `y = x${sup(n)}`);
-    add(out, line(kv("x" + sup(n), isFinite(v) ? fmt(r2(v)) : "undefined (÷0)"),
+    add(out, line(kv("Value", isFinite(v) ? tex(`(${fmt(x)})^{${n}} = ${fmt(r2(v))}`) : "undefined (÷0)"),
       kv("Sign", !isFinite(v) ? "–" : v > 0 ? "positive" : v < 0 ? "negative" : "zero"),
       kv("Note", x < 0 ? (n % 2 === 0 ? "negative base, even power → positive" : "negative base, odd power → negative") : x > 0 && x < 1 ? (n > 1 ? "between 0 and 1: powers get smaller" : n < 0 ? "negative power → bigger" : "") : n < 0 ? "negative power = 1 ÷ positive power" : "")));
   });
@@ -146,7 +148,7 @@
     let res;
     if (m1 === m2) res = b1 === b2 ? "Same line: infinitely many solutions" : "Parallel: no solution";
     else { const x = (b2 - b1) / (m1 - m2), y = m1 * x + b1; P.dot(x, y, "dotA", 6); res = `They meet at (${fmt(r2(x))}, ${fmt(r2(y))}): one solution`; }
-    add(out, line(kv("Line 1", `y = ${m1}x ${b1 >= 0 ? "+" : "−"} ${Math.abs(b1)}`), kv("Line 2", `y = ${m2}x ${b2 >= 0 ? "+" : "−"} ${Math.abs(b2)}`, "pos")), h("div", { class: "wsmall" }, res));
+    add(out, line(kv("Line 1 (blue)", tex(`y = ${m1}x ${b1 >= 0 ? "+" : "-"} ${Math.abs(b1)}`)), kv("Line 2 (red)", tex(`y = ${m2}x ${b2 >= 0 ? "+" : "-"} ${Math.abs(b2)}`))), h("div", { class: "wsmall" }, res));
   });
 
   QW.ineq = () => frame([slider("c", "Centre c", -5, 5, 1, 2), slider("d", "Distance d", 1, 6, 1, 3), toggle("op", [["lt", "|x − c| < d"], ["gt", "|x − c| > d"]], "lt")], 320, 90, ({ c, d, op }, svg, out) => {
@@ -168,7 +170,7 @@
     P.dot(vx, vy, "dotB", 5);
     let roots = "none (D < 0)";
     if (D >= 0) { const r1 = (-b - Math.sqrt(D)) / (2 * a), r2_ = (-b + Math.sqrt(D)) / (2 * a); P.dot(r1, 0, "dotA", 6); P.dot(r2_, 0, "dotA", 6); roots = D === 0 ? `x = ${fmt(r2(r1))} (one root)` : `x = ${fmt(r2(Math.min(r1, r2_)))} and ${fmt(r2(Math.max(r1, r2_)))}`; }
-    add(out, line(kv("Equation", `${a}x² ${b >= 0 ? "+" : "−"} ${Math.abs(b)}x ${c >= 0 ? "+" : "−"} ${Math.abs(c)}`), kv("b² − 4ac", D, D > 0 ? "pos" : D < 0 ? "neg" : ""), kv("Roots", roots), kv("Vertex", `(${fmt(r2(vx))}, ${fmt(r2(vy))})`)));
+    add(out, line(kv("Equation", tex(`y = ${a}x^2 ${b >= 0 ? "+" : "-"} ${Math.abs(b)}x ${c >= 0 ? "+" : "-"} ${Math.abs(c)}`)), kv("Discriminant", tex(`b^2 - 4ac = ${D}`), D > 0 ? "pos" : D < 0 ? "neg" : ""), kv("Roots", roots), kv("Vertex", `(${fmt(r2(vx))}, ${fmt(r2(vy))})`)));
   });
 
   QW.sequence = () => frame([toggle("type", [["ar", "Arithmetic (+d)"], ["ge", "Geometric (×r)"]], "ar"), slider("a1", "First term", -5, 10, 1, 3), slider("d", "d or r", -3, 4, 1, 2)], 320, 170, ({ type, a1, d }, svg, out) => {
@@ -177,7 +179,7 @@
     terms.forEach((t, i) => { const hgt = t / max * 70, x = 14 + i * 38; add(svg, s("rect", { x, y: t >= 0 ? mid - hgt : mid, width: 28, height: Math.abs(hgt) || 1, rx: 4, class: "barA" }), s("text", { x: x + 14, y: t >= 0 ? mid - hgt - 4 : mid - hgt + 12, class: "lbl mid small" }, fmt(t)), s("text", { x: x + 14, y: 166, class: "lbl mid small" }, "a" + (i + 1))); });
     add(svg, s("line", { x1: 0, x2: 320, y1: mid, y2: mid, class: "axis" }));
     const sum = terms.reduce((x, y) => x + y, 0);
-    add(out, line(kv("Rule", type === "ar" ? `aₙ = ${a1} + (n − 1)·${d}` : `aₙ = ${a1} · ${d}^(n − 1)`), kv("Sum of 8 terms", fmt(sum))), type === "ar" ? h("div", { class: "wsmall" }, `Check: 8 × (first + last)/2 = 8 × (${a1} + ${terms[7]})/2 = ${fmt(8 * (a1 + terms[7]) / 2)}`) : null);
+    add(out, line(kv("Rule", tex(type === "ar" ? `a_n = ${a1} + (n - 1)(${d})` : `a_n = ${a1} \\cdot (${d})^{n-1}`)), kv("Sum of 8 terms", fmt(sum))), type === "ar" ? h("div", { class: "wsmall" }, `Check: 8 × (first + last)/2 = 8 × (${a1} + ${terms[7]})/2 = ${fmt(8 * (a1 + terms[7]) / 2)}`) : null);
   });
 
   QW.points = () => frame([slider("x1", "x₁", -6, 6, 1, -3), slider("y1", "y₁", -6, 6, 1, -2), slider("x2", "x₂", -6, 6, 1, 3), slider("y2", "y₂", -6, 6, 1, 6)], 280, 280, ({ x1, y1, x2, y2 }, svg, out) => {
@@ -185,7 +187,7 @@
     add(svg, s("path", { d: `M${P.X(x1)} ${P.Y(y1)} L${P.X(x2)} ${P.Y(y1)} L${P.X(x2)} ${P.Y(y2)}`, class: "dash" }), s("line", { x1: P.X(x1), y1: P.Y(y1), x2: P.X(x2), y2: P.Y(y2), class: "curveA" }));
     P.dot(x1, y1, "dotB", 6); P.dot(x2, y2, "dotA", 6); P.dot((x1 + x2) / 2, (y1 + y2) / 2, "dot", 4);
     const dx = x2 - x1, dy = y2 - y1;
-    add(out, line(kv("Slope", dx === 0 && dy === 0 ? "same point" : dx === 0 ? "none (vertical line)" : `${dy}/${dx} = ${fmt(r2(dy / dx))}`), kv("Distance", `√(${dx}² + ${dy}²) = ${fmt(r2(Math.hypot(dx, dy)))}`), kv("Midpoint", `(${fmt((x1 + x2) / 2)}, ${fmt((y1 + y2) / 2)})`)), h("div", { class: "wsmall" }, "The dashed legs are Δx and Δy: distance is the Pythagorean theorem."));
+    add(out, line(kv("Slope", dx === 0 && dy === 0 ? "same point" : dx === 0 ? "none (vertical line)" : tex(`m = \\frac{${dy}}{${dx}} = ${fmt(r2(dy / dx))}`)), kv("Distance", tex(`\\sqrt{${dx}^2 + ${dy}^2} = ${fmt(r2(Math.hypot(dx, dy)))}`)), kv("Midpoint", `(${fmt((x1 + x2) / 2)}, ${fmt((y1 + y2) / 2)})`)), h("div", { class: "wsmall" }, "The dashed legs are Δx and Δy: distance is the Pythagorean theorem."));
   });
 
   QW.rate = () => frame([slider("va", "Speed of A (km/h)", 10, 100, 5, 60), slider("vb", "Speed of B (km/h)", 10, 100, 5, 40), slider("t", "Time (hours)", 0, 5, 0.25, 1)], 320, 110, ({ va, vb, t }, svg, out) => {
@@ -221,7 +223,7 @@
       const c = Math.hypot(a, b);
       add(svg, s("text", { x: x0 - 8, y: y0 - a * k / 2, class: "lbl end" }, a), s("text", { x: x0 + b * k / 2, y: y0 + 16, class: "lbl mid" }, b), s("text", { x: x0 + b * k / 2 + 8, y: y0 - a * k / 2 - 4, class: "lbl" }, "c = " + fmt(r2(c))));
       const isInt = Number.isInteger(c);
-      add(out, line(kv("c² = a² + b²", `${a * a} + ${b * b} = ${a * a + b * b}`), kv("c", isInt ? String(c) : `√${a * a + b * b} ≈ ${r2(c)}`, isInt ? "pos" : ""), kv("Area", `½ × ${a} × ${b} = ${fmt(a * b / 2)}`)), a === b ? h("div", { class: "wsmall" }, `45-45-90: c = ${a}√2`) : isInt ? h("div", { class: "wsmall" }, "A Pythagorean triple!") : null);
+      add(out, line(kv("Pythagoras", tex(`c^2 = ${a}^2 + ${b}^2 = ${a * a + b * b}`)), kv("Hypotenuse", tex(isInt ? `c = ${c}` : `c = \\sqrt{${a * a + b * b}} \\approx ${r2(c)}`), isInt ? "pos" : ""), kv("Area", tex(`\\tfrac{1}{2} \\cdot ${a} \\cdot ${b} = ${fmt(a * b / 2)}`))), a === b ? h("div", { class: "wsmall" }, `45-45-90: c = ${a}√2`) : isInt ? h("div", { class: "wsmall" }, "A Pythagorean triple!") : null);
     });
   };
 
@@ -240,7 +242,7 @@
     add(svg, t >= 360 ? s("circle", { cx, cy, r: R, class: "fillA" }) : s("path", { d: `M${cx} ${cy} L${cx + R} ${cy} A${R} ${R} 0 ${t > 180 ? 1 : 0} 0 ${x2} ${y2} Z`, class: "fillA" }));
     add(svg, s("text", { x: cx + 18, y: cy - 6, class: "lbl" }, t + "°"), s("text", { x: cx + R / 2, y: cy + 16, class: "lbl mid" }, "r = " + r));
     const frac = t / 360, g = gcd(t, 360);
-    add(out, line(kv("Fraction of circle", `${t}/360 = ${t / g}/${360 / g}`), kv("Arc length", `${fmt(r2(frac * 2 * r))}π ≈ ${r2(frac * 2 * Math.PI * r)}`), kv("Sector area", `${fmt(r2(frac * r * r))}π ≈ ${r2(frac * Math.PI * r * r)}`)), h("div", { class: "wsmall" }, `Whole circle: circumference ${2 * r}π, area ${r * r}π.`));
+    add(out, line(kv("Fraction of circle", `${t}/360 = ${t / g}/${360 / g}`), kv("Arc length", tex(`${fmt(r2(frac * 2 * r))}\\pi \\approx ${r2(frac * 2 * Math.PI * r)}`)), kv("Sector area", tex(`${fmt(r2(frac * r * r))}\\pi \\approx ${r2(frac * Math.PI * r * r)}`))), h("div", { class: "wsmall" }, `Whole circle: circumference ${2 * r}π, area ${r * r}π.`));
   });
 
   QW.box = () => frame([slider("l", "Length", 1, 12, 1, 4), slider("w", "Width", 1, 12, 1, 3), slider("h", "Height", 1, 12, 1, 12)], 300, 200, ({ l, w, h: hh }, svg, out) => {
@@ -317,7 +319,7 @@
     const letters = "ABCDEFGHIJ".slice(0, n).split("");
     letters.forEach((L, i) => add(svg, s("circle", { cx: 20 + i * 30, cy: 30, r: 12, class: i < k ? "dotA" : "slice" }), s("text", { x: 20 + i * 30, y: 35, class: "lbl mid small" }, L)));
     const combos = []; const go = (start, cur) => { if (combos.length >= 12) return; if (cur.length === k) { combos.push(cur.join("")); return; } for (let i = start; i < n; i++) go(i + 1, [...cur, letters[i]]); }; go(0, []);
-    add(out, line(kv("Order matters: nPk", `${n}!/${n - k}! = ${P}`), kv("Order doesn't: nCk", `${P}/${k}! = ${C}`, "pos")), h("div", { class: "wsmall" }, `Every group of ${k} can be arranged in ${k}! = ${fact(k)} ways, so P = C × ${fact(k)}. Groups: ${combos.join(", ")}${C > 12 ? " …" : ""}`));
+    add(out, line(kv("Order matters", tex(`{}_{${n}}P_{${k}} = \\frac{${n}!}{${n - k}!} = ${P}`)), kv("Order doesn't", tex(`\\binom{${n}}{${k}} = \\frac{${P}}{${k}!} = ${C}`), "pos")), h("div", { class: "wsmall" }, `Every group of ${k} can be arranged in ${k}! = ${fact(k)} ways, so P = C × ${fact(k)}. Groups: ${combos.join(", ")}${C > 12 ? " …" : ""}`));
   });
 
   QW.venn = () => frame([slider("a", "P(A)", 0, 1, 0.05, 0.5), slider("b", "P(B)", 0, 1, 0.05, 0.4), slider("ab", "P(A and B)", 0, 1, 0.05, 0.2)], 320, 170, ({ a, b, ab }, svg, out) => {

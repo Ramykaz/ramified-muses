@@ -1,46 +1,189 @@
 {
   "redirects": [
-    { "source": "/", "has": [{ "type": "host", "value": "forms.ramyfied.me" }], "destination": "/admin", "permanent": false }
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "forms.ramyfied.me"
+        }
+      ],
+      "destination": "/admin",
+      "permanent": false
+    },
+    {
+      "source": "/quant",
+      "destination": "/prep/math/",
+      "permanent": false
+    },
+    {
+      "source": "/quant/(.*)",
+      "destination": "/prep/math/",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/api/(.*)",  "destination": "/api/$1" },
-    { "source": "/(.*)", "has": [{ "type": "host", "value": "forms.ramyfied.me" }], "destination": "/forms/index.html" },
-    { "source": "/kawho",     "destination": "/kawho/index.html" },
-    { "source": "/kawho/(.*)", "destination": "/kawho/index.html" },
-    { "source": "/imposter",     "destination": "/imposter/index.html" },
-    { "source": "/imposter/(.*)", "destination": "/imposter/index.html" },
-    { "source": "/forms",     "destination": "/forms/index.html" },
-    { "source": "/forms/(.*)", "destination": "/forms/index.html" },
-    { "source": "/English",   "destination": "/English.html" },
-    { "source": "/English/",  "destination": "/English.html" },
-    { "source": "/English/jeopardy",  "destination": "/English/jeopardy/index.html" },
-    { "source": "/English/jeopardy/", "destination": "/English/jeopardy/index.html" },
-    { "source": "/English/jeopardy/unit1",  "destination": "/English/jeopardy/unit1/index.html" },
-    { "source": "/English/jeopardy/unit1/", "destination": "/English/jeopardy/unit1/index.html" },
-    { "source": "/English/jeopardy/a2-unit1",  "destination": "/English/jeopardy/a2-unit1/index.html" },
-    { "source": "/English/jeopardy/a2-unit1/", "destination": "/English/jeopardy/a2-unit1/index.html" },
-    { "source": "/English/jeopardy/fun",  "destination": "/English/jeopardy/fun/index.html" },
-    { "source": "/English/jeopardy/fun/", "destination": "/English/jeopardy/fun/index.html" },
-    { "source": "/English/jeopardy/fun2",  "destination": "/English/jeopardy/fun2/index.html" },
-    { "source": "/English/jeopardy/fun2/", "destination": "/English/jeopardy/fun2/index.html" },
-    { "source": "/English/jeopardy/unit1-revision",  "destination": "/English/jeopardy/unit1-revision/index.html" },
-    { "source": "/English/jeopardy/unit1-revision/", "destination": "/English/jeopardy/unit1-revision/index.html" },
-    { "source": "/English/jeopardy/exam-units1-3",  "destination": "/English/jeopardy/exam-units1-3/index.html" },
-    { "source": "/English/jeopardy/exam-units1-3/", "destination": "/English/jeopardy/exam-units1-3/index.html" },
-    { "source": "/English/jeopardy/b1-vocab",  "destination": "/English/jeopardy/b1-vocab/index.html" },
-    { "source": "/English/jeopardy/b1-vocab/", "destination": "/English/jeopardy/b1-vocab/index.html" },
-    { "source": "/English/jeopardy/unit4-practice",  "destination": "/English/jeopardy/unit4-practice/index.html" },
-    { "source": "/English/jeopardy/unit4-practice/", "destination": "/English/jeopardy/unit4-practice/index.html" },
-    { "source": "/English/jeopardy/b1-quiz1",  "destination": "/English/jeopardy/b1-quiz1/index.html" },
-    { "source": "/English/jeopardy/b1-quiz1/", "destination": "/English/jeopardy/b1-quiz1/index.html" },
-    { "source": "/English/jeopardy/b1-quiz2",  "destination": "/English/jeopardy/b1-quiz2/index.html" },
-    { "source": "/English/jeopardy/b1-quiz2/", "destination": "/English/jeopardy/b1-quiz2/index.html" },
-    { "source": "/English/jeopardy/junior4",  "destination": "/English/jeopardy/junior4/index.html" },
-    { "source": "/English/jeopardy/junior4/", "destination": "/English/jeopardy/junior4/index.html" },
-    { "source": "/quant",  "destination": "/quant/index.html" },
-    { "source": "/quant/", "destination": "/quant/index.html" },
-    { "source": "/prep",  "destination": "/prep/index.html" },
-    { "source": "/prep/", "destination": "/prep/index.html" },
-    { "source": "/(.*)",      "destination": "/index.html" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "forms.ramyfied.me"
+        }
+      ],
+      "destination": "/forms/index.html"
+    },
+    {
+      "source": "/kawho",
+      "destination": "/kawho/index.html"
+    },
+    {
+      "source": "/kawho/(.*)",
+      "destination": "/kawho/index.html"
+    },
+    {
+      "source": "/imposter",
+      "destination": "/imposter/index.html"
+    },
+    {
+      "source": "/imposter/(.*)",
+      "destination": "/imposter/index.html"
+    },
+    {
+      "source": "/forms",
+      "destination": "/forms/index.html"
+    },
+    {
+      "source": "/forms/(.*)",
+      "destination": "/forms/index.html"
+    },
+    {
+      "source": "/English",
+      "destination": "/English.html"
+    },
+    {
+      "source": "/English/",
+      "destination": "/English.html"
+    },
+    {
+      "source": "/English/jeopardy",
+      "destination": "/English/jeopardy/index.html"
+    },
+    {
+      "source": "/English/jeopardy/",
+      "destination": "/English/jeopardy/index.html"
+    },
+    {
+      "source": "/English/jeopardy/unit1",
+      "destination": "/English/jeopardy/unit1/index.html"
+    },
+    {
+      "source": "/English/jeopardy/unit1/",
+      "destination": "/English/jeopardy/unit1/index.html"
+    },
+    {
+      "source": "/English/jeopardy/a2-unit1",
+      "destination": "/English/jeopardy/a2-unit1/index.html"
+    },
+    {
+      "source": "/English/jeopardy/a2-unit1/",
+      "destination": "/English/jeopardy/a2-unit1/index.html"
+    },
+    {
+      "source": "/English/jeopardy/fun",
+      "destination": "/English/jeopardy/fun/index.html"
+    },
+    {
+      "source": "/English/jeopardy/fun/",
+      "destination": "/English/jeopardy/fun/index.html"
+    },
+    {
+      "source": "/English/jeopardy/fun2",
+      "destination": "/English/jeopardy/fun2/index.html"
+    },
+    {
+      "source": "/English/jeopardy/fun2/",
+      "destination": "/English/jeopardy/fun2/index.html"
+    },
+    {
+      "source": "/English/jeopardy/unit1-revision",
+      "destination": "/English/jeopardy/unit1-revision/index.html"
+    },
+    {
+      "source": "/English/jeopardy/unit1-revision/",
+      "destination": "/English/jeopardy/unit1-revision/index.html"
+    },
+    {
+      "source": "/English/jeopardy/exam-units1-3",
+      "destination": "/English/jeopardy/exam-units1-3/index.html"
+    },
+    {
+      "source": "/English/jeopardy/exam-units1-3/",
+      "destination": "/English/jeopardy/exam-units1-3/index.html"
+    },
+    {
+      "source": "/English/jeopardy/b1-vocab",
+      "destination": "/English/jeopardy/b1-vocab/index.html"
+    },
+    {
+      "source": "/English/jeopardy/b1-vocab/",
+      "destination": "/English/jeopardy/b1-vocab/index.html"
+    },
+    {
+      "source": "/English/jeopardy/unit4-practice",
+      "destination": "/English/jeopardy/unit4-practice/index.html"
+    },
+    {
+      "source": "/English/jeopardy/unit4-practice/",
+      "destination": "/English/jeopardy/unit4-practice/index.html"
+    },
+    {
+      "source": "/English/jeopardy/b1-quiz1",
+      "destination": "/English/jeopardy/b1-quiz1/index.html"
+    },
+    {
+      "source": "/English/jeopardy/b1-quiz1/",
+      "destination": "/English/jeopardy/b1-quiz1/index.html"
+    },
+    {
+      "source": "/English/jeopardy/b1-quiz2",
+      "destination": "/English/jeopardy/b1-quiz2/index.html"
+    },
+    {
+      "source": "/English/jeopardy/b1-quiz2/",
+      "destination": "/English/jeopardy/b1-quiz2/index.html"
+    },
+    {
+      "source": "/English/jeopardy/junior4",
+      "destination": "/English/jeopardy/junior4/index.html"
+    },
+    {
+      "source": "/English/jeopardy/junior4/",
+      "destination": "/English/jeopardy/junior4/index.html"
+    },
+    {
+      "source": "/prep/math",
+      "destination": "/prep/math/index.html"
+    },
+    {
+      "source": "/prep/math/",
+      "destination": "/prep/math/index.html"
+    },
+    {
+      "source": "/prep",
+      "destination": "/prep/index.html"
+    },
+    {
+      "source": "/prep/",
+      "destination": "/prep/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
