@@ -1,0 +1,10 @@
+{
+  "name": "GRE Quant Prep",
+  "short_name": "GRE Quant",
+  "start_url": "/quant/",
+  "scope": "/quant/",
+  "display": "standalone",
+  "background_color": "#0E1320",
+  "theme_color": "#0E1320",
+  "icons": [{ "src": "/quant/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

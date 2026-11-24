@@ -37,6 +37,8 @@
     { "source": "/English/jeopardy/b1-quiz2/", "destination": "/English/jeopardy/b1-quiz2/index.html" },
     { "source": "/English/jeopardy/junior4",  "destination": "/English/jeopardy/junior4/index.html" },
     { "source": "/English/jeopardy/junior4/", "destination": "/English/jeopardy/junior4/index.html" },
+    { "source": "/quant",  "destination": "/quant/index.html" },
+    { "source": "/quant/", "destination": "/quant/index.html" },
     { "source": "/prep",  "destination": "/prep/index.html" },
     { "source": "/prep/", "destination": "/prep/index.html" },
     { "source": "/(.*)",      "destination": "/index.html" }
