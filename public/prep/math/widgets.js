@@ -41,6 +41,8 @@
   // a result: maths between ⟦ and ⟧ is typeset with KaTeX (window.MATH comes from math.js)
   const kv = (k, v, cls) => { const b = h("b"); const t = String(v); if (t.includes("⟦") && window.MATH) b.innerHTML = window.MATH(t); else b.textContent = t; return h("span", { class: "kv" + (cls ? " " + cls : "") }, h("small", {}, k), b); };
   const tex = x => "⟦" + x + "⟧";
+  // 1x → x, −1x → −x, as maths is written
+  const co = m => m === 1 ? "" : m === -1 ? "-" : String(m);
   // a coordinate plane
   function plane(svg, W, H, x0, x1, y0, y1, step = 1) {
     const X = x => (x - x0) / (x1 - x0) * W, Y = y => H - (y - y0) / (y1 - y0) * H;
@@ -148,7 +150,7 @@
     let res;
     if (m1 === m2) res = b1 === b2 ? "Same line: infinitely many solutions" : "Parallel: no solution";
     else { const x = (b2 - b1) / (m1 - m2), y = m1 * x + b1; P.dot(x, y, "dotA", 6); res = `They meet at (${fmt(r2(x))}, ${fmt(r2(y))}): one solution`; }
-    add(out, line(kv("Line 1 (blue)", tex(`y = ${m1}x ${b1 >= 0 ? "+" : "-"} ${Math.abs(b1)}`)), kv("Line 2 (red)", tex(`y = ${m2}x ${b2 >= 0 ? "+" : "-"} ${Math.abs(b2)}`))), h("div", { class: "wsmall" }, res));
+    add(out, line(kv("Line 1 (blue)", tex(m1 === 0 ? `y = ${b1}` : `y = ${co(m1)}x ${b1 >= 0 ? "+" : "-"} ${Math.abs(b1)}`)), kv("Line 2 (red)", tex(m2 === 0 ? `y = ${b2}` : `y = ${co(m2)}x ${b2 >= 0 ? "+" : "-"} ${Math.abs(b2)}`))), h("div", { class: "wsmall" }, res));
   });
 
   QW.ineq = () => frame([slider("c", "Centre c", -5, 5, 1, 2), slider("d", "Distance d", 1, 6, 1, 3), toggle("op", [["lt", "|x − c| < d"], ["gt", "|x − c| > d"]], "lt")], 320, 90, ({ c, d, op }, svg, out) => {
@@ -361,6 +363,87 @@
     };
     draw(); return wrap;
   };
+
+
+  /* ---------- data graphs for questions (bar, line, pie, scatter, table) ---------- */
+  const COLORS = ["#2F6FED", "#E0A100", "#0E8F80", "#D64545", "#7C5CBF"];
+  const nice = m => { const raw = m / 5, p = Math.pow(10, Math.floor(Math.log10(raw))); const f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
+  window.QCHART = spec => {
+    if (spec.type === "table") return h("div", { class: "dchart" }, h("div", { class: "dtitle" }, spec.title), h("div", { class: "dtable-wrap" }, h("table", { class: "dtable" }, h("tr", {}, spec.head.map(c => h("th", {}, c))), spec.rows.map(r => h("tr", {}, r.map((c, i) => h(i ? "td" : "th", {}, typeof c === "number" ? c.toLocaleString("en-US") : c)))))));
+    const W = 340, H = 220, L = 42, R = 10, Tp = 14, B = 40, svg = s("svg", { viewBox: `0 0 ${W} ${H}`, class: "wsvg dsvg", role: "img", "aria-label": spec.title });
+    if (spec.type === "pie") {
+      const cx = 105, cy = 110, r = 88; let a0 = -Math.PI / 2;
+      spec.parts.forEach(([name, pct], i) => {
+        const a1 = a0 + pct / 100 * 2 * Math.PI, large = pct > 50 ? 1 : 0;
+        add(svg, s("path", { d: `M${cx} ${cy} L${cx + r * Math.cos(a0)} ${cy + r * Math.sin(a0)} A${r} ${r} 0 ${large} 1 ${cx + r * Math.cos(a1)} ${cy + r * Math.sin(a1)} Z`, fill: COLORS[i % 5], stroke: "#fff", "stroke-width": 2 }));
+        const am = (a0 + a1) / 2; if (pct >= 8) add(svg, s("text", { x: cx + r * 0.62 * Math.cos(am), y: cy + r * 0.62 * Math.sin(am) + 4, class: "lbl mid", fill: "#fff", style: "fill:#fff" }, pct + "%"));
+        add(svg, s("rect", { x: 212, y: 34 + i * 26, width: 14, height: 14, rx: 3, fill: COLORS[i % 5] }), s("text", { x: 232, y: 46 + i * 26, class: "lbl" }, `${name} ${pct}%`));
+        a0 = a1;
+      });
+      return h("div", { class: "dchart" }, h("div", { class: "dtitle" }, spec.title), svg);
+    }
+    let xs, ymin = spec.ymin ?? 0, ymax;
+    if (spec.type === "scatter") { ymax = spec.ymax ?? Math.max(...spec.points.map(p => p[1])); }
+    else ymax = Math.max(...spec.series.flatMap(x => x.values));
+    const step = nice((ymax - ymin) || 1); ymax = Math.ceil(ymax / step) * step;
+    const Y = v => Tp + (H - Tp - B) * (1 - (v - ymin) / (ymax - ymin));
+    for (let v = ymin; v <= ymax + 1e-9; v += step) add(svg, s("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), class: "grid" }), s("text", { x: L - 6, y: Y(v) + 4, class: "lbl end small" }, fmt(r2(v))));
+    add(svg, s("line", { x1: L, x2: L, y1: Tp, y2: H - B, class: "axis" }), s("line", { x1: L, x2: W - R, y1: H - B, y2: H - B, class: "axis" }));
+    if (spec.type === "scatter") {
+      const xmax = spec.xmax ?? Math.max(...spec.points.map(p => p[0])), xstep = nice(xmax), X = v => L + (W - L - R) * v / xmax;
+      for (let v = 0; v <= xmax + 1e-9; v += xstep) add(svg, s("text", { x: X(v), y: H - B + 16, class: "lbl mid small" }, fmt(v)));
+      spec.points.forEach(([x, y]) => add(svg, s("circle", { cx: X(x), cy: Y(y), r: 4.5, fill: COLORS[0], "fill-opacity": .8, stroke: "#fff" })));
+      add(svg, s("text", { x: (L + W) / 2, y: H - 6, class: "lbl mid small" }, spec.x), s("text", { x: 10, y: Tp - 2, class: "lbl small" }, spec.y));
+      return h("div", { class: "dchart" }, h("div", { class: "dtitle" }, spec.title), svg);
+    }
+    const n = spec.labels.length, slot = (W - L - R) / n, ns = spec.series.length;
+    spec.labels.forEach((t, i) => add(svg, s("text", { x: L + slot * (i + 0.5), y: H - B + 16, class: "lbl mid small" }, t)));
+    if (spec.type === "bar") {
+      const bw = Math.min(34, slot * 0.7 / ns);
+      spec.series.forEach((ser, k) => ser.values.forEach((v, i) => { const x = L + slot * (i + 0.5) - bw * ns / 2 + k * bw; add(svg, s("rect", { x: x + 1, y: Y(v), width: bw - 2, height: Y(ymin) - Y(v), rx: 2, fill: COLORS[k] }), s("text", { x: x + bw / 2, y: Y(v) - 4, class: "lbl mid small" }, fmt(v))); }));
+    } else {
+      spec.series.forEach((ser, k) => { const pts = ser.values.map((v, i) => [L + slot * (i + 0.5), Y(v)]); add(svg, s("polyline", { points: pts.map(p => p.join(",")).join(" "), fill: "none", stroke: COLORS[k], "stroke-width": 2.5 })); pts.forEach((p, i) => add(svg, s("circle", { cx: p[0], cy: p[1], r: 4, fill: COLORS[k], stroke: "#fff" }), s("text", { x: p[0], y: p[1] - 8, class: "lbl mid small" }, fmt(ser.values[i])))); });
+    }
+    const legend = ns > 1 ? h("div", { class: "dlegend" }, spec.series.map((ser, k) => h("span", {}, h("i", { style: `background:${COLORS[k]}` }), ser.name))) : null;
+    return h("div", { class: "dchart" }, h("div", { class: "dtitle" }, spec.title), legend, svg);
+  };
+
+  /* ---------- widgets for the new lessons ---------- */
+  QW.units = () => frame([slider("b", "Base", 2, 9, 1, 7), slider("n", "Exponent", 1, 40, 1, 22)], 320, 90, ({ b, n }, svg, out) => {
+    const cyc = []; let d = b % 10; while (!cyc.includes(d)) { cyc.push(d); d = d * b % 10; }
+    const pos = (n - 1) % cyc.length;
+    cyc.forEach((c, i) => add(svg, s("circle", { cx: 30 + i * 60, cy: 45, r: 22, class: i === pos ? "fillA" : "slice" }), s("text", { x: 30 + i * 60, y: 51, class: "lbl mid big" }, c)));
+    add(out, line(kv("Cycle of units digits", cyc.join(", ") + " (length " + cyc.length + ")"), kv("Units digit", tex(`${b}^{${n}} \\to ${cyc[pos]}`), "pos")), h("div", { class: "wsmall" }, `${n} = ${cyc.length} × ${Math.floor((n - 1) / cyc.length)} + ${pos + 1}: position ${pos + 1} in the cycle.`));
+  });
+  QW.region = () => frame([slider("m", "Slope m", -3, 3, 0.5, 1), slider("b", "Intercept b", -4, 4, 1, 1), toggle("op", [[">", "y > mx + b"], ["<", "y < mx + b"], [">=", "y ≥ mx + b"], ["<=", "y ≤ mx + b"]], ">")], 280, 280, ({ m, b, op }, svg, out) => {
+    const P = plane(svg, 280, 280, -6, 6, -6, 6, 1), up = op[0] === ">";
+    const yl = x => m * x + b, d = `M${P.X(-6)} ${P.Y(yl(-6))} L${P.X(6)} ${P.Y(yl(6))} L${P.X(6)} ${P.Y(up ? 7 : -7)} L${P.X(-6)} ${P.Y(up ? 7 : -7)} Z`;
+    add(svg, s("path", { d, class: "fillA", style: "stroke:none" }));
+    add(svg, s("line", { x1: P.X(-6), y1: P.Y(yl(-6)), x2: P.X(6), y2: P.Y(yl(6)), class: op.length === 1 ? "dash" : "curve", style: op.length === 1 ? "stroke:#2F6FED;stroke-width:2.5" : "" }));
+    const inside = up ? (op.length === 1 ? 0 > b : 0 >= b) : (op.length === 1 ? 0 < b : 0 <= b);
+    P.dot(0, 0, inside ? "dotB" : "dotA", 6);
+    add(out, line(kv("Shaded region", tex(`y ${op.replace(">=", "\\ge").replace("<=", "\\le")} ${m === 0 ? "" : co(m) + "x "}${m === 0 ? b : (b >= 0 ? "+ " : "- ") + Math.abs(b)}`)), kv("Line", op.length === 1 ? "dashed: not included" : "solid: included"), kv("Test (0, 0)", inside ? "inside" : "outside", inside ? "pos" : "neg")));
+  });
+  QW.similar = () => frame([slider("k", "Scale factor k", 0.5, 3, 0.5, 2)], 320, 170, ({ k }, svg, out) => {
+    const tri = (x0, f, cls) => add(svg, s("polygon", { points: `${x0},150 ${x0 + 40 * f},150 ${x0},${150 - 30 * f}`, class: cls }));
+    tri(20, 1, "tri"); tri(90, k, "fillA");
+    add(svg, s("text", { x: 22, y: 166, class: "lbl small" }, "3-4-5"), s("text", { x: 92, y: 166, class: "lbl small" }, `${fmt(3 * k)}-${fmt(4 * k)}-${fmt(5 * k)}`));
+    add(out, line(kv("Lengths", tex(`\\times ${k}`)), kv("Perimeter", tex(`12 \\to ${fmt(12 * k)}`)), kv("Area", tex(`6 \\to ${fmt(r2(6 * k * k))} \;(\\times ${fmt(k * k)})`), "pos"), kv("Volume (solids)", tex(`\\times ${fmt(r2(k ** 3))}`))));
+  });
+  QW.twoway = () => frame([slider("a", "Girls who play", 0, 60, 5, 40), slider("b", "Girls who don't", 0, 120, 5, 80), slider("c", "Boys who play", 0, 60, 5, 40), slider("d", "Boys who don't", 0, 120, 5, 40)], 320, 150, ({ a, b, c, d }, svg, out) => {
+    const rows = [["Girls", a, b], ["Boys", c, d], ["Total", a + c, b + d]], X = [10, 110, 190, 270];
+    ["", "Sport", "No sport", "Total"].forEach((t, i) => add(svg, s("text", { x: X[i] + (i ? 30 : 0), y: 24, class: "lbl" + (i ? " mid" : "") }, t)));
+    rows.forEach((r, j) => { const y = 56 + j * 34; add(svg, s("line", { x1: 6, x2: 314, y1: y - 22, y2: y - 22, class: "thin" }), s("text", { x: X[0], y, class: "lbl" }, r[0]), s("text", { x: X[1] + 30, y, class: "lbl mid" + (j === 0 ? " big" : "") }, r[1]), s("text", { x: X[2] + 30, y, class: "lbl mid" }, r[2]), s("text", { x: X[3] + 30, y, class: "lbl mid" }, r[1] + r[2])); });
+    const tot = a + b + c + d || 1, sport = a + c || 1, girls = a + b || 1;
+    const pS = (a + c) / tot, pSg = a / girls;
+    add(out, line(kv("P(sport)", tex(`\\frac{${a + c}}{${tot}} = ${r2(pS)}`)), kv("P(sport | girl)", tex(`\\frac{${a}}{${a + b}} = ${r2(pSg)}`), "pos"), kv("P(girl | sport)", tex(`\\frac{${a}}{${a + c}} = ${r2(a / sport)}`))), h("div", { class: "wsmall" }, Math.abs(pS - pSg) < 0.005 ? "Sport and being a girl are independent here: P(sport | girl) = P(sport)." : "Not independent: knowing it's a girl changes the chance of playing a sport."));
+  });
+  QW.expect = () => frame([slider("p0", "P(win $0)", 0, 1, 0.05, 0.6), slider("p1", "P(win $5)", 0, 1, 0.05, 0.3), slider("cost", "Ticket price ($)", 0, 10, 1, 3)], 320, 160, ({ p0, p1, cost }, svg, out) => {
+    p1 = Math.min(p1, 1 - p0); const p2 = Math.max(0, 1 - p0 - p1), vals = [[0, p0], [5, p1], [20, p2]];
+    vals.forEach(([v, p], i) => { const hh = p * 110, x = 40 + i * 95; add(svg, s("rect", { x, y: 130 - hh, width: 56, height: hh, rx: 4, class: "barA" }), s("text", { x: x + 28, y: 124 - hh, class: "lbl mid" }, r2(p)), s("text", { x: x + 28, y: 150, class: "lbl mid" }, "$" + v)); });
+    const E = vals.reduce((t, [v, p]) => t + v * p, 0);
+    add(out, line(kv("P(win $20)", r2(p2) + " (the rest)"), kv("Expected prize", tex(`0(${r2(p0)}) + 5(${r2(p1)}) + 20(${r2(p2)}) = ${r2(E)}`)), kv("Expected gain", tex(`${r2(E)} - ${cost} = ${r2(E - cost)}`), E - cost >= 0 ? "pos" : "neg")));
+  });
 
   window.QW = QW;
 })();

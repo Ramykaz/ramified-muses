@@ -3,7 +3,10 @@
 (() => {
   "use strict";
   const app = document.getElementById("app");
-  const L = window.QL, BYID = Object.fromEntries(L.map(l => [l.id, l]));
+  // the course order: lessons added later slot in next to the ones they build on
+  const ORDER = ["integers", "fractions", "exponents", "estimation", "percent", "ratios", "absval", "interest", "linear", "inequalities", "quadratics", "functions", "coordinate", "graphs", "wordprob", "angles", "triangles", "congruence", "polygons", "circles", "solids", "stats", "spread", "normal", "counting", "probability", "conditional", "expected", "charts", "datasets", "qc"];
+  const rank = id => { const i = ORDER.indexOf(id); return i < 0 ? 999 : i; };
+  const L = window.QL.slice().sort((a, b) => rank(a.id) - rank(b.id)), BYID = Object.fromEntries(L.map(l => [l.id, l]));
   const UNITS = [...new Set(L.map(l => l.unit))];
   const KEY = "quant.v1";
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
@@ -45,12 +48,13 @@
   const ALLQ = [
     ...L.flatMap(l => l.practice.map((q, i) => ({ ...q, topic: l.id, id: l.id + ":" + i }))),
     ...window.QM.map((q, i) => ({ ...q, id: "m:" + i })),
+    ...(window.QM2 || []).map((q, i) => ({ ...q, id: "n:" + i })),
   ];
   const QC_OPTS = ["Quantity A is greater.", "Quantity B is greater.", "The two quantities are equal.", "The relationship cannot be determined from the information given."];
   const num = v => { v = String(v ?? "").replace(/[,\s$%]/g, "").replace(/−/g, "-"); if (!v) return NaN; if (/^-?\d*\.?\d+\/-?\d*\.?\d+$/.test(v)) { const [a, b] = v.split("/").map(Number); return a / b; } return /^-?\d*\.?\d+$/.test(v) ? Number(v) : NaN; };
   function isRight(q, ans) {
     if (ans == null) return false;
-    if (q.t === "ne") { const a = num(q.a), b = num(ans); return Number.isFinite(b) && Math.abs(a - b) < 1e-6 * Math.max(1, Math.abs(a)); }
+    if (q.t === "ne") { const a = num(q.a), b = num(ans); return Number.isFinite(b) && Math.abs(a - b) <= (q.tol ?? 1e-6 * Math.max(1, Math.abs(a))); }
     if (q.t === "ma") return Array.isArray(ans) && ans.slice().sort().join() === q.a.slice().sort().join();
     return ans === q.a;
   }
@@ -65,6 +69,7 @@
       wrap.append(el("div", { class: "qc-grid" }, el("div", { class: "qc-box" }, el("small", {}, "Quantity A"), rich("div", q.A)), el("div", { class: "qc-box" }, el("small", {}, "Quantity B"), rich("div", q.B))));
     } else wrap.append(rich("div", q.q, { class: "qtext" }));
     if (q.fig && window.FIG[q.fig]) wrap.append(rich("div", window.FIG[q.fig], { class: "figwrap" }));
+    if (q.chart && window.QCHART) wrap.append(window.QCHART(q.chart));
     const opts = q.t === "qc" ? QC_OPTS : q.o;
     if (q.t === "ne") {
       const frac = String(q.a).includes("/");
@@ -148,6 +153,7 @@
       el("div", { class: "ex-h" }, el("span", { class: "badge" }, "Example " + (k + 1))),
       rich("div", ex.q, { class: "qtext" }),
       ex.fig && window.FIG[ex.fig] ? rich("div", window.FIG[ex.fig], { class: "figwrap" }) : null,
+      ex.chart && window.QCHART ? window.QCHART(ex.chart) : null,
       el("ol", { class: "steps" }, ex.steps.slice(0, shown).map(s => rich("li", s))),
       shown >= ex.steps.length ? rich("div", "<small>Answer</small> " + ex.a, { class: "ans" }) : null,
       el("div", { class: "row" },
@@ -193,12 +199,22 @@
       el("button", { class: "btn", type: "button", onclick: () => mock([[12, 21]]) }, "Short test: 12 questions, 21 min"),
       S.mocks.length ? el("section", { class: "box" }, el("div", { class: "lbl" }, "Your mock tests"), S.mocks.slice(-8).reverse().map(m => el("div", { class: "lrow" }, el("span", { class: "lmain" }, el("b", {}, `${m.raw}/${m.n} · about ${m.est}`), el("small", {}, new Date(m.at).toLocaleDateString() + ` · ${Math.round(m.secs / 60)} min`))))) : null);
   }
+  // data-interpretation sets: questions with the same set id share one chart and are asked together
+  const SETS = {}; ALLQ.filter(q => q.set).forEach(q => (SETS[q.set] = SETS[q.set] || []).push(q));
   function pickSection(n, used) {
+    // like the GRE, each section ends with one data set of about 3 questions
+    const sets = shuffle(Object.values(SETS).filter(g => g.every(q => !used.has(q.id)))).sort((a, b) => Math.max(...a.map(q => S.seen[q.id] || 0)) - Math.max(...b.map(q => S.seen[q.id] || 0)));
+    const di = n >= 10 && sets.length ? sets[0] : [];
+    di.forEach(q => used.add(q.id));
+    const out = pickPlain(n - di.length, used, Math.round(n / 3));
+    return [...out, ...di];
+  }
+  function pickPlain(n, used, nqcWanted) {
     // GRE-like mix: about a third Quantitative Comparison first, the rest mixed, spread over the four areas
     const unitOf = q => (BYID[q.topic] || {}).unit;
-    const fresh = ALLQ.filter(q => !used.has(q.id)).sort((a, b) => (S.seen[a.id] || 0) - (S.seen[b.id] || 0) + (Math.random() - 0.5) * 6e8);
+    const fresh = ALLQ.filter(q => !used.has(q.id) && !q.set).sort((a, b) => (S.seen[a.id] || 0) - (S.seen[b.id] || 0) + (Math.random() - 0.5) * 6e8);
     // like the GRE: about 1/3 comparison, then mostly one-answer, a few select-all and numeric entry
-    const nqc = Math.round(n / 3), nr = n - nqc, cap = { mc: nr, ma: Math.max(1, Math.round(nr / 5)), ne: Math.max(1, Math.round(nr / 4)) };
+    const nqc = nqcWanted, nr = n - nqc, cap = { mc: nr, ma: Math.max(1, Math.round(nr / 5)), ne: Math.max(1, Math.round(nr / 4)) };
     const qc = [], rest = [], per = {}, typ = {};
     for (const q of fresh) {
       const u = unitOf(q); if ((per[u] || 0) >= Math.ceil(n / 3)) continue;

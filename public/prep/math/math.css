@@ -232,3 +232,15 @@ ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 @media (max-width: 420px) { .qtext { font-size: 18px; } .row.spread .btn { padding: 11px; } .hero::after { display: none; } }
 .qc-box .katex { font-size: 1.35em; }
 .qtext .katex, .qc-given .katex { font-size: 1.12em; }
+/* data graphs inside questions */
+.dchart { display: grid; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; min-width: 0; }
+.dtitle { font: 700 15px var(--serif); text-align: center; }
+.dsvg { border: 0; max-height: 280px; }
+.dlegend { display: flex; gap: 14px; justify-content: center; font-size: 13px; color: var(--muted); }
+.dlegend span { display: inline-flex; gap: 6px; align-items: center; }
+.dlegend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.dtable-wrap { overflow-x: auto; }
+.dtable { width: 100%; border-collapse: collapse; font: 15px var(--serif); text-align: center; }
+.dtable th, .dtable td { border: 1px solid var(--line); padding: 6px 8px; }
+.dtable tr:first-child th { background: var(--soft); font: 700 13px var(--sans); color: var(--muted); }
+.dtable td { font-variant-numeric: tabular-nums; }
