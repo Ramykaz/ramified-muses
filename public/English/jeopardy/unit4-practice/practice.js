@@ -141,6 +141,7 @@
         el("div", { class: "nav", style: "justify-content:center" },
           !last ? el("button", { class: "btn gold big", type: "button", id: "nextB", onclick: () => go(si + 1) }, `Next: ${S[si + 1].book} · ${S[si + 1].title} →`) : el("a", { class: "btn gold big", href: "#/", id: "nextB" }, "All parts"),
           el("button", { class: "btn big", type: "button", onclick: () => section(si) }, "Try again")),
+        s.revise ? (() => { const b = el("div", { class: "revise-body" }); b.innerHTML = s.revise.html; return el("section", { class: "card revise" }, el("h3", {}, s.revise.title), b); })() : null,
         misses.length ? el("div", { class: "miss" }, misses.map(x => el("div", { class: "m" },
           el("b", {}, x.q.q || (x.q.text ? x.q.text.slice(0, 90) + "…" : `Gap (${x.q.n})`)),
           el("span", {}, "Your answer: " + x.p + " · "), el("span", { class: "ans" }, "Answer: " + x.q.a)))) : null));
