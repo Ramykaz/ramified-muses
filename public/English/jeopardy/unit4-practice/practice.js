@@ -46,7 +46,7 @@
         el("p", { class: "lede" }, `${P.lede} ${total} questions in ${S.length} parts.`),
         el("div", { class: "start-row" },
           el("button", { class: "btn gold big", type: "button", onclick: () => go(next) }, doneCount && next ? `Continue: ${S[next].book} · ${S[next].title}` : "Start from the beginning"),
-          modeBtn(home),
+          P.noMode ? null : modeBtn(home),
           doneCount ? el("button", { class: "btn big", type: "button", onclick: () => { if (confirm("Clear all scores and start again?")) { mem = { best: {} }; save(mem); home(); } } }, "Reset scores") : null)),
       el("div", { class: "list" }, parts.map(p => el("section", { class: "part" },
         el("h2", {}, p.book),
@@ -67,7 +67,8 @@
     .replace(/\bwon't\b/g, "will not").replace(/\bcan't\b/g, "can not").replace(/\bcannot\b/g, "can not").replace(/n't\b/g, " not")
     .replace(/'ve\b/g, " have").replace(/'ll\b/g, " will").replace(/'re\b/g, " are").replace(/'m\b/g, " am")
     .replace(/[.,!?;:"()]/g, " ").replace(/\s+/g, " ").trim();
-  const isRight = (q, p) => p != null && [q.a, ...(q.alt || [])].some(x => norm(x) === norm(p));
+  const kwOk = (q, p) => { const t = " " + norm(p).replace(/-/g, " ") + " "; return q.kw.every(g => g.split("|").some(k => t.includes(norm(k).replace(/-/g, " ")))); };
+  const isRight = (q, p) => p != null && ([q.a, ...(q.alt || [])].some(x => norm(x) === norm(p)) || (q.kw ? kwOk(q, p) : false));
 
   /* ---------- one section, one question at a time ---------- */
   function section(si) {
@@ -75,8 +76,10 @@
     document.title = `${s.book} · ${s.title} · ${P.title}`;
     mem.pos = si; save(mem);
     const show = () => {
-      const q = s.qs[qi], done = picks[qi] != null, typing = mode() === "type" && !s.choose && !q.choose;
-      const order = q._o || (q._o = s.fixed || q.fixed ? q.o.slice() : shuffle(q.o));
+      const q = s.qs[qi], done = picks[qi] != null, ask = q.ask || s.ask;
+      // ask "type": the book gives no choices, so the student writes; the teacher can show the choices
+      const typing = ask === "type" ? !(mem.show && q.o) : ask === "choose" ? false : mode() === "type" && !s.choose && !q.choose;
+      const order = q._o || (q._o = !q.o ? [] : s.fixed || q.fixed ? q.o.slice() : shuffle(q.o));
       const choose = o => { if (picks[qi] != null) return; picks[qi] = o; show(); };
       const next = () => { if (picks[qi] == null) return; if (qi < s.qs.length - 1) { qi++; show(); } else finish(); };
       // the passage, with the gaps answered so far filled in
@@ -94,7 +97,10 @@
       const typedOpt = done ? order.find(o => norm(o) === norm(picks[qi])) : null;
       const inp = typing && !done ? el("input", { class: "type-in", type: "text", autocomplete: "off", autocapitalize: "off", spellcheck: "false", enterkeyhint: "done", "aria-label": "Your answer", placeholder: "Type your answer" }) : null;
       const check = e => { if (e) e.preventDefault(); const v = inp.value.trim(); if (!v) { inp.focus(); return; } picks[qi] = v; show(); };
-      const hint = el("div", { class: "hint-row" }, el("span", {}, "Use one:"), order.map(o => el("b", {}, o)));
+      const hint = ask ? null : el("div", { class: "hint-row" }, el("span", {}, "Use one:"), order.map(o => el("b", {}, o)));
+      const bank = s.bank ? el("div", { class: "card bank" }, el("span", { class: "bank-t" }, s.bankTitle || "Word box"),
+        el("div", { class: "bank-w" }, s.bank.map(w => el(inp ? "button" : "span", { class: "bw", type: inp ? "button" : null, onclick: inp ? () => { inp.value = w; inp.focus(); } : null }, w)))) : null;
+      const showBtn = ask === "type" && q.o && !done ? el("button", { class: "btn mode-btn", type: "button", onclick: () => { mem.show = !mem.show; save(mem); show(); } }, mem.show ? "Hide the choices" : "Show the choices") : null;
       app.replaceChildren(el("div", { class: "qwrap" },
         el("div", { class: "qtop" },
           el("a", { class: "link", href: "#/" }, "← All parts"),
@@ -102,6 +108,7 @@
           el("span", { class: "count" }, `${qi + 1} / ${s.qs.length}`)),
         el("div", { class: "bar", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": total, "aria-valuenow": before(si) + qi + 1, "aria-label": "Progress in the unit" }, el("i", { style: `width:${((before(si) + qi + (done ? 1 : 0)) / total) * 100}%` })),
         el("p", { class: "task" }, s.task),
+        bank,
         s.reading ? el("details", { class: "card story", open: readOpen, ontoggle: e => { readOpen = e.target.open; } }, el("summary", {}, "The text"), s.reading.split(/\n\n+/).map(t => el("p", {}, t))) : null,
         passage,
         q.text ? el("div", { class: "reading" }, q.text) : null,
@@ -111,12 +118,12 @@
           el("button", { class: "opt" + (done && o === q.a ? " right" : "") + (done && !right && (o === picks[qi] || o === typedOpt) && o !== q.a ? " wrong" : "") + (done && q.w ? " noted" : ""), type: "button", disabled: done, onclick: () => choose(o) },
             el("span", { class: "k" }, done && q.w ? svg(o === q.a ? ICON.ok : ICON.no) : String(k + 1)),
             el("span", { class: "ot" }, o, done && q.w && (o === q.a ? q.why : q.w[o]) ? el("span", { class: "note" }, o === q.a ? q.why : q.w[o]) : null)))),
-        done ? el("div", { class: "why " + (right ? "good" : "bad"), role: "status" }, svg(right ? ICON.ok : ICON.no), el("span", {}, right ? (norm(picks[qi]) !== norm(q.a) ? `Correct! ("${q.a}" is right too.) ` : "Correct! ") : typing && !typedOpt ? `You wrote "${picks[qi]}". The answer is "${q.a}". ` : `Not quite. The answer is "${q.a}". `, q.w ? (right ? "See why the others are wrong above." : "See why above each choice.") : (q.why || ""))) : null,
+        done ? el("div", { class: "why " + (right ? "good" : "bad"), role: "status" }, svg(right ? ICON.ok : ICON.no), el("span", {}, right ? (norm(picks[qi]) !== norm(q.a) ? `Correct! ("${q.a}" is right too.) ` : "Correct! ") : typing && !typedOpt ? `You wrote "${picks[qi]}". The answer is "${q.a}". ` : `Not quite. The answer is "${q.a}". `, ask === "type" && !(mem.show && q.o) ? (q.o && q.w ? (right ? "" : "See why above.") : q.why || "") : q.w ? (right ? "See why the others are wrong above." : "See why above each choice.") : (q.why || ""))) : null,
         el("div", { class: "nav" },
           el("button", { class: "btn", type: "button", disabled: qi === 0, onclick: () => { qi--; show(); } }, "← Back"),
           el("button", { class: "btn teal big", type: "button", disabled: !done, id: "nextB", onclick: next }, qi < s.qs.length - 1 ? "Next →" : "See my score →")),
         el("p", { class: "keys" }, typing ? "Press Enter to check, Enter again for next" : "Keys: 1–" + order.length + " to choose, Enter for next"),
-        el("div", { style: "text-align:center" }, modeBtn(show))));
+        el("div", { style: "text-align:center" }, P.noMode ? showBtn : modeBtn(show))));
       keys = e => {
         if (e.target && e.target.tagName === "INPUT") return;
         const n = Number(e.key);
