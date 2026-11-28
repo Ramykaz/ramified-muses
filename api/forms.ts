@@ -122,6 +122,52 @@ function questionIds(data: unknown): Set<string> {
   return ids
 }
 
+// ---------- email on a new response (Resend: https://resend.com)
+// Vercel env: RESEND_API_KEY (required), NOTIFY_EMAIL (where to send),
+// RESEND_FROM (optional, e.g. "Ramyfied <forms@ramyfied.me>" once the domain is verified in Resend).
+// Sent for the lesson application form, and for any form whose JSON has "notify": true.
+const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
+type Q = { id?: string; type?: string; title?: string; other?: string }
+async function notifyByEmail(formId: string, data: Record<string, unknown>, answers: Record<string, unknown>) {
+  const key = process.env.RESEND_API_KEY, to = process.env.NOTIFY_EMAIL
+  if (!key || !to) return
+  if (formId !== LESSON_FORM_ID && data.notify !== true) return
+  const qs = (((data.sections ?? []) as Array<{ questions?: Q[] }>).flatMap(sx => sx.questions ?? [])).filter(q => q.id && q.type !== 'info')
+  const show = (q: Q) => {
+    const v = answers[q.id as string]
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return ''
+    const list = Array.isArray(v) ? v : typeof v === 'object' ? Object.entries(v as object).map(([k, x]) => `${k}: ${x}`) : [v]
+    return list.map(x => q.other && x === q.other ? `${x}: ${answers[q.id + '__other'] ?? ''}` : String(x)).join(', ')
+  }
+  const rows = qs.map(q => [q.title ?? q.id, show(q)]).filter(r => r[1])
+  const name = String(answers.fullName ?? '').trim()
+  const phone = String(answers.phone ?? '').replace(/[^\d]/g, '')
+  const waNum = phone.startsWith('0') ? '9' + phone : phone.length === 10 && phone.startsWith('5') ? '90' + phone : phone
+  const title = String(data.title ?? 'Form')
+  const html = `<div style="font-family:Arial,sans-serif;max-width:560px">
+<h2 style="margin:0 0 4px">${esc(title)}</h2><p style="color:#666;margin:0 0 16px">New response${name ? ' from <b>' + esc(name) + '</b>' : ''}</p>
+<table style="border-collapse:collapse;width:100%">${rows.map(([k, v]) => `<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#666;vertical-align:top;width:40%">${esc(k)}</td><td style="padding:8px;border-bottom:1px solid #eee"><b>${esc(v)}</b></td></tr>`).join('')}</table>
+${waNum.length >= 10 ? `<p style="margin:20px 0"><a href="https://wa.me/${waNum}" style="background:#25D366;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Reply on WhatsApp</a></p>` : ''}
+<p style="color:#888;font-size:13px">All responses: <a href="https://forms.ramyfied.me">forms.ramyfied.me</a></p></div>`
+  const text = rows.map(([k, v]) => `${k}: ${v}`).join('\n') + (waNum.length >= 10 ? `\n\nWhatsApp: https://wa.me/${waNum}` : '')
+  const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 5000)
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST', signal: ctl.signal,
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM || 'Ramyfied Forms <onboarding@resend.dev>',
+        to: to.split(',').map(x => x.trim()).filter(Boolean),
+        subject: formId === LESSON_FORM_ID ? `Yeni ders başvurusu${name ? ': ' + name : ''}` : `New response: ${title}`,
+        html, text,
+      }),
+    })
+    if (!r.ok) console.error('notify email failed:', r.status, await r.text())
+  } catch (err) {
+    console.error('notify email failed:', err)  // the response is saved either way
+  } finally { clearTimeout(timer) }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   for (const [k, v] of Object.entries(CORS)) res.setHeader(k, v)
   if (req.method === 'OPTIONS') return res.status(200).end()
@@ -157,6 +203,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (JSON.stringify(answers).length > MAX_ANSWER_BYTES) return res.status(400).json({ error: 'Your answers are too long.' })
       const rid = newId(12)
       await db.execute(sql`INSERT INTO form_responses (id, form_id, answers, created_at) VALUES (${rid}, ${id}, ${JSON.stringify(answers)}::jsonb, ${Date.now()})`)
+      await notifyByEmail(id, r.data as Record<string, unknown>, answers)
       return res.status(200).json({ ok: true, id: rid })
     }
 
