@@ -18,6 +18,35 @@ const MAX_FORM_BYTES = 200_000
 const MAX_ANSWER_BYTES = 60_000
 const SESSION_DAYS = 180
 
+// The lesson application form on ramyfied.me/English (short links /basvuru and /apply) sends here.
+// It is created once, so its answers show in the forms admin like any other form.
+// The question ids must match what public/English.html sends.
+export const LESSON_FORM_ID = 'ders-basvuru'
+const LESSON_FORM = {
+  title: 'Ders Başvurusu: İngilizce özel ders',
+  description: 'Applications from ramyfied.me/English (short links: ramyfied.me/basvuru and ramyfied.me/apply).',
+  slug: LESSON_FORM_ID,
+  theme: '#1f6f6b',
+  thankYou: 'Teşekkürler! 24 saat içinde WhatsApp üzerinden size ulaşacağım.',
+  sections: [
+    { title: 'Kişisel bilgiler / Personal information', questions: [
+      { id: 'fullName', type: 'short', title: 'Ad Soyad / Full name', required: true },
+      { id: 'phone', type: 'phone', title: 'Telefon (WhatsApp) / Phone (WhatsApp)', required: true },
+      { id: 'ageGroup', type: 'single', title: 'Yaş grubu / Age group', required: true, options: ['15 yaş altı', '15-18', '18-25', '25+'] },
+    ] },
+    { title: 'Ders hedefi / Goal', questions: [
+      { id: 'goals', type: 'multiple', title: 'Neden İngilizce öğrenmek istiyor? / Why English?', options: ['Günlük konuşma & akıcılık', 'TOEFL hazırlığı', 'SAT hazırlığı', 'YÖKDİL / YDS hazırlığı', 'Diğer ÖSYM sınavı', 'Akademik yazı / essay', 'Üniversite başvuru metni', 'Genel gelişim'], other: 'Diğer', optional: true },
+      { id: 'currentLevel', type: 'dropdown', title: 'Mevcut seviye / Current level', options: ['Bilmiyorum', 'A1', 'A2', 'B1', 'B2', 'C1'] },
+    ] },
+    { title: 'Ders tercihleri / Lesson preferences', questions: [
+      { id: 'format', type: 'single', title: 'Format', options: ['Online', 'Yüz yüze (Ankara)', 'Fark etmez'] },
+      { id: 'availableDays', type: 'multiple', title: 'Uygun günler / Available days', options: ['Hafta içi sabah', 'Hafta içi öğleden sonra', 'Hafta içi akşam', 'Hafta sonu'], optional: true },
+      { id: 'referral', type: 'dropdown', title: 'Beni nereden duydu? / How did they hear about you?', options: ['Arkadaş tavsiyesi', 'Instagram', 'Web sitesi', 'Diğer'] },
+      { id: 'notes', type: 'long', title: 'Ek not / Anything else' },
+    ] },
+  ],
+}
+
 let schemaReady: Promise<unknown> | null = null
 function ensureSchema() {
   schemaReady ??= db
@@ -37,6 +66,7 @@ function ensureSchema() {
     .then(() => db.execute(sql`CREATE INDEX IF NOT EXISTS form_responses_form_idx ON form_responses (form_id, created_at)`))
     .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS forms_admin (k text PRIMARY KEY, v text NOT NULL)`))
     .then(() => db.execute(sql`CREATE TABLE IF NOT EXISTS forms_sessions (token text PRIMARY KEY, created_at bigint NOT NULL)`))
+    .then(() => db.execute(sql`INSERT INTO forms (id, data, status, created_at, updated_at) VALUES (${LESSON_FORM_ID}, ${JSON.stringify(LESSON_FORM)}::jsonb, 'open', ${Date.now()}, ${Date.now()}) ON CONFLICT (id) DO NOTHING`))
     .catch(err => { schemaReady = null; throw err })
   return schemaReady
 }

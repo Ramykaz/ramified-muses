@@ -782,11 +782,7 @@
     </div>
 
     <div class="form-card reveal delay-1">
-      <!--
-        FORMSPREE: replace REPLACE_WITH_YOUR_FORMSPREE_ID below with your
-        actual Formspree form ID (from https://formspree.io) before going live.
-      -->
-      <form id="applyForm" action="https://formspree.io/f/REPLACE_WITH_YOUR_FORMSPREE_ID" method="POST">
+      <form id="applyForm" action="/api/forms?action=submit" method="POST">
 
         <div class="form-group">
           <div class="form-group-title lang-tr">Kişisel Bilgiler</div>
@@ -802,11 +798,11 @@
 
           <div class="field">
             <label class="field-label" for="phone">
-              <span class="lang-tr">Telefon numarası</span><span class="lang-en">Phone Number</span>
+              <span class="lang-tr">Telefon (WhatsApp)</span><span class="lang-en">Phone (WhatsApp)</span>
             </label>
             <input type="tel" id="phone" name="phone" required
-                   data-tr-ph="+90 5xx xxx xx xx" data-en-ph="+90 5xx xxx xx xx">
-            <p class="phone-hint">🇹🇷 <span class="lang-tr">Türkiye numarası olması yeterli</span><span class="lang-en">A Turkish number is fine</span></p>
+                   data-tr-ph="WhatsApp numaranız" data-en-ph="Your WhatsApp number">
+            <p class="phone-hint"><span class="lang-tr">Size WhatsApp'tan ulaşacağım.</span><span class="lang-en">I'll get back to you on WhatsApp.</span></p>
           </div>
 
           <div class="field">
@@ -1295,7 +1291,7 @@
     }
   };
 
-  /* ============ FORM SUBMISSION (Formspree AJAX) ============ */
+  /* ============ FORM SUBMISSION (to the forms app: form "ders-basvuru", see api/forms.ts) ============ */
   var applyForm = document.getElementById('applyForm');
   var thankYou = document.getElementById('thankYou');
   var formError = document.getElementById('formError');
@@ -1307,10 +1303,24 @@
     submitBtn.disabled = true;
 
     var data = new FormData(applyForm);
+    var levels = { unknown:'Bilmiyorum' };
+    var goals = data.getAll('goals');
+    var answers = {
+      fullName: data.get('fullName'),
+      phone: data.get('phone'),
+      ageGroup: data.get('ageGroup'),
+      goals: goals,
+      goals__other: goals.indexOf('Diğer') >= 0 ? data.get('otherGoal') : '',
+      currentLevel: levels[data.get('currentLevel')] || data.get('currentLevel'),
+      format: data.get('format'),
+      availableDays: data.getAll('availableDays'),
+      referral: data.get('referral'),
+      notes: data.get('notes')
+    };
     fetch(applyForm.action, {
       method:'POST',
-      body:data,
-      headers:{ 'Accept':'application/json' }
+      body:JSON.stringify({ id:'ders-basvuru', answers:answers }),
+      headers:{ 'Content-Type':'application/json', 'Accept':'application/json' }
     }).then(function(response){
       if(response.ok){
         applyForm.style.display = 'none';
