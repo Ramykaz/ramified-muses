@@ -1005,7 +1005,9 @@
   /* ============ LANGUAGE TOGGLE ============ */
   var root = document.documentElement;
   var langBtn = document.getElementById('langToggle');
-  var currentLang = sessionStorage.getItem('englishPageLang') || 'tr';
+  // ?lang=en or ?lang=tr in the link picks the language (used by ramyfied.me/apply)
+  var urlLang = (location.search.match(/[?&]lang=(en|tr)\b/) || [])[1];
+  var currentLang = urlLang || sessionStorage.getItem('englishPageLang') || 'tr';
 
   function applyAttrTranslations(lang){
     document.querySelectorAll('[data-tr], [data-en]').forEach(function(el){
@@ -1325,6 +1327,19 @@
 
   /* ============ INIT ============ */
   setLang(currentLang);
+  // a shared link to a section (ramyfied.me/basvuru opens /English#apply): land on it after the language is set
+  if(location.hash.length > 1){
+    var target = document.getElementById(location.hash.slice(1));
+    if(target){
+      target.querySelectorAll('.reveal').forEach(function(r){ r.classList.add('in-view'); });
+      var stopLanding = false;
+      var land = function(){ if(!stopLanding) target.scrollIntoView({ block:'start' }); };
+      addEventListener('load', function(){ land(); setTimeout(land, 400); setTimeout(land, 1200); });
+      if(document.fonts && document.fonts.ready) document.fonts.ready.then(land);
+      // stop re-landing once the visitor scrolls themselves
+      ['touchstart','wheel','keydown'].forEach(function(t){ addEventListener(t, function(){ stopLanding = true; }, { once:true, passive:true }); });
+    }
+  }
 })();
 </script>
 

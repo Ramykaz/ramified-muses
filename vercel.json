@@ -20,6 +20,16 @@
       "source": "/quant/(.*)",
       "destination": "/prep/math/",
       "permanent": false
+    },
+    {
+      "source": "/basvuru",
+      "destination": "/English#apply",
+      "permanent": false
+    },
+    {
+      "source": "/apply",
+      "destination": "/English?lang=en#apply",
+      "permanent": false
     }
   ],
   "rewrites": [
